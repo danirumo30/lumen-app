@@ -5,6 +5,7 @@ import {
   generateVerificationEmailHtml,
   generateVerificationEmailText
 } from '@/infrastructure/email/nodemailer.service';
+import { getBaseUrl } from '@/lib/get-base-url';
 import { randomUUID } from 'crypto';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -141,8 +142,8 @@ export async function POST(request: Request) {
       );
     }
 
-    // 3. Construir URL de verificación
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    // 3. Construir URL de verificación (usa la URL de la petición en Vercel o local)
+    const baseUrl = getBaseUrl(request);
     const verificationUrl = `${baseUrl}/api/auth/confirm-email?token=${verificationToken}`;
 
     // 4. Preparar y enviar email con Nodemailer

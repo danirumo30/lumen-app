@@ -5,6 +5,7 @@ import {
   generatePasswordResetEmailHtml, 
   generatePasswordResetEmailText 
 } from '@/infrastructure/email/nodemailer.service';
+import { getBaseUrl } from '@/lib/get-base-url';
 import { randomUUID } from 'crypto';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -85,9 +86,9 @@ export async function POST(request: Request) {
         );
     }
 
-    // 4. Construir URL
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-    const resetUrl = `${baseUrl}/auth/reset-password?token=${resetToken}`;
+    // 4. Construir URL (usa la URL de la petición en Vercel o local)
+    const baseUrl = getBaseUrl(request);
+    const resetUrl = `${baseUrl}/auth/reset-password?token=${resetToken}&email=${encodeURIComponent(user.email)}`;
 
     // 5. Enviar email
     const emailHtml = generatePasswordResetEmailHtml({
