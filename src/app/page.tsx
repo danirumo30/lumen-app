@@ -1,6 +1,14 @@
 import Image from "next/image";
 
-export default function Home() {
+interface HomeProps {
+  searchParams: Promise<{ [key: string]: string | string[] }>;
+}
+
+export default async function Home({ searchParams }: HomeProps) {
+  const params = await searchParams;
+  const error = params.error;
+  const success = params.success;
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
       <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
@@ -13,6 +21,18 @@ export default function Home() {
           priority
         />
         <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
+          {/* Mensajes de estado */}
+          {error && (
+            <div className="w-full p-4 bg-red-100 border border-red-400 text-red-700 rounded mb-4">
+              Error: {error}
+            </div>
+          )}
+          {success && (
+            <div className="w-full p-4 bg-green-100 border border-green-400 text-green-700 rounded mb-4">
+              ¡Éxito! {success}
+            </div>
+          )}
+          
           <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
             To get started, edit the page.tsx file.
           </h1>
