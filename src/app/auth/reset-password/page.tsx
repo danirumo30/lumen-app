@@ -75,12 +75,12 @@ function PasswordInput({ value, onChange, placeholder, disabled, required, showR
   );
 }
 
-export default function ResetPasswordPage() {
+function ResetPasswordContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get('token');
   const email = searchParams.get('email'); // Email para redirigir con el campo pre-llenado
-  
+
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [message, setMessage] = useState('');
@@ -221,5 +221,23 @@ export default function ResetPasswordPage() {
         </form>
       </div>
     </div>
+  );
+}
+
+function ResetPasswordFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-zinc-950 p-4">
+      <div className="bg-zinc-900 p-8 rounded-2xl border border-zinc-800 w-full max-w-md text-center">
+        <p className="text-zinc-400">Cargando...</p>
+      </div>
+    </div>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<ResetPasswordFallback />}>
+      <ResetPasswordContent />
+    </Suspense>
   );
 }
