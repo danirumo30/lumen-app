@@ -34,8 +34,8 @@ test.describe('Authentication Flow', () => {
     // Click register link
     await page.click('text=Regístrate');
     
-    // Verify register form is shown
-    await expect(page.locator('text=Crear cuenta')).toBeVisible();
+    // Verify register form is shown (use heading role to avoid ambiguity)
+    await expect(page.getByRole('heading', { name: 'Crear cuenta' })).toBeVisible();
     await expect(page.locator('text=Nombre completo')).toBeVisible();
   });
 
