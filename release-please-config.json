@@ -1,0 +1,22 @@
+{
+  "packages": {
+    ".": {
+      "release-type": "node",
+      "package-name": "lumen-app",
+      "draft": false,
+      "prerelease": false,
+      "include-component-in-tag": false,
+      "pull-request-title-pattern": "chore${scope}: Release ${version}",
+      "extra-files": [],
+      "changelog-sections": {
+        "features": "Features",
+        "fixes": "Bug Fixes",
+        "refactor": "Refactoring",
+        "perf": "Performance Improvements",
+        "revert": "Reverts",
+        "docs": "Documentation",
+        "chore": "Maintenance"
+      }
+    }
+  }
+}
