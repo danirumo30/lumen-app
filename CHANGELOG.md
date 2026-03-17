@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.1](https://github.com/danirumo30/lumen-app/compare/v1.0.0...v1.0.1) (2026-03-17)
+
+
+### Bug Fixes
+
+* add release-please manifest file ([bf4afbf](https://github.com/danirumo30/lumen-app/commit/bf4afbf2c946d531f00d8c3fd985567db9ece5d6))
+* remove invalid changelog-sections from release-please config ([1a6d01b](https://github.com/danirumo30/lumen-app/commit/1a6d01bc914e880920071b60801bbd46be80513b))
+
 ## 1.0.0 (2026-03-17)
 
 
