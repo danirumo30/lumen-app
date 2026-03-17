@@ -14,7 +14,7 @@ interface PageProps {
 }
 
 export default async function ProfilePage({ params }: PageProps) {
-  const username = params.username;
+  const { username } = await params;
 
   // Get Supabase client
   const supabase = getSupabaseClient();
