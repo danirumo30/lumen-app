@@ -4,7 +4,7 @@ import {
   sendEmail,
   generateVerificationEmailHtml,
   generateVerificationEmailText
-} from '@/infrastructure/email/nodemailer.service';
+} from '@/modules/auth/infrastructure/email/nodemailer.service';
 import { getBaseUrl } from '@/lib/get-base-url';
 import { randomUUID } from 'crypto';
 
