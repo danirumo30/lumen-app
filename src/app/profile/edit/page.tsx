@@ -108,9 +108,7 @@ export default function ProfileEditPage() {
       const filePath = generateUniqueFileName(user.id, type, file.name);
 
       // Subir archivo
-      console.log("Uploading file:", filePath, "size:", file.size);
       const publicUrl = await uploadFile(file, "profile-images", filePath);
-      console.log("Upload successful, URL:", publicUrl);
 
       // Actualizar preview y formData
       if (type === "avatar") {
@@ -172,19 +170,11 @@ export default function ProfileEditPage() {
       const avatarUrl = formData.avatarUrl || null;
       const bannerUrl = formData.bannerUrl || null;
       
-      console.log("Updating profile with:", {
-        avatarUrl: avatarUrl ? "set" : "null",
-        bannerUrl: bannerUrl ? "set" : "null",
-        username: formData.username,
-      });
-      
       await repository.updateProfile(user.id, {
         avatarUrl,
         bannerUrl,
         username: formData.username,
       });
-
-      console.log("Profile updated successfully in database");
 
       // Note: We only update user_profiles table here.
       // The AuthContext will read from user_profiles when needed.

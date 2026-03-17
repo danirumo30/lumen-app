@@ -302,66 +302,40 @@ export class SupabaseUserProfileRepository implements UserProfileRepository {
   }
 
   async getFollowers(userId: string, limit: number = 20): Promise<UserProfile[]> {
-    // Obtener IDs de seguidores
-    const { data: followerIds, error: idsError } = await this.client
+    const { data: followerIds, error } = await this.client
       .from("user_followers")
       .select("follower_id")
       .eq("following_id", userId)
       .limit(limit);
 
-    if (idsError) {
-      console.error("Error getting follower IDs:", idsError);
-      throw idsError;
-    }
+    if (error || !followerIds?.length) return [];
 
-    if (!followerIds || followerIds.length === 0) {
-      return [];
-    }
-
-    // Obtener perfiles de los seguidores
-    const ids = followerIds.map((item: any) => item.follower_id);
-    const { data, error } = await this.client
-      .from("user_profiles")
-      .select("*")
-      .in("id", ids);
-
-    if (error) {
-      console.error("Error getting followers profiles:", error);
-      throw error;
-    }
-
-    return data.map(this.toUserProfile);
+    const ids = followerIds.map(item => item.follower_id);
+    return this.getProfilesByIds(ids);
   }
 
   async getFollowing(userId: string, limit: number = 20): Promise<UserProfile[]> {
-    // Obtener IDs de seguidos
-    const { data: followingIds, error: idsError } = await this.client
+    const { data: followingIds, error } = await this.client
       .from("user_followers")
       .select("following_id")
       .eq("follower_id", userId)
       .limit(limit);
 
-    if (idsError) {
-      console.error("Error getting following IDs:", idsError);
-      throw idsError;
-    }
+    if (error || !followingIds?.length) return [];
 
-    if (!followingIds || followingIds.length === 0) {
-      return [];
-    }
+    const ids = followingIds.map(item => item.following_id);
+    return this.getProfilesByIds(ids);
+  }
 
-    // Obtener perfiles de los seguidos
-    const ids = followingIds.map((item: any) => item.following_id);
+  private async getProfilesByIds(ids: string[]): Promise<UserProfile[]> {
+    if (!ids.length) return [];
+    
     const { data, error } = await this.client
       .from("user_profiles")
       .select("*")
       .in("id", ids);
 
-    if (error) {
-      console.error("Error getting following profiles:", error);
-      throw error;
-    }
-
+    if (error) throw error;
     return data.map(this.toUserProfile);
   }
 

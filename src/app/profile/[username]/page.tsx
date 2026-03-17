@@ -9,7 +9,7 @@ import { ProfileStats } from "@/components/profile/ProfileStats";
 import { MediaTabs } from "@/components/profile/MediaTabs";
 import { FollowersModal } from "@/components/profile/FollowersModal";
 import { getSupabaseClient } from "@/lib/supabase";
-import type { Follower, UserProfileWithContent } from "@/modules/social/domain/user-profile";
+import type { Follower, UserProfileWithContent, UserProfileWithStats } from "@/modules/social/domain/user-profile";
 
 export default function ProfilePage() {
   const params = useParams();
@@ -19,7 +19,7 @@ export default function ProfilePage() {
   const [modalType, setModalType] = useState<"followers" | "following">("followers");
   const [followers, setFollowers] = useState<Follower[]>([]);
   const [following, setFollowing] = useState<Follower[]>([]);
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] = useState<UserProfileWithStats | null>(null);
   const [content, setContent] = useState<UserProfileWithContent | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isFollowing, setIsFollowing] = useState(false);
@@ -104,7 +104,6 @@ export default function ProfilePage() {
 
       if (isFollowing) {
         // Unfollow
-        console.log("Unfollowing:", user.id, "->", profile.id);
         await repository.unfollowUser(user.id, profile.id);
         setIsFollowing(false);
         
@@ -121,7 +120,6 @@ export default function ProfilePage() {
         setFollowers(prev => prev.filter(f => f.id !== user.id));
       } else {
         // Follow
-        console.log("Following:", user.id, "->", profile.id);
         await repository.followUser(user.id, profile.id);
         setIsFollowing(true);
         

@@ -44,6 +44,7 @@ export type MediaProgressMinutes = number;
 export interface UserMediaState {
   readonly userId: string;
   readonly mediaId: MediaId;
+  readonly mediaType: MediaType;
   readonly isFavorite: boolean;
   readonly isWatched: boolean;
   readonly isPlanned: boolean;
