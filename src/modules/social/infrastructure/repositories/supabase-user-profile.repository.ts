@@ -302,31 +302,67 @@ export class SupabaseUserProfileRepository implements UserProfileRepository {
   }
 
   async getFollowers(userId: string, limit: number = 20): Promise<UserProfile[]> {
-    const { data, error } = await this.client
+    // Obtener IDs de seguidores
+    const { data: followerIds, error: idsError } = await this.client
       .from("user_followers")
-      .select("follower:follower_id(*)")
+      .select("follower_id")
       .eq("following_id", userId)
       .limit(limit);
 
+    if (idsError) {
+      console.error("Error getting follower IDs:", idsError);
+      throw idsError;
+    }
+
+    if (!followerIds || followerIds.length === 0) {
+      return [];
+    }
+
+    // Obtener perfiles de los seguidores
+    const ids = followerIds.map((item: any) => item.follower_id);
+    const { data, error } = await this.client
+      .from("user_profiles")
+      .select("*")
+      .in("id", ids);
+
     if (error) {
+      console.error("Error getting followers profiles:", error);
       throw error;
     }
 
-    return data.map((item: any) => this.toUserProfile(item.follower));
+    return data.map(this.toUserProfile);
   }
 
   async getFollowing(userId: string, limit: number = 20): Promise<UserProfile[]> {
-    const { data, error } = await this.client
+    // Obtener IDs de seguidos
+    const { data: followingIds, error: idsError } = await this.client
       .from("user_followers")
-      .select("following:following_id(*)")
+      .select("following_id")
       .eq("follower_id", userId)
       .limit(limit);
 
+    if (idsError) {
+      console.error("Error getting following IDs:", idsError);
+      throw idsError;
+    }
+
+    if (!followingIds || followingIds.length === 0) {
+      return [];
+    }
+
+    // Obtener perfiles de los seguidos
+    const ids = followingIds.map((item: any) => item.following_id);
+    const { data, error } = await this.client
+      .from("user_profiles")
+      .select("*")
+      .in("id", ids);
+
     if (error) {
+      console.error("Error getting following profiles:", error);
       throw error;
     }
 
-    return data.map((item: any) => this.toUserProfile(item.following));
+    return data.map(this.toUserProfile);
   }
 
   async isFollowing(followerId: string, followingId: string): Promise<boolean> {

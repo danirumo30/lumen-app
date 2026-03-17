@@ -29,14 +29,18 @@ export async function uploadFile(
     });
 
   if (error) {
+    console.error("Error uploading file:", error);
     throw new Error(`Error al subir imagen: ${error.message}`);
   }
+
+  console.log("Upload successful, data:", data);
 
   // Obtener URL pública
   const { data: urlData } = supabase.storage
     .from(bucket)
     .getPublicUrl(path);
 
+  console.log("Public URL:", urlData.publicUrl);
   return urlData.publicUrl;
 }
 

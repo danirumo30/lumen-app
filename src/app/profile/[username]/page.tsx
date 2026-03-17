@@ -104,6 +104,7 @@ export default function ProfilePage() {
 
       if (isFollowing) {
         // Unfollow
+        console.log("Unfollowing:", user.id, "->", profile.id);
         await repository.unfollowUser(user.id, profile.id);
         setIsFollowing(false);
         
@@ -120,6 +121,7 @@ export default function ProfilePage() {
         setFollowers(prev => prev.filter(f => f.id !== user.id));
       } else {
         // Follow
+        console.log("Following:", user.id, "->", profile.id);
         await repository.followUser(user.id, profile.id);
         setIsFollowing(true);
         
