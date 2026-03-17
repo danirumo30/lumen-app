@@ -57,19 +57,21 @@ export default function Header() {
               <div className="flex items-center space-x-3">
                 {/* Avatar */}
                 <div className="relative group">
-                  {user.avatarUrl ? (
-                    <img
-                      src={user.avatarUrl}
-                      alt="Avatar"
-                      className="w-8 h-8 rounded-full object-cover border border-zinc-700"
-                    />
-                  ) : (
-                    <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center border border-zinc-700">
-                      <span className="text-white text-sm font-medium">
-                        {user.username?.charAt(0) || user.fullName?.charAt(0) || user.email?.charAt(0).toUpperCase() || 'U'}
-                      </span>
-                    </div>
-                  )}
+                  <Link href={`/profile/${user.username || user.fullName || user.email?.split('@')[0]}`}>
+                    {user.avatarUrl ? (
+                      <img
+                        src={user.avatarUrl}
+                        alt="Avatar"
+                        className="w-8 h-8 rounded-full object-cover border border-zinc-700 cursor-pointer"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center border border-zinc-700 cursor-pointer">
+                        <span className="text-white text-sm font-medium">
+                          {user.username?.charAt(0) || user.fullName?.charAt(0) || user.email?.charAt(0).toUpperCase() || 'U'}
+                        </span>
+                      </div>
+                    )}
+                  </Link>
                   {/* Dropdown on hover */}
                   <div className="absolute right-0 top-full mt-2 w-48 bg-zinc-900 border border-zinc-700 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
                     <div className="p-3 border-b border-zinc-800">
@@ -78,6 +80,18 @@ export default function Header() {
                       </p>
                       <p className="text-xs text-zinc-500 truncate">{user.email}</p>
                     </div>
+                    <Link
+                      href={`/profile/${user.username || user.fullName || user.email?.split('@')[0]}`}
+                      className="block w-full text-left px-3 py-2 text-sm text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+                    >
+                      Mi Perfil
+                    </Link>
+                    <Link
+                      href="/profile/edit"
+                      className="block w-full text-left px-3 py-2 text-sm text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+                    >
+                      Editar Perfil
+                    </Link>
                     <button
                       onClick={signOut}
                       disabled={isLoading}
@@ -88,9 +102,12 @@ export default function Header() {
                   </div>
                 </div>
                 {/* Username visible */}
-                <span className="text-zinc-300 text-sm hidden md:inline">
+                <Link 
+                  href={`/profile/${user.username || user.fullName || user.email?.split('@')[0]}`}
+                  className="text-zinc-300 text-sm hidden md:inline hover:text-zinc-100 transition-colors cursor-pointer"
+                >
                   {user.username || user.fullName || user.email?.split('@')[0]}
-                </span>
+                </Link>
               </div>
             ) : (
               <button

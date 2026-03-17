@@ -13,7 +13,7 @@ export type IgdbMediaId = `igdb_${string}`;
  */
 export type MediaId = TmdbMediaId | IgdbMediaId;
 
-export type MediaType = "movie" | "tv";
+export type MediaType = "movie" | "tv" | "game";
 
 export type MediaTitle = string;
 
