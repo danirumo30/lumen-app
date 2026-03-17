@@ -262,6 +262,20 @@ export class SupabaseUserProfileRepository implements UserProfileRepository {
     return !data;
   }
 
+  async searchUsers(query: string, limit: number = 20): Promise<UserProfile[]> {
+    const { data, error } = await this.client
+      .from("user_profiles")
+      .select("*")
+      .ilike("username", `%${query}%`)
+      .limit(limit);
+
+    if (error) {
+      throw error;
+    }
+
+    return data.map(this.toUserProfile);
+  }
+
   private toUserProfile(row: UserProfileRow): UserProfile {
     return {
       id: row.id,

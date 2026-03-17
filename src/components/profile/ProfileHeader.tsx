@@ -42,24 +42,14 @@ export function ProfileHeader({
           {/* Avatar */}
           <div className="relative group">
             <div
-              className="w-28 h-28 rounded-full border-4 border-white/20 bg-zinc-800 bg-cover bg-center shadow-2xl"
+              className="w-28 h-28 rounded-full border-4 border-white/20 bg-gradient-to-br from-indigo-500 to-purple-600 bg-cover bg-center shadow-2xl flex items-center justify-center"
               style={{ backgroundImage: profile.avatarUrl ? `url(${profile.avatarUrl})` : undefined }}
             />
             {!profile.avatarUrl && (
               <div className="absolute inset-0 flex items-center justify-center">
-                <svg
-                  className="w-12 h-12 text-zinc-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                  />
-                </svg>
+                <span className="text-5xl font-semibold text-white drop-shadow-lg">
+                  {profile.username?.charAt(0).toUpperCase() || 'U'}
+                </span>
               </div>
             )}
           </div>

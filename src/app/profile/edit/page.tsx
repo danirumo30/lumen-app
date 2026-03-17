@@ -171,24 +171,9 @@ export default function ProfileEditPage() {
         username: formData.username,
       });
 
-      // Update user_metadata in Supabase Auth for avatar and banner
-      const updateData: Record<string, any> = {};
-      if (avatarPreview || formData.avatarUrl) {
-        updateData.avatar_url = avatarPreview || formData.avatarUrl;
-      }
-      if (bannerPreview || formData.bannerUrl) {
-        updateData.banner_url = bannerPreview || formData.bannerUrl;
-      }
-      
-      if (Object.keys(updateData).length > 0) {
-        const { error: metaError } = await supabase.auth.updateUser({
-          data: updateData,
-        });
-        
-        if (metaError) {
-          console.warn("No se pudo actualizar el metadata del usuario:", metaError.message);
-        }
-      }
+      // Note: We only update user_profiles table here.
+      // The AuthContext will read from user_profiles when needed.
+      // This ensures data persists correctly across sessions.
 
       setSuccess("Perfil actualizado correctamente");
       setOriginalData({ ...originalData!, ...formData });

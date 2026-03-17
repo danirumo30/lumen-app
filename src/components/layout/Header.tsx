@@ -2,12 +2,20 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/modules/auth/infrastructure/contexts/AuthContext';
 import LoginModal from '@/modules/auth/ui/components/LoginModal';
 
 export default function Header() {
+  const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { user, signOut, isLoading } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+    router.push('/');
+    router.refresh(); // Refresh to ensure state is cleared
+  };
 
   return (
     <>
@@ -33,17 +41,10 @@ export default function Header() {
               <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-indigo-500 group-hover:w-full transition-all duration-300" />
             </Link>
             <Link
-              href="/discover"
+              href="/search"
               className="text-zinc-400 hover:text-white transition-colors text-sm font-medium relative group"
             >
-              Descubrir
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-indigo-500 group-hover:w-full transition-all duration-300" />
-            </Link>
-            <Link
-              href="/library"
-              className="text-zinc-400 hover:text-white transition-colors text-sm font-medium relative group"
-            >
-              Mi Biblioteca
+              Buscar
               <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-indigo-500 group-hover:w-full transition-all duration-300" />
             </Link>
             <Link
@@ -129,7 +130,7 @@ export default function Header() {
                         <span>Editar Perfil</span>
                       </Link>
                       <button
-                        onClick={signOut}
+                        onClick={handleSignOut}
                         disabled={isLoading}
                         className="w-full flex items-center space-x-3 px-4 py-2.5 text-zinc-400 hover:text-red-400 hover:bg-red-500/10 transition-all"
                       >

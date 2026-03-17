@@ -35,4 +35,9 @@ export interface UserProfileRepository {
    * Verifica si un nombre de usuario está disponible
    */
   isUsernameAvailable(username: string, excludeUserId?: string): Promise<boolean>;
+
+  /**
+   * Busca usuarios por username
+   */
+  searchUsers(query: string, limit?: number): Promise<UserProfile[]>;
 }
