@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { SupabaseClient } from "@supabase/supabase-js";
 
 import { SupabaseUserProfileRepository } from "@/modules/social/infrastructure/repositories/supabase-user-profile.repository";
 import { getSupabaseClient } from "@/lib/supabase";
@@ -171,6 +170,25 @@ export default function ProfileEditPage() {
         bannerUrl: bannerPreview || formData.bannerUrl || null,
         username: formData.username,
       });
+
+      // Update user_metadata in Supabase Auth for avatar and banner
+      const updateData: Record<string, any> = {};
+      if (avatarPreview || formData.avatarUrl) {
+        updateData.avatar_url = avatarPreview || formData.avatarUrl;
+      }
+      if (bannerPreview || formData.bannerUrl) {
+        updateData.banner_url = bannerPreview || formData.bannerUrl;
+      }
+      
+      if (Object.keys(updateData).length > 0) {
+        const { error: metaError } = await supabase.auth.updateUser({
+          data: updateData,
+        });
+        
+        if (metaError) {
+          console.warn("No se pudo actualizar el metadata del usuario:", metaError.message);
+        }
+      }
 
       setSuccess("Perfil actualizado correctamente");
       setOriginalData({ ...originalData!, ...formData });

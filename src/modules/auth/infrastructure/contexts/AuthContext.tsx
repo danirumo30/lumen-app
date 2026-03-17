@@ -1,8 +1,12 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createClient } from '@supabase/supabase-js';
 import { User } from '@/modules/auth/domain/user.entity';
 import { SupabaseAuthRepository } from '@/modules/auth/infrastructure/repositories/supabase-auth.repository';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 // Types
 interface AuthState {
@@ -77,7 +81,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     checkSession();
 
     // Subscribe to auth changes
-    const unsubscribe = authRepository.onAuthChange((user) => {
+    const unsubscribe = authRepository.onAuthChange(async (supabaseUser) => {
+      let user = supabaseUser;
+      
+      // If user exists, get avatar/banner from user_profiles table
+      if (supabaseUser) {
+        try {
+          const supabase = createClient(supabaseUrl, supabaseAnonKey);
+          const { data: profileData } = await supabase
+            .from("user_profiles")
+            .select("avatar_url, banner_url")
+            .eq("id", supabaseUser.id)
+            .maybeSingle();
+          
+          if (profileData) {
+            // Update user entity with profile data
+            user = new User(
+              supabaseUser.id,
+              supabaseUser.email,
+              supabaseUser.isEmailVerified,
+              supabaseUser.username,
+              supabaseUser.fullName,
+              profileData.avatar_url || supabaseUser.avatarUrl
+            );
+          }
+        } catch (err) {
+          console.warn("Could not fetch profile data:", err);
+        }
+      }
+      
       setState(prev => ({
         ...prev,
         user,

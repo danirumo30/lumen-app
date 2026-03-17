@@ -2,6 +2,7 @@ import type { UserProfileWithStats } from "@/modules/social/domain/user-profile"
 
 interface ProfileHeaderProps {
   profile: UserProfileWithStats;
+  isOwnProfile: boolean;
   isFollowing: boolean;
   onFollowToggle: () => void;
   onFollowersClick: () => void;
@@ -12,6 +13,7 @@ interface ProfileHeaderProps {
 
 export function ProfileHeader({
   profile,
+  isOwnProfile,
   isFollowing,
   onFollowToggle,
   onFollowersClick,
@@ -93,33 +95,37 @@ export function ProfileHeader({
 
           {/* Action Buttons */}
           <div className="flex gap-3 pb-2">
-            {/* Follow Button */}
-            <button
-              onClick={onFollowToggle}
-              className={`px-6 py-2.5 rounded-xl font-medium transition-all ${
-                isFollowing
-                  ? "bg-zinc-800 text-white hover:bg-zinc-700"
-                  : "bg-indigo-600 text-white hover:bg-indigo-500 shadow-lg shadow-indigo-600/30"
-              }`}
-            >
-              {isFollowing ? "Siguiendo" : "Seguir"}
-            </button>
+            {/* Follow Button - Only show for other users */}
+            {!isOwnProfile && (
+              <button
+                onClick={onFollowToggle}
+                className={`px-6 py-2.5 rounded-xl font-medium transition-all ${
+                  isFollowing
+                    ? "bg-zinc-800 text-white hover:bg-zinc-700"
+                    : "bg-indigo-600 text-white hover:bg-indigo-500 shadow-lg shadow-indigo-600/30"
+                }`}
+              >
+                {isFollowing ? "Siguiendo" : "Seguir"}
+              </button>
+            )}
 
-            {/* Edit Profile Button */}
-            <a
-              href="/profile/edit"
-              className="flex items-center gap-2 px-4 py-2.5 bg-zinc-800/80 text-white rounded-xl font-medium hover:bg-zinc-700 transition-all backdrop-blur-sm"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                />
-              </svg>
-              Editar
-            </a>
+            {/* Edit Profile Button - Only show for own profile */}
+            {isOwnProfile && (
+              <a
+                href="/profile/edit"
+                className="flex items-center gap-2 px-4 py-2.5 bg-zinc-800/80 text-white rounded-xl font-medium hover:bg-zinc-700 transition-all backdrop-blur-sm"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                  />
+                </svg>
+                Editar
+              </a>
+            )}
           </div>
         </div>
       </div>
