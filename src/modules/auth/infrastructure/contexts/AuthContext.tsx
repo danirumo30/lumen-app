@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import type { User } from '@supabase/supabase-js';
+import { User } from '@/modules/auth/domain/user.entity';
 import { SupabaseAuthRepository } from '@/modules/auth/infrastructure/repositories/supabase-auth.repository';
 
 // Types

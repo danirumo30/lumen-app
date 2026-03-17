@@ -1,4 +1,4 @@
-import type { User } from '@supabase/supabase-js';
+import type { User } from './user.entity';
 
 export interface AuthRepository {
   signIn(email: string, password: string): Promise<{ user: User | null; error?: string }>;

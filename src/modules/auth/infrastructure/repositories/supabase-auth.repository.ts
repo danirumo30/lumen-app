@@ -1,5 +1,7 @@
-import { createClient, type User, type AuthChangeEvent, type Session } from '@supabase/supabase-js';
+import { createClient, type User as SupabaseUser, type AuthChangeEvent, type Session } from '@supabase/supabase-js';
 import type { AuthRepository } from '@/modules/auth/domain/auth.repository';
+import { User } from '@/modules/auth/domain/user.entity';
+import { UserMapper } from '@/modules/auth/infrastructure/mappers/user.mapper';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -38,22 +40,23 @@ export class SupabaseAuthRepository implements AuthRepository {
         return { user: null, error: error.message };
       }
 
-      let user = data.session?.user ?? null;
+      let supabaseUser = data.session?.user ?? null;
       
       // Verify user integrity and email confirmation
-      if (user) {
-        const integrityResult = await this.verifyUserIntegrity(user);
+      if (supabaseUser) {
+        const integrityResult = await this.verifyUserIntegrity(UserMapper.fromSupabase(supabaseUser));
         if (!integrityResult) {
           await supabase.auth.signOut();
           return { user: null, error: 'La cuenta de usuario no existe o ha sido eliminada.' };
         }
         
-        if (!user.email_confirmed_at) {
+        if (!supabaseUser.email_confirmed_at) {
           await supabase.auth.signOut();
           return { user: null, error: 'Por favor, verifica tu correo electrónico antes de iniciar sesión.' };
         }
       }
       
+      const user = supabaseUser ? UserMapper.fromSupabase(supabaseUser) : null;
       return { user };
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Login failed';
@@ -95,10 +98,11 @@ export class SupabaseAuthRepository implements AuthRepository {
         return { user: null, error: error.message };
       }
       
-      const user = session?.user ?? null;
-      const verifiedUser = await this.verifyUserIntegrity(user);
+      const supabaseUser = session?.user ?? null;
+      const supabaseUserVerified = supabaseUser ? await this.verifyUserIntegrityBySupabase(supabaseUser) : null;
+      const user = supabaseUserVerified ? UserMapper.fromSupabase(supabaseUserVerified) : null;
       
-      return { user: verifiedUser };
+      return { user };
     } catch (err) {
       return { user: null, error: 'Failed to get session' };
     }
@@ -122,14 +126,35 @@ export class SupabaseAuthRepository implements AuthRepository {
       return user; // Conservative approach: keep user on error
     }
   }
+
+  // Helper method to verify Supabase user integrity (returns Supabase user)
+  private async verifyUserIntegrityBySupabase(user: SupabaseUser | null): Promise<SupabaseUser | null> {
+    if (!user) return null;
+    
+    const adminClient = getSupabaseAdmin();
+    if (!adminClient) return user;
+
+    try {
+      const { error } = await adminClient.auth.admin.getUserById(user.id);
+      if (error) {
+        console.log(`User ${user.id} not found in database.`);
+        return null;
+      }
+      return user;
+    } catch (adminCheckError) {
+      console.error('Error verifying user integrity:', adminCheckError);
+      return user; // Conservative approach: keep user on error
+    }
+  }
   
   // Expose subscription method for the Context
   onAuthChange(callback: (user: User | null) => void) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event: AuthChangeEvent, session: Session | null) => {
-        const user = session?.user ?? null;
-        const verifiedUser = await this.verifyUserIntegrity(user);
-        callback(verifiedUser);
+        const supabaseUser = session?.user ?? null;
+        const supabaseUserVerified = supabaseUser ? await this.verifyUserIntegrityBySupabase(supabaseUser) : null;
+        const user = supabaseUserVerified ? UserMapper.fromSupabase(supabaseUserVerified) : null;
+        callback(user);
       }
     );
     

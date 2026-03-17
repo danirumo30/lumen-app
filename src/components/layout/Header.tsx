@@ -57,16 +57,16 @@ export default function Header() {
               <div className="flex items-center space-x-3">
                 {/* Avatar */}
                 <div className="relative group">
-                  {user.user_metadata?.avatar_url ? (
+                  {user.avatarUrl ? (
                     <img
-                      src={user.user_metadata.avatar_url}
+                      src={user.avatarUrl}
                       alt="Avatar"
                       className="w-8 h-8 rounded-full object-cover border border-zinc-700"
                     />
                   ) : (
                     <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center border border-zinc-700">
                       <span className="text-white text-sm font-medium">
-                        {user.user_metadata?.username?.charAt(0) || user.user_metadata?.full_name?.charAt(0) || user.email?.charAt(0).toUpperCase() || 'U'}
+                        {user.username?.charAt(0) || user.fullName?.charAt(0) || user.email?.charAt(0).toUpperCase() || 'U'}
                       </span>
                     </div>
                   )}
@@ -74,7 +74,7 @@ export default function Header() {
                   <div className="absolute right-0 top-full mt-2 w-48 bg-zinc-900 border border-zinc-700 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
                     <div className="p-3 border-b border-zinc-800">
                       <p className="text-sm font-medium text-zinc-200 truncate">
-                        {user.user_metadata?.username || user.user_metadata?.full_name || user.email?.split('@')[0]}
+                        {user.username || user.fullName || user.email?.split('@')[0]}
                       </p>
                       <p className="text-xs text-zinc-500 truncate">{user.email}</p>
                     </div>
@@ -89,7 +89,7 @@ export default function Header() {
                 </div>
                 {/* Username visible */}
                 <span className="text-zinc-300 text-sm hidden md:inline">
-                  {user.user_metadata?.username || user.user_metadata?.full_name || user.email?.split('@')[0]}
+                  {user.username || user.fullName || user.email?.split('@')[0]}
                 </span>
               </div>
             ) : (
