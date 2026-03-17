@@ -116,6 +116,10 @@ describe("UserProfile Domain", () => {
         watchedTvShows: [tvShow],
         favoriteGames: [game],
         watchedGames: [game],
+        followersCount: 100,
+        followingCount: 50,
+        isFollowing: false,
+        isFollower: true,
       };
 
       expect(content.favoriteMovies).toHaveLength(1);
@@ -142,6 +146,10 @@ describe("UserProfile Domain", () => {
         watchedTvShows: [],
         favoriteGames: [],
         watchedGames: [],
+        followersCount: 0,
+        followingCount: 0,
+        isFollowing: false,
+        isFollower: false,
       };
 
       expect(content.favoriteMovies).toHaveLength(0);

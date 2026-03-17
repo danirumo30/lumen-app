@@ -9,6 +9,13 @@ export interface UserProfile {
   readonly bannerUrl: string | null;
 }
 
+export interface Follower {
+  readonly id: string;
+  readonly username: string;
+  readonly avatarUrl: string | null;
+  readonly fullName?: string;
+}
+
 export interface UserProfileWithStats extends UserProfile {
   readonly totalMovieMinutes: MediaProgressMinutes;
   readonly totalTvMinutes: MediaProgressMinutes;
@@ -30,6 +37,10 @@ export interface UserProfileWithContent extends UserProfileWithStats {
   readonly watchedTvShows: Media[];
   readonly favoriteGames: Media[];
   readonly watchedGames: Media[];
+  readonly followersCount: number;
+  readonly followingCount: number;
+  readonly isFollowing: boolean;
+  readonly isFollower: boolean;
 }
 
 export interface UpdateProfileData {

@@ -165,7 +165,7 @@ export default function ProfileEditPage() {
         }
       }
 
-      // Update profile
+      // Update profile with uploaded images
       await repository.updateProfile(user.id, {
         avatarUrl: avatarPreview || formData.avatarUrl || null,
         bannerUrl: bannerPreview || formData.bannerUrl || null,
@@ -193,34 +193,34 @@ export default function ProfileEditPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500" />
+      <div className="min-h-screen flex items-center justify-center bg-zinc-950">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background py-12">
+    <div className="min-h-screen bg-zinc-950 py-24">
       <div className="max-w-2xl mx-auto px-4">
-        <div className="bg-card rounded-lg shadow-sm border border-border p-8">
-          <h1 className="text-2xl font-bold mb-8">Editar Perfil</h1>
+        <div className="bg-zinc-900/50 backdrop-blur-xl rounded-2xl border border-zinc-800/50 p-8 shadow-xl">
+          <h1 className="text-2xl font-semibold text-white mb-8">Editar Perfil</h1>
 
           {error && (
-            <div className="mb-6 p-4 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg">
+            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl">
               {error}
             </div>
           )}
 
           {success && (
-            <div className="mb-6 p-4 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-lg">
+            <div className="mb-6 p-4 bg-green-500/10 border border-green-500/30 text-green-400 rounded-xl">
               {success}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-8">
             {/* Username */}
             <div>
-              <label htmlFor="username" className="block text-sm font-medium mb-2">
+              <label htmlFor="username" className="block text-sm font-medium text-zinc-400 mb-3">
                 Nombre de usuario
               </label>
               <input
@@ -229,19 +229,19 @@ export default function ProfileEditPage() {
                 name="username"
                 value={formData.username}
                 onChange={handleInputChange}
-                className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full px-4 py-3 bg-zinc-800/50 border border-zinc-700/50 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all"
                 placeholder="username"
                 required
                 minLength={3}
               />
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="mt-2 text-xs text-zinc-500">
                 Mínimo 3 caracteres, solo letras, números y guiones bajos.
               </p>
             </div>
 
             {/* Avatar Upload */}
             <div>
-              <label className="block text-sm font-medium mb-2">
+              <label className="block text-sm font-medium text-zinc-400 mb-3">
                 Foto de perfil
               </label>
               <input
@@ -251,9 +251,9 @@ export default function ProfileEditPage() {
                 accept="image/jpeg,image/jpg,image/png,image/webp"
                 className="hidden"
               />
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-5">
                 <div
-                  className="w-24 h-24 rounded-full bg-gray-200 bg-cover bg-center cursor-pointer border-2 border-dashed border-gray-400 hover:border-purple-500 transition-colors"
+                  className="w-24 h-24 rounded-full bg-zinc-800 bg-cover bg-center cursor-pointer border-2 border-dashed border-zinc-600 hover:border-indigo-500 transition-all relative overflow-hidden group"
                   style={{
                     backgroundImage: avatarPreview
                       ? `url(${avatarPreview})`
@@ -264,32 +264,23 @@ export default function ProfileEditPage() {
                   onClick={() => triggerFileInput("avatar")}
                 >
                   {!avatarPreview && !formData.avatarUrl && (
-                    <div className="w-full h-full flex items-center justify-center text-gray-400">
-                      <svg
-                        className="w-8 h-8"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 4v16m8-8H4"
-                        />
+                    <div className="w-full h-full flex items-center justify-center text-zinc-500 group-hover:text-indigo-400 transition-colors">
+                      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" />
                       </svg>
                     </div>
                   )}
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
                 </div>
                 <div className="flex-1">
                   <button
                     type="button"
                     onClick={() => triggerFileInput("avatar")}
-                    className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg text-sm hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                    className="px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg text-sm font-medium transition-colors"
                   >
                     Elegir imagen
                   </button>
-                  <p className="mt-1 text-xs text-muted-foreground">
+                  <p className="mt-2 text-xs text-zinc-500">
                     JPG, PNG o WebP (máx 5MB)
                   </p>
                 </div>
@@ -298,7 +289,7 @@ export default function ProfileEditPage() {
 
             {/* Banner Upload */}
             <div>
-              <label className="block text-sm font-medium mb-2">
+              <label className="block text-sm font-medium text-zinc-400 mb-3">
                 Banner
               </label>
               <input
@@ -309,7 +300,7 @@ export default function ProfileEditPage() {
                 className="hidden"
               />
               <div
-                className="h-32 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 bg-cover bg-center cursor-pointer border-2 border-dashed border-gray-400 hover:border-purple-500 transition-colors relative overflow-hidden"
+                className="h-40 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 bg-cover bg-center cursor-pointer border-2 border-dashed border-zinc-600 hover:border-indigo-500 transition-all relative overflow-hidden group"
                 style={{
                   backgroundImage: bannerPreview
                     ? `url(${bannerPreview})`
@@ -320,9 +311,9 @@ export default function ProfileEditPage() {
                 onClick={() => triggerFileInput("banner")}
               >
                 {!bannerPreview && !formData.bannerUrl && (
-                  <div className="w-full h-full flex items-center justify-center text-white/70">
+                  <div className="w-full h-full flex items-center justify-center text-white/70 group-hover:text-white/90 transition-colors">
                     <svg
-                      className="w-8 h-8 mr-2"
+                      className="w-6 h-6 mr-2"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -330,71 +321,36 @@ export default function ProfileEditPage() {
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        strokeWidth={2}
+                        strokeWidth={1.5}
                         d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
                       />
                     </svg>
                     <span>Subir banner</span>
                   </div>
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-                <div className="absolute bottom-2 right-2">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent group-hover:from-black/40 transition-colors" />
+                <div className="absolute bottom-3 right-3">
                   <button
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       triggerFileInput("banner");
                     }}
-                    className="px-3 py-1 bg-black/50 text-white rounded text-xs hover:bg-black/70 transition-colors"
+                    className="px-3 py-1.5 bg-black/50 hover:bg-black/70 text-white/90 hover:text-white rounded-lg text-xs font-medium transition-colors"
                   >
                     Cambiar
                   </button>
                 </div>
               </div>
-              <p className="mt-1 text-xs text-muted-foreground">
+              <p className="mt-2 text-xs text-zinc-500">
                 JPG, PNG o WebP (máx 5MB)
               </p>
             </div>
 
-            {/* URL Inputs (opcional para enlaces externos) */}
-            <div className="pt-4 border-t border-border space-y-4">
-              <p className="text-sm text-muted-foreground">
-                O alternativamente, puedes usar URLs externas:
-              </p>
-              <div>
-                <label htmlFor="avatarUrl" className="block text-sm font-medium mb-2">
-                  URL de foto de perfil
-                </label>
-                <input
-                  type="url"
-                  id="avatarUrl"
-                  name="avatarUrl"
-                  value={formData.avatarUrl || ""}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  placeholder="https://example.com/avatar.jpg"
-                />
-              </div>
-              <div>
-                <label htmlFor="bannerUrl" className="block text-sm font-medium mb-2">
-                  URL de banner
-                </label>
-                <input
-                  type="url"
-                  id="bannerUrl"
-                  name="bannerUrl"
-                  value={formData.bannerUrl || ""}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  placeholder="https://example.com/banner.jpg"
-                />
-              </div>
-            </div>
-
             {/* Preview */}
-            <div className="pt-6 border-t border-border">
-              <h2 className="text-lg font-medium mb-4">Vista previa</h2>
-              <div className="relative h-32 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg overflow-hidden">
+            <div className="pt-6 border-t border-zinc-800/50">
+              <h2 className="text-lg font-medium text-white mb-4">Vista previa</h2>
+              <div className="relative h-40 rounded-2xl overflow-hidden bg-gradient-to-r from-indigo-600 to-purple-600">
                 {(bannerPreview || formData.bannerUrl) && (
                   <div
                     className="absolute inset-0 bg-cover bg-center"
@@ -404,9 +360,9 @@ export default function ProfileEditPage() {
                   />
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                <div className="absolute bottom-3 left-3 flex items-center gap-3">
+                <div className="absolute bottom-4 left-4 flex items-center gap-4">
                   <div
-                    className="w-12 h-12 rounded-full border-2 border-white bg-gray-200 bg-cover bg-center"
+                    className="w-16 h-16 rounded-full border-3 border-white bg-zinc-800 bg-cover bg-center shadow-lg"
                     style={{
                       backgroundImage: avatarPreview
                         ? `url(${avatarPreview})`
@@ -415,24 +371,29 @@ export default function ProfileEditPage() {
                         : undefined,
                     }}
                   />
-                  <span className="text-white font-medium">{formData.username || "usuario"}</span>
+                  <div>
+                    <span className="text-white font-medium text-lg">
+                      {formData.username || "usuario"}
+                    </span>
+                    <p className="text-white/70 text-sm">Usuario de Lumen</p>
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Submit Button */}
-            <div className="pt-4 flex gap-4">
+            <div className="pt-6 flex gap-4">
               <button
                 type="submit"
                 disabled={isSaving}
-                className="flex-1 px-6 py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="flex-1 px-6 py-3.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl font-medium shadow-lg shadow-indigo-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
                 {isSaving ? "Guardando..." : "Guardar cambios"}
               </button>
               <button
                 type="button"
                 onClick={() => router.back()}
-                className="px-6 py-3 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                className="px-6 py-3.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl font-medium transition-colors"
               >
                 Cancelar
               </button>

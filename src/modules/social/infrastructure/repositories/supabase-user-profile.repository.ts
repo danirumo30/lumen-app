@@ -205,6 +205,10 @@ export class SupabaseUserProfileRepository implements UserProfileRepository {
       watchedTvShows,
       favoriteGames,
       watchedGames,
+      followersCount: 0, // TODO: Implementar
+      followingCount: 0, // TODO: Implementar
+      isFollowing: false, // TODO: Implementar
+      isFollower: false, // TODO: Implementar
     };
   }
 
