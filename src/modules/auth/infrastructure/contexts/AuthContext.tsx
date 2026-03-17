@@ -1,8 +1,13 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createClient, type User as SupabaseUser } from '@supabase/supabase-js';
 import { User } from '@/modules/auth/domain/user.entity';
 import { SupabaseAuthRepository } from '@/modules/auth/infrastructure/repositories/supabase-auth.repository';
+
+// Environment constants
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 // Types
 interface AuthState {
@@ -15,8 +20,7 @@ interface ExtendedAuthState extends AuthState {
   requiresVerification: boolean;
 }
 
-interface AuthContextType extends AuthState {
-  requiresVerification: boolean;
+interface AuthContextType extends ExtendedAuthState {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, fullName: string, username: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -32,8 +36,39 @@ const initialState: AuthState = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Repository instance (could be injected in a more complex setup)
+// Repository instance
 const authRepository = new SupabaseAuthRepository();
+
+// Helper: Fetch user profile from database
+const fetchUserProfile = async (userId: string): Promise<{ avatarUrl?: string } | null> => {
+  try {
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const { data } = await supabase
+      .from('user_profiles')
+      .select('avatar_url')
+      .eq('id', userId)
+      .maybeSingle();
+    return data ? { avatarUrl: data.avatar_url } : null;
+  } catch {
+    console.warn('Could not fetch profile data');
+    return null;
+  }
+};
+
+// Helper: Build user entity from Supabase user + profile
+const buildUserFromSupabase = async (supabaseUser: SupabaseUser | null): Promise<User | null> => {
+  if (!supabaseUser) return null;
+  
+  const profile = await fetchUserProfile(supabaseUser.id);
+  return new User(
+    supabaseUser.id,
+    supabaseUser.email ?? '',
+    supabaseUser.email_confirmed_at !== null,
+    supabaseUser.user_metadata?.username as string | undefined,
+    supabaseUser.user_metadata?.full_name as string | undefined,
+    profile?.avatarUrl
+  );
+};
 
 // Provider
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -42,47 +77,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     requiresVerification: false,
   });
 
-  // Check session on mount and listen for changes
+  // Check session on mount and listen for auth changes
   useEffect(() => {
-    const checkSession = async () => {
+    const initSession = async () => {
       setState(prev => ({ ...prev, isLoading: true }));
-      try {
-        const { user, error } = await authRepository.getSession();
-        
-        if (error) {
-           setState(prev => ({
-             ...prev,
-             user: null,
-             requiresVerification: false,
-             isLoading: false,
-           }));
-           return;
-        }
-
-        setState(prev => ({
-          ...prev,
-          user,
-          isLoading: false,
-        }));
-      } catch {
-        setState(prev => ({
-          ...prev,
-          user: null,
-          requiresVerification: false,
-          isLoading: false,
-        }));
-      }
+      const { user } = await authRepository.getSession();
+      setState(prev => ({ ...prev, user, isLoading: false }));
     };
 
-    checkSession();
+    initSession();
 
-    // Subscribe to auth changes
-    const unsubscribe = authRepository.onAuthChange((user) => {
-      setState(prev => ({
-        ...prev,
-        user,
-        isLoading: false,
-      }));
+    const unsubscribe = authRepository.onAuthChange(async (user) => {
+      setState(prev => ({ ...prev, user, isLoading: false }));
     });
 
     return () => unsubscribe();
@@ -90,81 +96,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = useCallback(async (email: string, password: string) => {
     setState(prev => ({ ...prev, isLoading: true, error: null }));
-    try {
-      const { user, error } = await authRepository.signIn(email, password);
-      
-      if (error) {
-        setState(prev => ({
-          ...prev,
-          error,
-          isLoading: false,
-        }));
-        throw new Error(error);
-      }
-      
-      setState(prev => ({
-        ...prev,
-        user,
-        isLoading: false,
-      }));
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Login failed';
-      setState(prev => ({
-        ...prev,
-        error: message,
-        isLoading: false,
-      }));
-      throw err;
+    const { user, error } = await authRepository.signIn(email, password);
+    
+    if (error) {
+      setState(prev => ({ ...prev, error, isLoading: false }));
+      throw new Error(error);
     }
+    
+    setState(prev => ({ ...prev, user, isLoading: false }));
   }, []);
 
   const signUp = useCallback(async (email: string, password: string, fullName: string, username: string) => {
     setState(prev => ({ ...prev, isLoading: true, error: null }));
-    try {
-      const { user, error, requiresVerification } = await authRepository.signUp(email, password, fullName, username);
-      
-      if (error) {
-        setState(prev => ({
-          ...prev,
-          error,
-          isLoading: false,
-        }));
-        throw new Error(error);
-      }
-      
-      setState(prev => ({
-        ...prev,
-        user,
-        requiresVerification,
-        isLoading: false,
-      }));
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Registration failed';
-      setState(prev => ({
-        ...prev,
-        error: message,
-        isLoading: false,
-      }));
-      throw err;
+    const { user, error, requiresVerification } = await authRepository.signUp(email, password, fullName, username);
+    
+    if (error) {
+      setState(prev => ({ ...prev, error, isLoading: false }));
+      throw new Error(error);
     }
+    
+    setState(prev => ({ ...prev, user, requiresVerification, isLoading: false }));
   }, []);
 
   const signOut = useCallback(async () => {
     setState(prev => ({ ...prev, isLoading: true }));
-    try {
-      await authRepository.signOut();
-      setState(prev => ({
-        ...prev,
-        user: null,
-        isLoading: false,
-      }));
-    } catch {
-      setState(prev => ({
-        ...prev,
-        error: 'Logout failed',
-        isLoading: false,
-      }));
-    }
+    await authRepository.signOut();
+    setState(prev => ({ ...prev, user: null, isLoading: false }));
   }, []);
 
   const clearError = useCallback(() => {
@@ -187,11 +144,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-// Hook personalizado
+// Custom hook
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth debe ser usado dentro de un AuthProvider');
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 };

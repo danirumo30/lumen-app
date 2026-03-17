@@ -13,7 +13,7 @@ export type IgdbMediaId = `igdb_${string}`;
  */
 export type MediaId = TmdbMediaId | IgdbMediaId;
 
-export type MediaType = "movie" | "tv";
+export type MediaType = "movie" | "tv" | "game";
 
 export type MediaTitle = string;
 
@@ -44,6 +44,7 @@ export type MediaProgressMinutes = number;
 export interface UserMediaState {
   readonly userId: string;
   readonly mediaId: MediaId;
+  readonly mediaType: MediaType;
   readonly isFavorite: boolean;
   readonly isWatched: boolean;
   readonly isPlanned: boolean;
