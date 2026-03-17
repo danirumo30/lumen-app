@@ -13,8 +13,8 @@ export default function Header() {
 
   const handleSignOut = async () => {
     await signOut();
-    router.push('/');
-    router.refresh(); // Refresh to ensure state is cleared
+    // Force full page reload to clear all state
+    window.location.href = '/';
   };
 
   return (

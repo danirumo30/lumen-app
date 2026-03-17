@@ -40,4 +40,39 @@ export interface UserProfileRepository {
    * Busca usuarios por username
    */
   searchUsers(query: string, limit?: number): Promise<UserProfile[]>;
+
+  /**
+   * Seguir a un usuario
+   */
+  followUser(followerId: string, followingId: string): Promise<void>;
+
+  /**
+   * Dejar de seguir a un usuario
+   */
+  unfollowUser(followerId: string, followingId: string): Promise<void>;
+
+  /**
+   * Obtener seguidores de un usuario
+   */
+  getFollowers(userId: string, limit?: number): Promise<UserProfile[]>;
+
+  /**
+   * Obtener usuarios seguidos por un usuario
+   */
+  getFollowing(userId: string, limit?: number): Promise<UserProfile[]>;
+
+  /**
+   * Verificar si un usuario sigue a otro
+   */
+  isFollowing(followerId: string, followingId: string): Promise<boolean>;
+
+  /**
+   * Obtener conteo de seguidores
+   */
+  getFollowersCount(userId: string): Promise<number>;
+
+  /**
+   * Obtener conteo de usuarios seguidos
+   */
+  getFollowingCount(userId: string): Promise<number>;
 }

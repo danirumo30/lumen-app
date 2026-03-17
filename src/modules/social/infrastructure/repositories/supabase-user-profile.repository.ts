@@ -276,6 +276,92 @@ export class SupabaseUserProfileRepository implements UserProfileRepository {
     return data.map(this.toUserProfile);
   }
 
+  async followUser(followerId: string, followingId: string): Promise<void> {
+    const { error } = await this.client
+      .from("user_followers")
+      .insert({
+        follower_id: followerId,
+        following_id: followingId,
+      });
+
+    if (error) {
+      throw error;
+    }
+  }
+
+  async unfollowUser(followerId: string, followingId: string): Promise<void> {
+    const { error } = await this.client
+      .from("user_followers")
+      .delete()
+      .eq("follower_id", followerId)
+      .eq("following_id", followingId);
+
+    if (error) {
+      throw error;
+    }
+  }
+
+  async getFollowers(userId: string, limit: number = 20): Promise<UserProfile[]> {
+    const { data, error } = await this.client
+      .from("user_followers")
+      .select("follower:follower_id(*)")
+      .eq("following_id", userId)
+      .limit(limit);
+
+    if (error) {
+      throw error;
+    }
+
+    return data.map((item: any) => this.toUserProfile(item.follower));
+  }
+
+  async getFollowing(userId: string, limit: number = 20): Promise<UserProfile[]> {
+    const { data, error } = await this.client
+      .from("user_followers")
+      .select("following:following_id(*)")
+      .eq("follower_id", userId)
+      .limit(limit);
+
+    if (error) {
+      throw error;
+    }
+
+    return data.map((item: any) => this.toUserProfile(item.following));
+  }
+
+  async isFollowing(followerId: string, followingId: string): Promise<boolean> {
+    const { data, error } = await this.client
+      .rpc("is_following", { follower: followerId, following: followingId });
+
+    if (error) {
+      throw error;
+    }
+
+    return data;
+  }
+
+  async getFollowersCount(userId: string): Promise<number> {
+    const { data, error } = await this.client
+      .rpc("get_follower_count", { user_id: userId });
+
+    if (error) {
+      throw error;
+    }
+
+    return data || 0;
+  }
+
+  async getFollowingCount(userId: string): Promise<number> {
+    const { data, error } = await this.client
+      .rpc("get_following_count", { user_id: userId });
+
+    if (error) {
+      throw error;
+    }
+
+    return data || 0;
+  }
+
   private toUserProfile(row: UserProfileRow): UserProfile {
     return {
       id: row.id,

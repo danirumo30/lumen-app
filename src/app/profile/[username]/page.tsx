@@ -47,9 +47,10 @@ export default function ProfilePage() {
         setProfile(profileData);
 
         // Check if current user is following this profile
+        let isFollowingUser = false;
         if (user && user.id !== profileData.id) {
-          // TODO: Check following status from database
-          setIsFollowing(false);
+          isFollowingUser = await repository.isFollowing(user.id, profileData.id);
+          setIsFollowing(isFollowingUser);
         }
 
         // Load content
@@ -60,17 +61,28 @@ export default function ProfilePage() {
           mediaTypes: ["movie", "tv", "game"],
         });
 
+        // Get follower counts
+        const [followersCount, followingCount] = await Promise.all([
+          repository.getFollowersCount(profileData.id),
+          repository.getFollowingCount(profileData.id),
+        ]);
+
         setContent({
           ...contentData,
-          followersCount: 0, // Empty - user will populate manually
-          followingCount: 0, // Empty - user will populate manually
-          isFollowing: false,
-          isFollower: false,
+          followersCount,
+          followingCount,
+          isFollowing: isFollowingUser,
+          isFollower: user ? await repository.isFollowing(profileData.id, user.id) : false,
         });
 
-        // Empty lists - no mock data
-        setFollowers([]);
-        setFollowing([]);
+        // Load followers and following lists
+        const [followersList, followingList] = await Promise.all([
+          repository.getFollowers(profileData.id),
+          repository.getFollowing(profileData.id),
+        ]);
+        
+        setFollowers(followersList);
+        setFollowing(followingList);
       } catch (err) {
         console.error("Error loading profile:", err);
         notFound();
@@ -85,12 +97,47 @@ export default function ProfilePage() {
   const handleFollowToggle = async () => {
     try {
       const supabase = getSupabaseClient();
+      const repository = new SupabaseUserProfileRepository(supabase);
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user || !profile) return;
 
-      // TODO: Implement follow/unfollow logic
-      setIsFollowing(!isFollowing);
+      if (isFollowing) {
+        // Unfollow
+        await repository.unfollowUser(user.id, profile.id);
+        setIsFollowing(false);
+        
+        // Update counts
+        if (content) {
+          setContent({
+            ...content,
+            followersCount: content.followersCount - 1,
+            isFollowing: false,
+          });
+        }
+        
+        // Update followers list
+        setFollowers(prev => prev.filter(f => f.id !== user.id));
+      } else {
+        // Follow
+        await repository.followUser(user.id, profile.id);
+        setIsFollowing(true);
+        
+        // Update counts
+        if (content) {
+          setContent({
+            ...content,
+            followersCount: content.followersCount + 1,
+            isFollowing: true,
+          });
+        }
+        
+        // Add to followers list
+        const currentUser = await repository.getProfileById(user.id);
+        if (currentUser) {
+          setFollowers(prev => [...prev, currentUser]);
+        }
+      }
     } catch (err) {
       console.error("Error toggling follow:", err);
     }
