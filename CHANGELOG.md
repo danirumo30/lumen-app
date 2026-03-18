@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/danirumo30/lumen-app/compare/v1.0.1...v1.1.0) (2026-03-18)
+
+
+### Features
+
+* implement mobile responsive design ([#6](https://github.com/danirumo30/lumen-app/issues/6)) ([87b5b12](https://github.com/danirumo30/lumen-app/commit/87b5b12f11011647fe9940984699dc27b2ec5687))
+
 ## [1.0.1](https://github.com/danirumo30/lumen-app/compare/v1.0.0...v1.0.1) (2026-03-17)
 
 
