@@ -40,8 +40,8 @@ export function ProfileHeader({
       <div className="absolute bottom-0 left-0 right-0 pb-4 sm:pb-6">
         <div className="max-w-6xl mx-auto px-3 sm:px-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-end gap-3 sm:gap-6 w-full">
-            {/* Avatar */}
-            <div className="relative -mt-10 sm:-mt-12">
+            {/* Avatar - reduced negative margin on mobile to avoid being cut off */}
+            <div className="relative -mt-8 sm:-mt-12">
               <div
                 className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-full border-4 border-zinc-900 bg-gradient-to-br from-indigo-500 to-purple-600 bg-cover bg-center shadow-2xl flex items-center justify-center"
                 style={{ backgroundImage: profile.avatarUrl ? `url(${profile.avatarUrl})` : undefined }}
