@@ -1,90 +1,131 @@
 "use client";
 
-import { useState } from "react";
+import { useRef } from "react";
 import type { UserProfileWithContent } from "@/modules/social/domain/user-profile";
 import type { Media } from "@/modules/shared/domain/media";
-import { MediaGrid } from "./MediaGrid";
+import { MediaCard } from "./MediaCard";
+
+// SVG Icons (no emojis)
+const MovieIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
+  </svg>
+);
+
+const TvIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+  </svg>
+);
+
+const GameIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+  </svg>
+);
+
+interface CarouselSectionProps {
+  title: string;
+  icon: React.ReactNode;
+  mediaList: Media[];
+}
+
+function CarouselSection({ title, icon, mediaList }: CarouselSectionProps) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const scroll = (direction: "left" | "right") => {
+    if (scrollRef.current) {
+      const scrollAmount = 180; // Card width + gap
+      scrollRef.current.scrollBy({
+        left: direction === "right" ? scrollAmount : -scrollAmount,
+        behavior: "smooth",
+      });
+    }
+  };
+
+  return (
+    <div className="mb-8">
+      {/* Section Header */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <div className="text-zinc-400">{icon}</div>
+          <h2 className="text-lg font-semibold text-white">{title}</h2>
+          <span className="text-sm text-zinc-500">({mediaList.length})</span>
+        </div>
+        
+        <div className="flex gap-1">
+          <button
+            onClick={() => scroll("left")}
+            className="p-2 rounded-lg bg-zinc-800/50 hover:bg-zinc-700/50 text-zinc-400 hover:text-white transition-colors"
+            aria-label="Scroll left"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <button
+            onClick={() => scroll("right")}
+            className="p-2 rounded-lg bg-zinc-800/50 hover:bg-zinc-700/50 text-zinc-400 hover:text-white transition-colors"
+            aria-label="Scroll right"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      {/* Carousel */}
+      {mediaList.length > 0 ? (
+        <div
+          ref={scrollRef}
+          className="flex gap-3 overflow-x-auto scrollbar-hide pb-2"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        >
+          {mediaList.map((media) => (
+            <MediaCard key={media.id} media={media} />
+          ))}
+        </div>
+      ) : (
+        <p className="text-zinc-500 text-sm py-8 text-center">No hay contenido</p>
+      )}
+
+      <style jsx>{`
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
+    </div>
+  );
+}
 
 interface MediaTabsProps {
   content: UserProfileWithContent;
 }
 
-type TabType = "series" | "movies" | "games";
-type SubTabType = "watched" | "favorites";
-
 export function MediaTabs({ content }: MediaTabsProps) {
-  const [activeTab, setActiveTab] = useState<TabType>("series");
-  const [activeSubTab, setActiveSubTab] = useState<SubTabType>("watched");
-
-  const getMediaList = (): Media[] => {
-    switch (activeTab) {
-      case "series":
-        return activeSubTab === "watched" ? content.watchedTvShows : content.favoriteTvShows;
-      case "movies":
-        return activeSubTab === "watched" ? content.watchedMovies : content.favoriteMovies;
-      case "games":
-        return activeSubTab === "watched" ? content.watchedGames : content.favoriteGames;
-      default:
-        return [];
-    }
-  };
-
-  const mediaList = getMediaList();
-
   return (
-    <div className="space-y-6">
-      {/* Main Tabs */}
-      <div className="border-b border-border">
-        <nav className="flex gap-8" aria-label="Media categories">
-          {[
-            { id: "series" as TabType, label: "Series", icon: "📺" },
-            { id: "movies" as TabType, label: "Películas", icon: "🎬" },
-            { id: "games" as TabType, label: "Videojuegos", icon: "🎮" },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`pb-3 px-1 border-b-2 font-medium transition-colors ${
-                activeTab === tab.id
-                  ? "border-purple-500 text-purple-600 dark:text-purple-400"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <span className="mr-2">{tab.icon}</span>
-              {tab.label}
-            </button>
-          ))}
-        </nav>
-      </div>
+    <div>
+      {/* Series Carousel */}
+      <CarouselSection
+        title="Series"
+        icon={<TvIcon />}
+        mediaList={content.watchedTvShows}
+      />
 
-      {/* Sub Tabs */}
-      <div className="flex gap-4">
-        {[
-          { id: "watched" as SubTabType, label: "Vistos" },
-          { id: "favorites" as SubTabType, label: "Favoritos" },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveSubTab(tab.id)}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-              activeSubTab === tab.id
-                ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
-                : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      {/* Movies Carousel */}
+      <CarouselSection
+        title="Películas"
+        icon={<MovieIcon />}
+        mediaList={content.watchedMovies}
+      />
 
-      {/* Media Grid */}
-      {mediaList.length > 0 ? (
-        <MediaGrid mediaList={mediaList} />
-      ) : (
-        <div className="text-center py-12 text-muted-foreground">
-          <p>No hay contenido en esta categoría</p>
-        </div>
-      )}
+      {/* Games Carousel */}
+      <CarouselSection
+        title="Videojuegos"
+        icon={<GameIcon />}
+        mediaList={content.watchedGames}
+      />
     </div>
   );
 }
