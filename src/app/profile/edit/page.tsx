@@ -7,9 +7,11 @@ import { SupabaseUserProfileRepository } from "@/modules/social/infrastructure/r
 import { getSupabaseClient } from "@/lib/supabase";
 import { uploadFile, generateUniqueFileName, validateImageFile } from "@/lib/storage";
 import type { UpdateProfileData, UserProfile } from "@/modules/social/domain/user-profile";
+import { useAuth } from "@/modules/auth/infrastructure/contexts/AuthContext";
 
 export default function ProfileEditPage() {
   const router = useRouter();
+  const { user, updateUser } = useAuth();
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const bannerInputRef = useRef<HTMLInputElement>(null);
   
@@ -173,6 +175,12 @@ export default function ProfileEditPage() {
       await repository.updateProfile(user.id, {
         avatarUrl,
         bannerUrl,
+        username: formData.username,
+      });
+
+      // Update AuthContext so header avatar updates immediately
+      updateUser({
+        avatarUrl: avatarUrl || undefined,
         username: formData.username,
       });
 
