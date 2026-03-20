@@ -138,8 +138,7 @@ export function Carousel({ title, subtitle, items, variant = "movies", isLoading
           cursor: "grab",
           scrollBehavior: "smooth",
           WebkitOverflowScrolling: "touch",
-          scrollPaddingLeft: "4px",
-          scrollPaddingRight: "4px",
+          paddingBottom: "16px",
         }}
       >
         {/* Left padding for fade effect */}
