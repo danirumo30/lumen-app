@@ -1,11 +1,12 @@
 "use client";
 
-import { useRef } from "react";
+import { useState } from "react";
 import type { UserProfileWithContent } from "@/modules/social/domain/user-profile";
 import type { Media } from "@/modules/shared/domain/media";
 import { MediaCard } from "./MediaCard";
+import { useDragScroll } from "../home/useDragScroll";
 
-// SVG Icons (no emojis)
+// SVG Icons
 const MovieIcon = () => (
   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
@@ -31,71 +32,78 @@ interface CarouselSectionProps {
 }
 
 function CarouselSection({ title, icon, mediaList }: CarouselSectionProps) {
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const { containerRef, handlers } = useDragScroll({ snap: true });
+  const [isHovered, setIsHovered] = useState(false);
 
-  const scroll = (direction: "left" | "right") => {
-    if (scrollRef.current) {
-      const scrollAmount = 180; // Card width + gap
-      scrollRef.current.scrollBy({
-        left: direction === "right" ? scrollAmount : -scrollAmount,
-        behavior: "smooth",
-      });
-    }
-  };
+  if (mediaList.length === 0) {
+    return (
+      <section className="mb-8">
+        <div className="flex items-center gap-3 mb-4 px-1">
+          <div className="text-zinc-400">{icon}</div>
+          <h2 className="text-lg font-semibold text-white/90 tracking-tight">{title}</h2>
+          <span className="text-sm text-zinc-500">({mediaList.length})</span>
+        </div>
+        <p className="text-zinc-500 text-sm py-8 text-center">No hay contenido</p>
+      </section>
+    );
+  }
 
   return (
-    <div className="mb-8">
-      {/* Section Header */}
-      <div className="flex items-center justify-between mb-4">
+    <section 
+      className="mb-8 group/carousel relative"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {/* Header */}
+      <div className="flex items-end justify-between mb-4 px-1">
         <div className="flex items-center gap-3">
           <div className="text-zinc-400">{icon}</div>
-          <h2 className="text-lg font-semibold text-white">{title}</h2>
+          <h2 className="text-lg font-semibold text-white/90 tracking-tight">{title}</h2>
           <span className="text-sm text-zinc-500">({mediaList.length})</span>
         </div>
         
-        <div className="flex gap-1">
+        {/* Glassmorphism Navigation Buttons */}
+        <div className="flex gap-1.5 opacity-0 group-hover/carousel:opacity-100 transition-all duration-300">
           <button
-            onClick={() => scroll("left")}
-            className="p-2 rounded-lg bg-zinc-800/50 hover:bg-zinc-700/50 text-zinc-400 hover:text-white transition-colors"
-            aria-label="Scroll left"
+            onClick={() => containerRef.current?.scrollBy({ left: -300, behavior: "smooth" })}
+            className="p-2 rounded-xl bg-white/5 backdrop-blur-xl border border-white/5 text-zinc-400 hover:text-white hover:bg-white/10 hover:border-white/10 transition-all duration-200"
+            aria-label="Anterior"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
           <button
-            onClick={() => scroll("right")}
-            className="p-2 rounded-lg bg-zinc-800/50 hover:bg-zinc-700/50 text-zinc-400 hover:text-white transition-colors"
-            aria-label="Scroll right"
+            onClick={() => containerRef.current?.scrollBy({ left: 300, behavior: "smooth" })}
+            className="p-2 rounded-xl bg-white/5 backdrop-blur-xl border border-white/5 text-zinc-400 hover:text-white hover:bg-white/10 hover:border-white/10 transition-all duration-200"
+            aria-label="Siguiente"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
             </svg>
           </button>
         </div>
       </div>
 
       {/* Carousel */}
-      {mediaList.length > 0 ? (
-        <div
-          ref={scrollRef}
-          className="flex gap-3 overflow-x-auto scrollbar-hide pb-2"
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-        >
-          {mediaList.map((media) => (
-            <MediaCard key={media.id} media={media} />
-          ))}
-        </div>
-      ) : (
-        <p className="text-zinc-500 text-sm py-8 text-center">No hay contenido</p>
-      )}
-
-      <style jsx>{`
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;
-        }
-      `}</style>
-    </div>
+      <div
+        ref={containerRef}
+        className={`flex gap-3 snap-x snap-mandatory carousel-scroll ${isHovered ? 'is-scrolling' : ''}`}
+        {...handlers}
+        style={{
+          overflowX: "auto",
+          overflowY: "hidden",
+          cursor: "grab",
+          scrollBehavior: "smooth",
+          WebkitOverflowScrolling: "touch",
+          paddingBottom: "16px",
+        }}
+      >
+        {mediaList.map((media) => (
+          <MediaCard key={media.id} media={media} />
+        ))}
+      </div>
+    </section>
   );
 }
 
