@@ -22,6 +22,8 @@ export function FollowersModal({
   const [activeTab, setActiveTab] = useState<"followers" | "following">("followers");
   const list = type === "followers" ? followers : following;
 
+  // Sync activeTab when modal opens or type changes
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- Intentional: needed to sync tab with prop
   useEffect(() => {
     if (isOpen) {
       setActiveTab(type);

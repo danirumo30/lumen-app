@@ -1,7 +1,12 @@
 import { describe, test, expect } from "vitest";
 
 // Simulamos la lógica de display de username en el Header
-function getUsernameDisplay(userMetadata: any, email?: string): string {
+interface UserMetadata {
+  username?: string;
+  full_name?: string;
+}
+
+function getUsernameDisplay(userMetadata: UserMetadata, email?: string): string {
   return (
     userMetadata?.username ||
     userMetadata?.full_name ||
@@ -10,7 +15,7 @@ function getUsernameDisplay(userMetadata: any, email?: string): string {
   );
 }
 
-function getInitialDisplay(userMetadata: any, email?: string): string {
+function getInitialDisplay(userMetadata: UserMetadata, email?: string): string {
   return (
     userMetadata?.username?.charAt(0) ||
     userMetadata?.full_name?.charAt(0) ||

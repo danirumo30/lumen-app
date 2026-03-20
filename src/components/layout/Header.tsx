@@ -15,6 +15,7 @@ export default function Header() {
   const pathname = usePathname();
 
   // Update avatar cache key when user data changes (e.g., after profile update)
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- Intentional: needed for avatar cache busting
   useEffect(() => {
     if (user?.avatarUrl) {
       setAvatarCacheKey(prev => prev + 1);
@@ -30,6 +31,7 @@ export default function Header() {
   };
 
   // Close menus on route change
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- Intentional: needed to close menus on navigation
   useEffect(() => {
     setIsMobileMenuOpen(false);
     setIsUserMenuOpen(false);

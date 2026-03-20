@@ -40,8 +40,14 @@ export async function POST(request: Request) {
       );
     }
 
-    // Cast a tipo any para evitar error de TypeScript
-    const users = userData as any;
+    // Tipado para el resultado de get_user_by_email
+    interface UserResult {
+      id: string;
+      email: string;
+      email_confirmed_at: string | null;
+    }
+
+    const users = userData as UserResult;
 
     // Actualizar email_confirmed_at directamente en auth.users (solo en desarrollo)
     // NOTA: En producción, esto debería hacerse mediante el flujo normal de verificación

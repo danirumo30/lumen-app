@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { UserProfileWithStats } from "@/modules/social/domain/user-profile";
 
 interface ProfileHeaderProps {
@@ -102,7 +103,7 @@ export function ProfileHeader({
 
               {/* Edit Profile Button */}
               {isOwnProfile && (
-                <a
+                <Link
                   href="/profile/edit"
                   className="flex items-center justify-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 bg-zinc-800/80 text-white rounded-xl font-medium text-xs sm:text-sm hover:bg-zinc-700 transition-all backdrop-blur-sm"
                 >
@@ -110,7 +111,7 @@ export function ProfileHeader({
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
                   <span className="hidden sm:inline">Editar</span>
-                </a>
+                </Link>
               )}
             </div>
           </div>
