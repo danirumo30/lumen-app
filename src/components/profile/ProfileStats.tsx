@@ -1,5 +1,5 @@
-import { useRef } from "react";
 import type { UserProfileWithStats } from "@/modules/social/domain/user-profile";
+import { useSimpleDragScroll } from "./useSimpleDragScroll";
 
 interface ProfileStatsProps {
   stats: UserProfileWithStats;
@@ -43,7 +43,7 @@ const formatTime = (minutes: number): string => {
       return `${days}d`;
     }
   } else {
-    // Horas / Minutos / Segundos (mostramos solo H:M para simplicidad)
+    // Horas / Minutos
     const hours = Math.floor(minutes / minutesInHour);
     const mins = Math.floor(minutes % minutesInHour);
 
@@ -58,17 +58,7 @@ const formatTime = (minutes: number): string => {
 };
 
 export function ProfileStats({ stats }: ProfileStatsProps) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  const scroll = (direction: "left" | "right") => {
-    if (scrollRef.current) {
-      const scrollAmount = 200; // Card width + gap
-      scrollRef.current.scrollBy({
-        left: direction === "right" ? scrollAmount : -scrollAmount,
-        behavior: "smooth",
-      });
-    }
-  };
+  const { containerRef, handlers } = useSimpleDragScroll();
 
   const statsData = [
     {
@@ -115,41 +105,30 @@ export function ProfileStats({ stats }: ProfileStatsProps) {
 
   return (
     <div className="mb-8">
-      {/* Header with navigation */}
+      {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-white">Estadísticas</h2>
-        <div className="flex gap-1">
-          <button
-            onClick={() => scroll("left")}
-            className="p-2 rounded-lg bg-zinc-800/50 hover:bg-zinc-700/50 text-zinc-400 hover:text-white transition-colors"
-            aria-label="Scroll left"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <button
-            onClick={() => scroll("right")}
-            className="p-2 rounded-lg bg-zinc-800/50 hover:bg-zinc-700/50 text-zinc-400 hover:text-white transition-colors"
-            aria-label="Scroll right"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-        </div>
+        <h2 className="text-lg font-semibold text-white/90 tracking-tight">Estadísticas</h2>
       </div>
 
-      {/* Stats Carousel - wider and shorter cards */}
+      {/* Stats Carousel - drag only, no scrollbar, no arrows */}
       <div
-        ref={scrollRef}
-        className="flex gap-3 overflow-x-auto scrollbar-hide pb-2"
-        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        ref={containerRef}
+        className="flex gap-3"
+        {...handlers}
+        style={{
+          overflowX: "auto",
+          overflowY: "hidden",
+          cursor: "grab",
+          scrollBehavior: "smooth",
+          WebkitOverflowScrolling: "touch",
+          scrollbarWidth: "none",
+          msOverflowStyle: "none",
+        }}
       >
         {statsData.map((stat, index) => (
           <div
             key={index}
-            className="flex-shrink-0 w-36 sm:w-44 bg-zinc-900/50 backdrop-blur-sm rounded-xl p-3 border border-zinc-800/50 hover:border-zinc-700/50 transition-all cursor-default"
+            className="flex-shrink-0 w-36 sm:w-44 bg-zinc-900/50 backdrop-blur-sm rounded-xl p-3 border border-white/[0.03] hover:border-white/[0.06] transition-all"
           >
             <div className="flex items-center gap-2.5">
               <div className={`p-1.5 bg-${stat.color}-500/10 rounded-lg`}>
@@ -157,7 +136,7 @@ export function ProfileStats({ stats }: ProfileStatsProps) {
               </div>
               <div className="min-w-0">
                 <p className="text-xs text-zinc-500 uppercase tracking-wider truncate">{stat.label}</p>
-                <p className="text-sm font-semibold text-white mt-0.5 truncate">{stat.value}</p>
+                <p className="text-sm font-semibold text-white/90 mt-0.5 truncate">{stat.value}</p>
               </div>
             </div>
           </div>
@@ -165,7 +144,7 @@ export function ProfileStats({ stats }: ProfileStatsProps) {
       </div>
 
       <style jsx>{`
-        .scrollbar-hide::-webkit-scrollbar {
+        div::-webkit-scrollbar {
           display: none;
         }
       `}</style>
