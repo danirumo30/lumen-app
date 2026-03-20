@@ -23,6 +23,10 @@ export function Carousel({ title, subtitle, items, variant = "movies" }: Carouse
   const [isHovered, setIsHovered] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   
+  // Scroll indicator state
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [thumbWidth, setThumbWidth] = useState(20);
+  
   // Drag state
   const dragRef = useRef({
     isDragging: false,
@@ -30,10 +34,21 @@ export function Carousel({ title, subtitle, items, variant = "movies" }: Carouse
     startScrollLeft: 0,
   });
 
+  const handleScroll = useCallback(() => {
+    if (!scrollRef.current) return;
+    
+    const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+    const maxScroll = scrollWidth - clientWidth;
+    
+    if (maxScroll > 0) {
+      setScrollProgress((scrollLeft / maxScroll) * 100);
+      setThumbWidth((clientWidth / scrollWidth) * 100);
+    }
+  }, []);
+
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (!scrollRef.current) return;
     
-    // Only start drag if clicking on an item
     const target = e.target as HTMLElement;
     const clickedOnItem = target.closest('article');
     if (!clickedOnItem) return;
@@ -55,7 +70,8 @@ export function Carousel({ title, subtitle, items, variant = "movies" }: Carouse
     
     const deltaX = dragRef.current.startX - e.clientX;
     scrollRef.current.scrollLeft = dragRef.current.startScrollLeft + deltaX;
-  }, []);
+    handleScroll();
+  }, [handleScroll]);
 
   const handleMouseUp = useCallback(() => {
     if (dragRef.current.isDragging && scrollRef.current) {
@@ -73,6 +89,7 @@ export function Carousel({ title, subtitle, items, variant = "movies" }: Carouse
         left: direction === "right" ? 280 : -280,
         behavior: "smooth",
       });
+      setTimeout(handleScroll, 100);
     }
   };
 
@@ -83,6 +100,8 @@ export function Carousel({ title, subtitle, items, variant = "movies" }: Carouse
           <path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/>
         </svg>
       ),
+      accent: "#f59e0b",
+      accentLight: "rgba(245, 158, 11, 0.4)",
     },
     tv: {
       icon: (
@@ -90,6 +109,8 @@ export function Carousel({ title, subtitle, items, variant = "movies" }: Carouse
           <path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z"/>
         </svg>
       ),
+      accent: "#06b6d4",
+      accentLight: "rgba(6, 182, 212, 0.4)",
     },
     games: {
       icon: (
@@ -97,6 +118,8 @@ export function Carousel({ title, subtitle, items, variant = "movies" }: Carouse
           <path d="M21.58 16.09l-1.09-7.66C20.21 6.46 18.52 5 16.53 5H7.47C5.48 5 3.79 6.46 3.51 8.43l-1.09 7.66C2.2 17.63 3.39 19 4.94 19h0c.68 0 1.32-.27 1.8-.75L9 16h6l2.25 2.25c.48.48 1.13.75 1.8.75h0c1.56 0 2.74-1.37 2.53-2.91zM11 11H9v2H8v-2H6v-2h2V7h1v2h2v2zm4-1.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm2 4.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
         </svg>
       ),
+      accent: "#10b981",
+      accentLight: "rgba(16, 185, 129, 0.4)",
     },
   };
 
@@ -151,6 +174,7 @@ export function Carousel({ title, subtitle, items, variant = "movies" }: Carouse
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
+        onScroll={handleScroll}
       >
         {items.map((item, index) => (
           <article
@@ -203,9 +227,37 @@ export function Carousel({ title, subtitle, items, variant = "movies" }: Carouse
         ))}
       </div>
 
-      {/* Subtle scroll indicator - fades in on hover */}
-      <div className={`relative mt-4 transition-all duration-500 ${isHovered ? 'opacity-40' : 'opacity-0'}`}>
-        <div className="h-px bg-gradient-to-r from-transparent via-zinc-600 to-transparent" />
+      {/* Premium Minimalist Scroll Indicator */}
+      <div 
+        className={`relative mt-5 transition-all duration-500 ${isHovered ? 'opacity-100' : 'opacity-0'}`}
+        style={{ height: '6px' }}
+      >
+        {/* Track */}
+        <div 
+          className="absolute inset-0 rounded-full bg-zinc-800/60 backdrop-blur-sm"
+        />
+        
+        {/* Progress fill */}
+        <div 
+          className="absolute top-0 left-0 h-full rounded-full transition-all duration-100"
+          style={{ 
+            width: `${thumbWidth}%`,
+            left: `${scrollProgress}%`,
+            background: `linear-gradient(90deg, ${config.accent}, ${config.accent})`,
+            boxShadow: `0 0 12px ${config.accentLight}`,
+            transform: 'translateX(-50%)',
+          }}
+        />
+        
+        {/* Thumb dot */}
+        <div 
+          className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full transition-all duration-100"
+          style={{ 
+            left: `calc(${scrollProgress}% + ${thumbWidth / 2}%)`,
+            background: 'white',
+            boxShadow: `0 0 8px ${config.accentLight}, 0 2px 4px rgba(0,0,0,0.3)`,
+          }}
+        />
       </div>
 
       <style jsx>{`
