@@ -36,8 +36,11 @@ USING (
 );
 
 -- Function to get follower count
+-- SECURITY DEFINER with SET search_path = '' to prevent search_path attacks
 CREATE OR REPLACE FUNCTION get_follower_count(user_id uuid)
-RETURNS bigint AS $$
+RETURNS bigint
+SET search_path = ''
+AS $$
 BEGIN
   RETURN (
     SELECT COUNT(*)
@@ -48,8 +51,11 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Function to get following count
+-- SECURITY DEFINER with SET search_path = '' to prevent search_path attacks
 CREATE OR REPLACE FUNCTION get_following_count(user_id uuid)
-RETURNS bigint AS $$
+RETURNS bigint
+SET search_path = ''
+AS $$
 BEGIN
   RETURN (
     SELECT COUNT(*)
@@ -60,8 +66,11 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Function to check if user is following
+-- SECURITY DEFINER with SET search_path = '' to prevent search_path attacks
 CREATE OR REPLACE FUNCTION is_following(follower uuid, following uuid)
-RETURNS boolean AS $$
+RETURNS boolean
+SET search_path = ''
+AS $$
 BEGIN
   RETURN (
     SELECT EXISTS (
