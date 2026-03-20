@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
+import { useAuth } from "@/modules/auth/infrastructure/contexts/AuthContext";
 import { Carousel } from "@/components/home/Carousel";
 import { HomepageSkeleton } from "@/components/home/CarouselSkeleton";
 
@@ -25,6 +27,7 @@ export default function HomePage() {
   const [games, setGames] = useState<TrendingItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user, isLoading: authLoading } = useAuth();
 
   useEffect(() => {
     async function fetchData() {
@@ -79,39 +82,72 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 pt-20 pb-12">
-      {/* Hero Section */}
-      <section className="relative mb-12 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-indigo-500/10 via-transparent to-transparent" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-500/20 via-zinc-950 to-zinc-950" />
+    <div className="min-h-screen bg-zinc-950">
+      {/* Hero Section - starts right after fixed header */}
+      <section className="relative pt-16 overflow-hidden">
+        {/* Gradient backgrounds */}
+        <div className="absolute inset-0 bg-gradient-to-b from-indigo-500/20 via-zinc-950 to-zinc-950" />
         
         <div className="relative max-w-7xl mx-auto px-6 py-16">
           <div className="max-w-2xl">
-            <h1 className="text-5xl md:text-6xl font-bold text-white mb-4 tracking-tight">
-              Tu universo,
-              <br />
-              <span className="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
-                tu historia.
-              </span>
-            </h1>
-            <p className="text-lg text-zinc-400 mb-8 leading-relaxed">
-              Rastreá películas, series y videojuegos. Encontrá lo que tus amigos están viendo. 
-              Descubrí tu próximo obsession.
-            </p>
-            <div className="flex gap-4">
-              <a
-                href="/search"
-                className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-medium rounded-xl transition-all shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40"
-              >
-                Explorar
-              </a>
-              <a
-                href="/rankings"
-                className="px-6 py-3 bg-zinc-800/50 hover:bg-zinc-700/50 text-white font-medium rounded-xl transition-all border border-zinc-700/50 hover:border-zinc-600/50"
-              >
-                Rankings
-              </a>
-            </div>
+            {user ? (
+              // Logged in view
+              <>
+                <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 tracking-tight">
+                  Bienvenido de vuelta,
+                  <br />
+                  <span className="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+                    {user.username || user.email?.split('@')[0]}
+                  </span>
+                </h1>
+                <p className="text-lg text-zinc-400 mb-8 leading-relaxed">
+                  Descubrí qué está trending esta semana. Tu próxima obsesión te espera.
+                </p>
+                <div className="flex gap-4">
+                  <Link
+                    href="/search"
+                    className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-medium rounded-xl transition-all shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40"
+                  >
+                    Explorar
+                  </Link>
+                  <Link
+                    href={`/profile/${user.username}`}
+                    className="px-6 py-3 bg-zinc-800/50 hover:bg-zinc-700/50 text-white font-medium rounded-xl transition-all border border-zinc-700/50 hover:border-zinc-600/50"
+                  >
+                    Mi perfil
+                  </Link>
+                </div>
+              </>
+            ) : (
+              // Logged out view
+              <>
+                <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 tracking-tight">
+                  Tu universo,
+                  <br />
+                  <span className="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+                    tu historia.
+                  </span>
+                </h1>
+                <p className="text-lg text-zinc-400 mb-8 leading-relaxed">
+                  Rastreá películas, series y videojuegos. Encontrá lo que tus amigos están viendo. 
+                  Descubrí tu próximo obsession.
+                </p>
+                <div className="flex gap-4">
+                  <Link
+                    href="/search"
+                    className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-medium rounded-xl transition-all shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40"
+                  >
+                    Explorar
+                  </Link>
+                  <Link
+                    href="/rankings"
+                    className="px-6 py-3 bg-zinc-800/50 hover:bg-zinc-700/50 text-white font-medium rounded-xl transition-all border border-zinc-700/50 hover:border-zinc-600/50"
+                  >
+                    Rankings
+                  </Link>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </section>
@@ -155,26 +191,48 @@ export default function HomePage() {
       </main>
 
       {/* Footer CTA */}
-      <section className="max-w-7xl mx-auto px-6 mt-16">
+      <section className="max-w-7xl mx-auto px-6 mt-16 pb-12">
         <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-indigo-600/20 to-purple-600/20 border border-indigo-500/20 p-8 md:p-12">
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxjaXJjbGUgY3g9IjMwIiBjeT0iMzAiIHI9IjMiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wMykiLz48L2c+PC9zdmc+')] opacity-50" />
           
           <div className="relative text-center">
-            <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
-              Empezá tu tracking hoy
-            </h2>
-            <p className="text-zinc-400 mb-6 max-w-md mx-auto">
-              Unite a miles de usuarios que ya están siguiendo su universo de media en Lumen.
-            </p>
-            <a
-              href="/login"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-white text-zinc-900 font-semibold rounded-xl hover:bg-zinc-100 transition-all shadow-lg"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-              Comenzar gratis
-            </a>
+            {user ? (
+              <>
+                <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
+                  Encontrá tu próxima obsesión
+                </h2>
+                <p className="text-zinc-400 mb-6 max-w-md mx-auto">
+                  Rastreá todo lo que ves, juegas y más. Enterate qué recomiendan tus amigos.
+                </p>
+                <Link
+                  href="/search"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:from-indigo-500 hover:to-purple-500 transition-all shadow-lg"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  Explorar ahora
+                </Link>
+              </>
+            ) : (
+              <>
+                <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
+                  Empezá tu tracking hoy
+                </h2>
+                <p className="text-zinc-400 mb-6 max-w-md mx-auto">
+                  Unite a miles de usuarios que ya están siguiendo su universo de media en Lumen.
+                </p>
+                <Link
+                  href="/login"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-white text-zinc-900 font-semibold rounded-xl hover:bg-zinc-100 transition-all shadow-lg"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  Comenzar gratis
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </section>
