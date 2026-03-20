@@ -3,13 +3,15 @@ import { NextResponse } from "next/server";
 const TMDB_API_KEY = process.env.TMDB_API_KEY!;
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 
-export const runtime = "edge";
+export const runtime = "nodejs";
 
 export async function GET() {
   try {
     const response = await fetch(
       `${TMDB_BASE_URL}/trending/tv/week?api_key=${TMDB_API_KEY}&language=es-ES`,
-      { next: { revalidate: 3600 } } // Cache 1 hour
+      { 
+        headers: { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400" }
+      }
     );
 
     if (!response.ok) {

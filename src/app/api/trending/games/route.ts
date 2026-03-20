@@ -1,13 +1,10 @@
-import { writeFileSync } from "fs";
-import { join } from "path";
 import { NextResponse } from "next/server";
 
 const IGDB_ACCESS_TOKEN = process.env.IGDB_ACCESS_TOKEN!;
 const IGDB_CLIENT_ID = process.env.TWITCH_CLIENT_ID!;
 const IGDB_CLIENT_SECRET = process.env.TWITCH_CLIENT_SECRET!;
-const ENV_PATH = join(process.cwd(), ".env.local");
 
-export const runtime = "edge";
+export const runtime = "nodejs";
 
 async function getFreshAccessToken(): Promise<string> {
   const tokenResponse = await fetch(
@@ -31,25 +28,6 @@ async function getFreshAccessToken(): Promise<string> {
   return tokenData.access_token;
 }
 
-async function refreshTokenAndUpdateEnv(): Promise<string> {
-  const newToken = await getFreshAccessToken();
-  
-  // Update .env.local with new token
-  try {
-    const currentEnv = require("fs").readFileSync(ENV_PATH, "utf-8");
-    const updatedEnv = currentEnv.replace(
-      /IGDB_ACCESS_TOKEN=.*/,
-      `IGDB_ACCESS_TOKEN=${newToken}`
-    );
-    require("fs").writeFileSync(ENV_PATH, updatedEnv);
-    console.log("IGDB access token refreshed and saved to .env.local");
-  } catch {
-    console.warn("Could not update .env.local file");
-  }
-  
-  return newToken;
-}
-
 async function fetchGames(accessToken: string, retry = false): Promise<Response> {
   const response = await fetch("https://api.igdb.com/v4/games", {
     method: "POST",
@@ -64,13 +42,17 @@ async function fetchGames(accessToken: string, retry = false): Promise<Response>
       sort rating desc;
       limit 20;
     `,
-    next: { revalidate: 3600 },
   });
 
   // If 401 and haven't retried, refresh token and retry
   if (response.status === 401 && !retry) {
     console.log("IGDB token expired, refreshing...");
-    const newToken = await refreshTokenAndUpdateEnv();
+    const newToken = await getFreshAccessToken();
+    
+    // Update process env for this request
+    process.env.IGDB_ACCESS_TOKEN = newToken;
+    
+    // Try again with new token
     return fetchGames(newToken, true);
   }
 
