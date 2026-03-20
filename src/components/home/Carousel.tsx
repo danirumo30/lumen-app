@@ -130,7 +130,7 @@ export function Carousel({ title, subtitle, items, variant = "movies", isLoading
       {/* Scrollable Container */}
       <div
         ref={containerRef}
-        className="flex gap-3 snap-x snap-mandatory scrollbar-minimal"
+        className="flex gap-3 snap-x snap-mandatory carousel-scroll"
         {...handlers}
         style={{
           overflowX: "auto",
@@ -207,45 +207,6 @@ export function Carousel({ title, subtitle, items, variant = "movies", isLoading
         {/* Right padding for fade effect */}
         <div className="flex-shrink-0 w-1" />
       </div>
-
-      {/* Shimmer animation keyframes */}
-      <style jsx>{`
-        @keyframes shimmer {
-          100% {
-            transform: translateX(100%);
-          }
-        }
-        
-        .scrollbar-minimal::-webkit-scrollbar {
-          height: 4px;
-        }
-        .scrollbar-minimal::-webkit-scrollbar-track {
-          background: transparent;
-          opacity: 0;
-          transition: opacity 0.3s ease;
-        }
-        .scrollbar-minimal::-webkit-scrollbar-thumb {
-          background: rgba(168, 85, 247, 0.4);
-          border-radius: 999px;
-          opacity: 0;
-          transition: opacity 0.3s ease;
-        }
-        .group:hover .scrollbar-minimal::-webkit-scrollbar-thumb,
-        .scrollbar-minimal:hover::-webkit-scrollbar-thumb {
-          opacity: 1;
-        }
-        .group:hover .scrollbar-minimal::-webkit-scrollbar-track,
-        .scrollbar-minimal:hover::-webkit-scrollbar-track {
-          opacity: 1;
-        }
-        .scrollbar-minimal::-webkit-scrollbar-thumb:hover {
-          background: rgba(168, 85, 247, 0.6);
-        }
-        .scrollbar-minimal {
-          scrollbar-width: thin;
-          scrollbar-color: rgba(168, 85, 247, 0.4) transparent;
-        }
-      `}</style>
     </section>
   );
 }
