@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 
 interface CarouselProps {
   title: string;
@@ -20,35 +20,80 @@ interface CarouselItem {
 
 export function Carousel({ title, subtitle, items, variant = "movies" }: CarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
   const [thumbPosition, setThumbPosition] = useState(0);
   const [thumbWidth, setThumbWidth] = useState(100);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartX = useRef(0);
+  const dragStartScroll = useRef(0);
 
-  const checkScroll = () => {
+  const checkScroll = useCallback(() => {
     if (scrollRef.current) {
       const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
       setCanScrollLeft(scrollLeft > 0);
       setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
       
-      // Calculate thumb position and width
       const maxScroll = scrollWidth - clientWidth;
       if (maxScroll > 0) {
         const scrollPercent = (scrollLeft / maxScroll) * 100;
         const thumbPercent = (clientWidth / scrollWidth) * 100;
         setThumbPosition(scrollPercent);
-        setThumbWidth(Math.max(thumbPercent, 10)); // Min width 10%
+        setThumbWidth(Math.max(thumbPercent, 10));
+      } else {
+        setThumbPosition(0);
+        setThumbWidth(100);
       }
     }
-  };
+  }, []);
 
   useEffect(() => {
     checkScroll();
     const el = scrollRef.current;
     el?.addEventListener("scroll", checkScroll);
     return () => el?.removeEventListener("scroll", checkScroll);
-  }, [items]);
+  }, [items, checkScroll]);
+
+  // Drag to scroll functionality
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    if (!scrollRef.current || !trackRef.current) return;
+    setIsDragging(true);
+    dragStartX.current = e.clientX;
+    dragStartScroll.current = scrollRef.current.scrollLeft;
+  }, []);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!isDragging || !scrollRef.current || !trackRef.current) return;
+    
+    const deltaX = e.clientX - dragStartX.current;
+    const trackWidth = trackRef.current.offsetWidth;
+    const scrollWidth = scrollRef.current.scrollWidth - scrollRef.current.clientWidth;
+    
+    if (scrollWidth <= 0) return;
+    
+    // Calculate scroll position based on thumb drag
+    const scrollDelta = (deltaX / trackWidth) * scrollWidth;
+    const newScroll = Math.max(0, Math.min(scrollWidth, dragStartScroll.current + scrollDelta));
+    
+    scrollRef.current.scrollLeft = newScroll;
+  }, [isDragging]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mouseup', handleMouseUp);
+      document.addEventListener('mousemove', handleMouseMove as any);
+      return () => {
+        document.removeEventListener('mouseup', handleMouseUp);
+        document.removeEventListener('mousemove', handleMouseMove as any);
+      };
+    }
+  }, [isDragging, handleMouseUp, handleMouseMove]);
 
   const scroll = (direction: "left" | "right") => {
     if (scrollRef.current) {
@@ -201,18 +246,31 @@ export function Carousel({ title, subtitle, items, variant = "movies" }: Carouse
       {/* Premium Custom Scrollbar */}
       <div 
         className={`relative h-1.5 mt-3 transition-all duration-500 ${isHovered ? 'opacity-100 scale-y-100' : 'opacity-0 scale-y-50'}`}
+        ref={trackRef}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        style={{ cursor: isDragging ? 'grabbing' : 'default' }}
       >
-        {/* Track */}
+        {/* Track background */}
         <div className="absolute inset-0 rounded-full bg-zinc-800/80 backdrop-blur-sm" />
+        
+        {/* Clickable zone - starts from thumb position and extends to end */}
+        <div 
+          className="absolute top-0 bottom-0"
+          style={{ left: `${thumbPosition}%`, right: 0 }}
+        />
         
         {/* Glow effect */}
         <div 
-          className={`absolute top-0 h-full rounded-full ${config.accent} transition-all duration-300 ease-out blur-sm`}
+          className={`absolute top-0 h-full rounded-full ${config.accent} transition-all duration-300 ease-out`}
           style={{ 
             left: `${thumbPosition}%`, 
             width: `${thumbWidth}%`,
             filter: 'blur(8px)',
-            opacity: 0.5,
+            opacity: 0.6,
+            maxWidth: 'calc(100% - 2px)',
           }}
         />
         
@@ -222,43 +280,21 @@ export function Carousel({ title, subtitle, items, variant = "movies" }: Carouse
           style={{ 
             left: `${thumbPosition}%`, 
             width: `${thumbWidth}%`,
+            maxWidth: 'calc(100% - 2px)',
           }}
         />
         
         {/* Inner shine */}
         <div 
-          className="absolute top-0 h-full rounded-full bg-gradient-to-b from-white/30 to-transparent"
+          className="absolute top-0 h-full rounded-full bg-gradient-to-b from-white/30 to-transparent pointer-events-none"
           style={{ 
             left: `${thumbPosition}%`, 
             width: `${thumbWidth}%`,
+            maxWidth: 'calc(100% - 2px)',
           }}
         />
       </div>
 
-      <style jsx>{`
-        /* Custom thin scrollbar for webkit browsers */
-        div::-webkit-scrollbar {
-          height: 6px;
-        }
-        div::-webkit-scrollbar-track {
-          background: transparent;
-          border-radius: 9999px;
-        }
-        div::-webkit-scrollbar-thumb {
-          background: linear-gradient(to right, rgb(99, 102, 241), rgb(168, 85, 247));
-          border-radius: 9999px;
-          opacity: 0;
-          transition: opacity 0.3s ease;
-        }
-        div::-webkit-scrollbar-thumb:hover {
-          opacity: 1;
-        }
-        
-        /* Hide scrollbar when not hovering */
-        div::-webkit-scrollbar-thumb {
-          opacity: 0;
-        }
-      `}</style>
     </section>
   );
 }
