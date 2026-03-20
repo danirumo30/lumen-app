@@ -146,7 +146,7 @@ export function Carousel({ title, subtitle, items, variant = "movies" }: Carouse
       {/* Scrollable Container - drag to scroll */}
       <div
         ref={scrollRef}
-        className={`flex gap-4 overflow-x-auto scroll-smooth pb-4 snap-x snap-mandatory ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+        className={`flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory hide-scrollbar ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
@@ -202,6 +202,21 @@ export function Carousel({ title, subtitle, items, variant = "movies" }: Carouse
           </article>
         ))}
       </div>
+
+      {/* Subtle scroll indicator - fades in on hover */}
+      <div className={`relative mt-4 transition-all duration-500 ${isHovered ? 'opacity-40' : 'opacity-0'}`}>
+        <div className="h-px bg-gradient-to-r from-transparent via-zinc-600 to-transparent" />
+      </div>
+
+      <style jsx>{`
+        .hide-scrollbar::-webkit-scrollbar {
+          height: 0;
+        }
+        .hide-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
     </section>
   );
 }
