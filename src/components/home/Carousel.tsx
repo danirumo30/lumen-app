@@ -134,7 +134,7 @@ export function Carousel({ title, subtitle, items, variant = "movies", isLoading
       {/* Scrollable Container */}
       <div
         ref={containerRef}
-        className="flex gap-3 snap-x snap-mandatory"
+        className="flex gap-3 snap-x snap-mandatory scrollbar-minimal"
         {...handlers}
         style={{
           overflowX: "auto",
@@ -218,6 +218,24 @@ export function Carousel({ title, subtitle, items, variant = "movies", isLoading
           100% {
             transform: translateX(100%);
           }
+        }
+        
+        .scrollbar-minimal::-webkit-scrollbar {
+          height: 3px;
+        }
+        .scrollbar-minimal::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .scrollbar-minimal::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.08);
+          border-radius: 999px;
+        }
+        .scrollbar-minimal::-webkit-scrollbar-thumb:hover {
+          background: rgba(255, 255, 255, 0.15);
+        }
+        .scrollbar-minimal {
+          scrollbar-width: thin;
+          scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
         }
       `}</style>
     </section>
