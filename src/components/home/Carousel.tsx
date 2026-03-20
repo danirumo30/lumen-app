@@ -1,6 +1,7 @@
 "use client";
 
 import { useDragScroll } from "./useDragScroll";
+import "./DragScrollContainer.css";
 
 interface CarouselProps {
   title: string;
@@ -91,8 +92,15 @@ export function Carousel({ title, subtitle, items, variant = "movies" }: Carouse
       {/* Scrollable Container */}
       <div
         ref={containerRef}
-        className="drag-scroll-container flex gap-4 snap-x snap-mandatory"
+        className="flex gap-4 snap-x snap-mandatory"
         {...handlers}
+        style={{
+          overflowX: "auto",
+          overflowY: "hidden",
+          cursor: "grab",
+          scrollBehavior: "smooth",
+          WebkitOverflowScrolling: "touch",
+        }}
       >
         {items.map((item, index) => (
           <article

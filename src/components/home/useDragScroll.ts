@@ -13,7 +13,7 @@ interface UseDragScrollOptions {
 
 interface UseDragScrollReturn {
   containerRef: RefObject<HTMLDivElement | null>;
-  isDragging: boolean;
+  isDragging?: React.RefObject<boolean>;
   handlers: {
     onMouseDown: (e: React.MouseEvent) => void;
     onMouseMove: (e: React.MouseEvent) => void;
@@ -116,7 +116,7 @@ export function useDragScroll(options: UseDragScrollOptions = {}): UseDragScroll
 
   return {
     containerRef,
-    isDragging: isDragging.current,
+    isDragging,
     handlers: {
       onMouseDown: handleMouseDown,
       onMouseMove: handleMouseMove,
