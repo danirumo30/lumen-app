@@ -35,6 +35,8 @@ body {
 /* Premium Dark Carousel Scrollbar */
 .carousel-scroll::-webkit-scrollbar {
   height: 4px;
+  margin-top: 12px;
+  margin-bottom: 4px;
 }
 
 .carousel-scroll::-webkit-scrollbar-track {
@@ -48,14 +50,6 @@ body {
   transition: opacity 0.3s ease;
 }
 
-.carousel-scroll:hover::-webkit-scrollbar-thumb {
-  opacity: 1;
-}
-
-.carousel-scroll:hover::-webkit-scrollbar-track {
-  opacity: 1;
-}
-
 .carousel-scroll::-webkit-scrollbar-thumb:hover {
   background: rgba(168, 85, 247, 0.7);
 }
@@ -63,6 +57,15 @@ body {
 .carousel-scroll {
   scrollbar-width: thin;
   scrollbar-color: rgba(168, 85, 247, 0.4) transparent;
+}
+
+/* Show scrollbar only when hovering over the carousel group */
+.group\/carousel:hover .carousel-scroll::-webkit-scrollbar-thumb {
+  opacity: 1;
+}
+
+.group\/carousel:hover .carousel-scroll::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
 }
 
 /* Shimmer animation */
