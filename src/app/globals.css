@@ -47,7 +47,8 @@ body {
   transition: background 0.3s ease, transform 0.2s ease;
 }
 
-.carousel-scroll:hover::-webkit-scrollbar-thumb {
+/* Show scrollbar when hovering anywhere in carousel */
+.carousel-scroll.is-scrolling::-webkit-scrollbar-thumb {
   background: rgba(168, 85, 247, 0.5);
 }
 

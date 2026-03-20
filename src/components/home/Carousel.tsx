@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useDragScroll } from "./useDragScroll";
 
 interface CarouselProps {
@@ -40,6 +41,7 @@ function CarouselSkeleton() {
 
 export function Carousel({ title, subtitle, items, variant = "movies", isLoading = false }: CarouselProps) {
   const { containerRef, handlers } = useDragScroll({ snap: true });
+  const [isHovered, setIsHovered] = useState(false);
 
   const variantConfig = {
     movies: {
@@ -89,7 +91,11 @@ export function Carousel({ title, subtitle, items, variant = "movies", isLoading
   }
 
   return (
-    <section className="mb-12 group/carousel relative">
+    <section 
+      className="mb-12 group/carousel relative"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       {/* Header */}
       <div className="flex items-end justify-between mb-6 px-1">
         <div className="flex items-center gap-3">
@@ -130,7 +136,7 @@ export function Carousel({ title, subtitle, items, variant = "movies", isLoading
       {/* Scrollable Container */}
       <div
         ref={containerRef}
-        className="flex gap-3 snap-x snap-mandatory carousel-scroll"
+        className={`flex gap-3 snap-x snap-mandatory carousel-scroll ${isHovered ? 'is-scrolling' : ''}`}
         {...handlers}
         style={{
           overflowX: "auto",
