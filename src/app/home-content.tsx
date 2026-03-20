@@ -7,7 +7,9 @@ import { HomepageSkeleton } from "@/components/home/CarouselSkeleton";
 interface TrendingItem {
   id: string;
   title: string;
+  name?: string;
   posterUrl: string | null;
+  coverUrl?: string | null;
   voteAverage?: number | null;
   rating?: number | null;
   releaseDate?: string;
@@ -119,21 +121,35 @@ export default function HomePage() {
         <Carousel
           title="Trending Movies"
           subtitle="Las películas más populares esta semana"
-          items={movies.map(m => ({ ...m, date: m.releaseDate }))}
+          items={movies.map(m => ({ 
+            ...m, 
+            rating: m.voteAverage,
+            date: m.releaseDate 
+          }))}
           variant="movies"
         />
 
         <Carousel
           title="Trending TV Shows"
           subtitle="Las series que todos están viendo"
-          items={tvShows.map(t => ({ ...t, date: t.firstAirDate }))}
+          items={tvShows.map(t => ({ 
+            ...t, 
+            rating: t.voteAverage,
+            date: t.firstAirDate 
+          }))}
           variant="tv"
         />
 
         <Carousel
           title="Trending Games"
           subtitle="Los videojuegos más jugados"
-          items={games}
+          items={games.map(g => ({ 
+            id: g.id,
+            title: g.name || g.title || "Unknown",
+            posterUrl: g.coverUrl || g.posterUrl,
+            rating: g.rating,
+            date: g.releaseDate
+          }))}
           variant="games"
         />
       </main>
