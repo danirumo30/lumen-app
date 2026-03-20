@@ -94,14 +94,14 @@ export default function HomePage() {
               // Logged in view
               <>
                 <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 tracking-tight">
-                  Bienvenido de vuelta,
+                  Bienvenido de nuevo,
                   <br />
                   <span className="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
                     {user.username || user.email?.split('@')[0]}
                   </span>
                 </h1>
                 <p className="text-lg text-zinc-400 mb-8 leading-relaxed">
-                  Descubrí qué está trending esta semana. Tu próxima obsesión te espera.
+                  Descubre qué está trending esta semana. Tu próxima obsesión te espera.
                 </p>
                 <div className="flex gap-4">
                   <Link
@@ -129,8 +129,8 @@ export default function HomePage() {
                   </span>
                 </h1>
                 <p className="text-lg text-zinc-400 mb-8 leading-relaxed">
-                  Rastreá películas, series y videojuegos. Encontrá lo que tus amigos están viendo. 
-                  Descubrí tu próximo obsession.
+                  Rastrea películas, series y videojuegos. Encuentra lo que tus amigos están viendo. 
+                  Descubre tu próxima obsesión.
                 </p>
                 <div className="flex gap-4">
                   <Link
@@ -155,8 +155,8 @@ export default function HomePage() {
       {/* Carousels */}
       <main className="max-w-7xl mx-auto px-6">
         <Carousel
-          title="Trending Movies"
-          subtitle="Las películas más populares esta semana"
+          title="Películas en tendencia"
+          subtitle="Las películas más populares de esta semana"
           items={movies.map(m => ({ 
             ...m, 
             rating: m.voteAverage,
@@ -166,7 +166,7 @@ export default function HomePage() {
         />
 
         <Carousel
-          title="Trending TV Shows"
+          title="Series en tendencia"
           subtitle="Las series que todos están viendo"
           items={tvShows.map(t => ({ 
             ...t, 
@@ -177,11 +177,11 @@ export default function HomePage() {
         />
 
         <Carousel
-          title="Trending Games"
+          title="Videojuegos en tendencia"
           subtitle="Los videojuegos más jugados"
           items={games.map(g => ({ 
             id: g.id,
-            title: g.name || g.title || "Unknown",
+            title: g.name || g.title || "Desconocido",
             posterUrl: g.coverUrl || g.posterUrl,
             rating: g.rating,
             date: g.releaseDate
@@ -199,10 +199,10 @@ export default function HomePage() {
             {user ? (
               <>
                 <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
-                  Encontrá tu próxima obsesión
+                  Encuentra tu próxima obsesión
                 </h2>
                 <p className="text-zinc-400 mb-6 max-w-md mx-auto">
-                  Rastreá todo lo que ves, juegas y más. Enterate qué recomiendan tus amigos.
+                  Rastrea todo lo que ves, juegas y más. Entérate de qué recomiendan tus amigos.
                 </p>
                 <Link
                   href="/search"
@@ -217,10 +217,10 @@ export default function HomePage() {
             ) : (
               <>
                 <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
-                  Empezá tu tracking hoy
+                  Empieza tu tracking hoy
                 </h2>
                 <p className="text-zinc-400 mb-6 max-w-md mx-auto">
-                  Unite a miles de usuarios que ya están siguiendo su universo de media en Lumen.
+                  Únete a miles de usuarios que ya están siguiendo su universo de media en Lumen.
                 </p>
                 <Link
                   href="/login"

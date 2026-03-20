@@ -48,6 +48,24 @@ export function Carousel({ title, subtitle, items, variant = "movies" }: Carouse
     }
   };
 
+  // Custom scrollbar track
+  const [scrollProgress, setScrollProgress] = useState(0);
+
+  const updateScrollProgress = () => {
+    if (scrollRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+      const maxScroll = scrollWidth - clientWidth;
+      setScrollProgress(maxScroll > 0 ? (scrollLeft / maxScroll) * 100 : 0);
+    }
+  };
+
+  useEffect(() => {
+    updateScrollProgress();
+    const el = scrollRef.current;
+    el?.addEventListener("scroll", updateScrollProgress);
+    return () => el?.removeEventListener("scroll", updateScrollProgress);
+  }, [items]);
+
   const accentColors = {
     movies: "from-amber-500/20 to-orange-500/20 border-amber-500/30",
     tv: "from-cyan-500/20 to-blue-500/20 border-cyan-500/30",
@@ -114,8 +132,8 @@ export function Carousel({ title, subtitle, items, variant = "movies" }: Carouse
       {/* Scrollable Container */}
       <div
         ref={scrollRef}
-        className="flex gap-4 overflow-x-auto scroll-smooth pb-4 scrollbar-hide snap-x snap-mandatory"
-        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        className="flex gap-4 overflow-x-auto scroll-smooth pb-4 snap-x snap-mandatory scrollbar-thin"
+        style={{ scrollbarWidth: "thin" }}
       >
         {items.map((item, index) => (
           <article
@@ -167,9 +185,29 @@ export function Carousel({ title, subtitle, items, variant = "movies" }: Carouse
         ))}
       </div>
 
+      {/* Custom Scrollbar */}
+      <div className="h-1 bg-zinc-800/50 rounded-full mt-2 overflow-hidden">
+        <div 
+          className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-150"
+          style={{ width: `${scrollProgress}%` }}
+        />
+      </div>
+
       <style jsx>{`
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;
+        /* Custom scrollbar styles */
+        div::-webkit-scrollbar {
+          height: 8px;
+        }
+        div::-webkit-scrollbar-track {
+          background: rgb(39 39 42 / 0.5);
+          border-radius: 9999px;
+        }
+        div::-webkit-scrollbar-thumb {
+          background: rgb(99 102 241 / 0.7);
+          border-radius: 9999px;
+        }
+        div::-webkit-scrollbar-thumb:hover {
+          background: rgb(99 102 241);
         }
       `}</style>
     </section>
