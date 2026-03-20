@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useCallback } from "react";
+import { useDragScroll } from "./useDragScroll";
 
 interface CarouselProps {
   title: string;
@@ -19,61 +19,7 @@ interface CarouselItem {
 }
 
 export function Carousel({ title, subtitle, items, variant = "movies" }: CarouselProps) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [isHovered, setIsHovered] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
-  
-  // Drag state
-  const dragRef = useRef({
-    isDragging: false,
-    startX: 0,
-    startScrollLeft: 0,
-  });
-
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (!scrollRef.current) return;
-    
-    const target = e.target as HTMLElement;
-    const clickedOnItem = target.closest('article');
-    if (!clickedOnItem) return;
-    
-    dragRef.current = {
-      isDragging: true,
-      startX: e.clientX,
-      startScrollLeft: scrollRef.current.scrollLeft,
-    };
-    
-    setIsDragging(true);
-    scrollRef.current.style.cursor = 'grabbing';
-    scrollRef.current.style.userSelect = 'none';
-    scrollRef.current.style.scrollBehavior = 'auto';
-  }, []);
-
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!dragRef.current.isDragging || !scrollRef.current) return;
-    
-    const deltaX = dragRef.current.startX - e.clientX;
-    scrollRef.current.scrollLeft = dragRef.current.startScrollLeft + deltaX;
-  }, []);
-
-  const handleMouseUp = useCallback(() => {
-    if (dragRef.current.isDragging && scrollRef.current) {
-      dragRef.current.isDragging = false;
-      setIsDragging(false);
-      scrollRef.current.style.cursor = '';
-      scrollRef.current.style.userSelect = '';
-      scrollRef.current.style.scrollBehavior = 'smooth';
-    }
-  }, []);
-
-  const scroll = (direction: "left" | "right") => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollBy({
-        left: direction === "right" ? 280 : -280,
-        behavior: "smooth",
-      });
-    }
-  };
+  const { containerRef, handlers } = useDragScroll({ snap: true });
 
   const variantConfig = {
     movies: {
@@ -82,8 +28,6 @@ export function Carousel({ title, subtitle, items, variant = "movies" }: Carouse
           <path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/>
         </svg>
       ),
-      accent: "#f59e0b",
-      accentLight: "rgba(245, 158, 11, 0.4)",
     },
     tv: {
       icon: (
@@ -91,8 +35,6 @@ export function Carousel({ title, subtitle, items, variant = "movies" }: Carouse
           <path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z"/>
         </svg>
       ),
-      accent: "#06b6d4",
-      accentLight: "rgba(6, 182, 212, 0.4)",
     },
     games: {
       icon: (
@@ -100,19 +42,13 @@ export function Carousel({ title, subtitle, items, variant = "movies" }: Carouse
           <path d="M21.58 16.09l-1.09-7.66C20.21 6.46 18.52 5 16.53 5H7.47C5.48 5 3.79 6.46 3.51 8.43l-1.09 7.66C2.2 17.63 3.39 19 4.94 19h0c.68 0 1.32-.27 1.8-.75L9 16h6l2.25 2.25c.48.48 1.13.75 1.8.75h0c1.56 0 2.74-1.37 2.53-2.91zM11 11H9v2H8v-2H6v-2h2V7h1v2h2v2zm4-1.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm2 4.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
         </svg>
       ),
-      accent: "#10b981",
-      accentLight: "rgba(16, 185, 129, 0.4)",
     },
   };
 
   const config = variantConfig[variant];
 
   return (
-    <section 
-      className="mb-12 group/carousel"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
+    <section className="mb-12 group/carousel">
       {/* Header */}
       <div className="flex items-end justify-between mb-6">
         <div className="flex items-center gap-3">
@@ -126,9 +62,11 @@ export function Carousel({ title, subtitle, items, variant = "movies" }: Carouse
         </div>
         
         {/* Navigation Buttons */}
-        <div className={`flex gap-2 transition-all duration-300 ${isHovered ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4'}`}>
+        <div className="flex gap-2 transition-all duration-300 opacity-0 translate-x-4 group-hover/carousel:opacity-100 group-hover/carousel:translate-x-0">
           <button
-            onClick={() => scroll("left")}
+            onClick={() => {
+              containerRef.current?.scrollBy({ left: -280, behavior: "smooth" });
+            }}
             className="p-2.5 rounded-xl bg-zinc-800/80 text-zinc-400 hover:text-white hover:bg-zinc-700/80 transition-all backdrop-blur-sm border border-zinc-700/50 hover:border-zinc-600/50"
             aria-label="Scroll left"
           >
@@ -137,7 +75,9 @@ export function Carousel({ title, subtitle, items, variant = "movies" }: Carouse
             </svg>
           </button>
           <button
-            onClick={() => scroll("right")}
+            onClick={() => {
+              containerRef.current?.scrollBy({ left: 280, behavior: "smooth" });
+            }}
             className="p-2.5 rounded-xl bg-zinc-800/80 text-zinc-400 hover:text-white hover:bg-zinc-700/80 transition-all backdrop-blur-sm border border-zinc-700/50 hover:border-zinc-600/50"
             aria-label="Scroll right"
           >
@@ -148,14 +88,11 @@ export function Carousel({ title, subtitle, items, variant = "movies" }: Carouse
         </div>
       </div>
 
-      {/* Scrollable Container - drag to scroll */}
+      {/* Scrollable Container */}
       <div
-        ref={scrollRef}
-        className={`flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory hide-scrollbar ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
+        ref={containerRef}
+        className="drag-scroll-container flex gap-4 snap-x snap-mandatory"
+        {...handlers}
       >
         {items.map((item, index) => (
           <article
@@ -166,7 +103,7 @@ export function Carousel({ title, subtitle, items, variant = "movies" }: Carouse
             {/* Poster Card */}
             <div className="relative aspect-[2/3] rounded-2xl overflow-hidden bg-zinc-800 transition-all duration-500 group-hover/item:scale-[1.03] group-hover/item:shadow-2xl group-hover/item:z-10">
               {/* Subtle border glow on hover */}
-              <div className={`absolute inset-0 rounded-2xl border-2 border-transparent group-hover/item:border-white/10 transition-all duration-500 ${isHovered ? 'opacity-100' : 'opacity-0'}`} />
+              <div className="absolute inset-0 rounded-2xl border-2 border-transparent group-hover/item:border-white/10 transition-all duration-500" />
               
               {item.posterUrl ? (
                 <img
@@ -207,17 +144,6 @@ export function Carousel({ title, subtitle, items, variant = "movies" }: Carouse
           </article>
         ))}
       </div>
-
-      <style jsx>{`
-        .hide-scrollbar::-webkit-scrollbar {
-          height: 0;
-          width: 0;
-        }
-        .hide-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-      `}</style>
     </section>
   );
 }
