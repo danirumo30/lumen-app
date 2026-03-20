@@ -90,10 +90,6 @@ export function Carousel({ title, subtitle, items, variant = "movies", isLoading
 
   return (
     <section className="mb-12 group/carousel relative">
-      {/* Fade masks for edges */}
-      <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-zinc-950 to-transparent z-10 pointer-events-none opacity-0 group-hover/carousel:opacity-100 transition-opacity duration-300" />
-      <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-zinc-950 to-transparent z-10 pointer-events-none opacity-0 group-hover/carousel:opacity-100 transition-opacity duration-300" />
-
       {/* Header */}
       <div className="flex items-end justify-between mb-6 px-1">
         <div className="flex items-center gap-3">
@@ -221,21 +217,33 @@ export function Carousel({ title, subtitle, items, variant = "movies", isLoading
         }
         
         .scrollbar-minimal::-webkit-scrollbar {
-          height: 3px;
+          height: 4px;
         }
         .scrollbar-minimal::-webkit-scrollbar-track {
           background: transparent;
+          opacity: 0;
+          transition: opacity 0.3s ease;
         }
         .scrollbar-minimal::-webkit-scrollbar-thumb {
-          background: rgba(255, 255, 255, 0.08);
+          background: rgba(168, 85, 247, 0.4);
           border-radius: 999px;
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        }
+        .group:hover .scrollbar-minimal::-webkit-scrollbar-thumb,
+        .scrollbar-minimal:hover::-webkit-scrollbar-thumb {
+          opacity: 1;
+        }
+        .group:hover .scrollbar-minimal::-webkit-scrollbar-track,
+        .scrollbar-minimal:hover::-webkit-scrollbar-track {
+          opacity: 1;
         }
         .scrollbar-minimal::-webkit-scrollbar-thumb:hover {
-          background: rgba(255, 255, 255, 0.15);
+          background: rgba(168, 85, 247, 0.6);
         }
         .scrollbar-minimal {
           scrollbar-width: thin;
-          scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
+          scrollbar-color: rgba(168, 85, 247, 0.4) transparent;
         }
       `}</style>
     </section>
