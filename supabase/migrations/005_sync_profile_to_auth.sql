@@ -1,12 +1,10 @@
 -- Trigger para sincronizar user_profiles con auth.users
 -- Esto asegura que el avatar esté disponible en user_metadata
--- SECURITY DEFINER with SET search_path = '' to prevent search_path attacks
 
 CREATE OR REPLACE FUNCTION public.sync_profile_to_auth()
-RETURNS TRIGGER
-SET search_path = ''
-AS $$
+RETURNS TRIGGER AS $$
 BEGIN
+  -- Update auth.users user_metadata when user_profiles changes
   UPDATE auth.users
   SET raw_user_meta_data = jsonb_set(
     COALESCE(raw_user_meta_data, '{}'),
@@ -14,6 +12,7 @@ BEGIN
     to_jsonb(NEW.avatar_url)
   )
   WHERE id = NEW.id;
+
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

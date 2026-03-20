@@ -26,7 +26,6 @@ interface AuthContextType extends ExtendedAuthState {
   signOut: () => Promise<void>;
   clearError: () => void;
   setRequiresVerification: (value: boolean) => void;
-  updateUser: (updates: Partial<Pick<User, 'avatarUrl' | 'username' | 'fullName'>>) => void;
 }
 
 const initialState: AuthState = {
@@ -133,23 +132,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setState(prev => ({ ...prev, requiresVerification: value }));
   }, []);
 
-  const updateUser = useCallback((updates: Partial<Pick<User, 'avatarUrl' | 'username' | 'fullName'>>) => {
-    setState(prev => {
-      if (!prev.user) return prev;
-      return {
-        ...prev,
-        user: new User(
-          prev.user.id,
-          prev.user.email,
-          prev.user.emailVerified,
-          updates.username ?? prev.user.username,
-          updates.fullName ?? prev.user.fullName,
-          updates.avatarUrl ?? prev.user.avatarUrl
-        ),
-      };
-    });
-  }, []);
-
   const value: AuthContextType = {
     ...state,
     signIn,
@@ -157,7 +139,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signOut,
     clearError,
     setRequiresVerification,
-    updateUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

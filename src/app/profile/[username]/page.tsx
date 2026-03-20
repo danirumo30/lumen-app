@@ -164,7 +164,7 @@ export default function ProfilePage() {
   const isOwnProfile = currentUserId === profile.id;
 
   return (
-    <div className="min-h-screen bg-zinc-950 pt-16">
+    <div className="min-h-screen bg-zinc-950">
       {/* Profile Header with Banner */}
       <ProfileHeader
         profile={profile}

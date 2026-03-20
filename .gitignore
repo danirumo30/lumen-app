@@ -29,7 +29,6 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
-server.log
 
 # env files (can opt-in for committing if needed)
 .env*
@@ -40,24 +39,3 @@ server.log
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-
-# test results
-test-results/
-playwright-report/
-
-# skills lock (external tool)
-skills-lock.json
-
-# ===========================================
-# LOCAL TOOL CONFIGURATIONS (do NOT commit)
-# ===========================================
-
-# Cursor IDE
-.cursor/
-.cursorrules
-
-# OpenCode / Agent Tools
-.atl/
-config/mcporter.json
-config/opencode.json
-config/skills-lock.json
