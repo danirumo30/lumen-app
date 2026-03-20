@@ -24,86 +24,148 @@ export function Carousel({ title, subtitle, items, variant = "movies" }: Carouse
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
-  const [thumbPosition, setThumbPosition] = useState(0);
-  const [thumbWidth, setThumbWidth] = useState(100);
   const [isDragging, setIsDragging] = useState(false);
-  const dragStartX = useRef(0);
-  const dragStartScroll = useRef(0);
+  
+  // Thumb state
+  const [thumbLeft, setThumbLeft] = useState(0);
+  const [thumbWidth, setThumbWidth] = useState(20);
+  
+  // Drag state
+  const dragRef = useRef({
+    isDragging: false,
+    startX: 0,
+    startThumbLeft: 0,
+  });
 
-  const checkScroll = useCallback(() => {
-    if (scrollRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
-      setCanScrollLeft(scrollLeft > 0);
-      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
+  const updateThumb = useCallback(() => {
+    if (!scrollRef.current) return;
+    
+    const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+    const maxScroll = scrollWidth - clientWidth;
+    
+    // Update scroll buttons
+    setCanScrollLeft(scrollLeft > 2);
+    setCanScrollRight(scrollLeft < maxScroll - 2);
+    
+    // Calculate thumb position
+    if (maxScroll > 0) {
+      const thumbWidthPercent = (clientWidth / scrollWidth) * 100;
+      const thumbLeftPercent = (scrollLeft / maxScroll) * (100 - thumbWidthPercent);
       
-      const maxScroll = scrollWidth - clientWidth;
-      if (maxScroll > 0) {
-        const scrollPercent = (scrollLeft / maxScroll) * 100;
-        const thumbPercent = (clientWidth / scrollWidth) * 100;
-        setThumbPosition(scrollPercent);
-        setThumbWidth(Math.max(thumbPercent, 10));
-      } else {
-        setThumbPosition(0);
-        setThumbWidth(100);
-      }
+      setThumbWidth(Math.max(thumbWidthPercent, 10));
+      setThumbLeft(thumbLeftPercent);
+    } else {
+      setThumbWidth(100);
+      setThumbLeft(0);
     }
   }, []);
 
   useEffect(() => {
-    checkScroll();
+    updateThumb();
     const el = scrollRef.current;
-    el?.addEventListener("scroll", checkScroll);
-    return () => el?.removeEventListener("scroll", checkScroll);
-  }, [items, checkScroll]);
-
-  // Drag to scroll functionality
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (!scrollRef.current || !trackRef.current) return;
-    setIsDragging(true);
-    dragStartX.current = e.clientX;
-    dragStartScroll.current = scrollRef.current.scrollLeft;
-  }, []);
-
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!isDragging || !scrollRef.current || !trackRef.current) return;
-    
-    const deltaX = e.clientX - dragStartX.current;
-    const trackWidth = trackRef.current.offsetWidth;
-    const scrollWidth = scrollRef.current.scrollWidth - scrollRef.current.clientWidth;
-    
-    if (scrollWidth <= 0) return;
-    
-    // Calculate scroll position based on thumb drag
-    const scrollDelta = (deltaX / trackWidth) * scrollWidth;
-    const newScroll = Math.max(0, Math.min(scrollWidth, dragStartScroll.current + scrollDelta));
-    
-    scrollRef.current.scrollLeft = newScroll;
-  }, [isDragging]);
-
-  const handleMouseUp = useCallback(() => {
-    setIsDragging(false);
-  }, []);
-
-  useEffect(() => {
-    if (isDragging) {
-      document.addEventListener('mouseup', handleMouseUp);
-      document.addEventListener('mousemove', handleMouseMove as any);
-      return () => {
-        document.removeEventListener('mouseup', handleMouseUp);
-        document.removeEventListener('mousemove', handleMouseMove as any);
-      };
+    if (el) {
+      el.addEventListener("scroll", updateThumb, { passive: true });
+      return () => el.removeEventListener("scroll", updateThumb);
     }
-  }, [isDragging, handleMouseUp, handleMouseMove]);
+  }, [items, updateThumb]);
 
   const scroll = (direction: "left" | "right") => {
     if (scrollRef.current) {
-      const scrollAmount = 280;
       scrollRef.current.scrollBy({
-        left: direction === "right" ? scrollAmount : -scrollAmount,
+        left: direction === "right" ? 280 : -280,
         behavior: "smooth",
       });
     }
   };
+
+  // Handle thumb drag
+  const handleThumbMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    dragRef.current = {
+      isDragging: true,
+      startX: e.clientX,
+      startThumbLeft: thumbLeft,
+    };
+    
+    setIsDragging(true);
+    document.body.style.cursor = 'grabbing';
+    document.body.style.userSelect = 'none';
+  }, [thumbLeft]);
+
+  // Handle track click
+  const handleTrackClick = useCallback((e: React.MouseEvent) => {
+    if (!scrollRef.current || !trackRef.current || isDragging) return;
+    
+    const rect = trackRef.current.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const trackWidth = rect.width;
+    
+    const { scrollWidth, clientWidth } = scrollRef.current;
+    const maxScroll = scrollWidth - clientWidth;
+    
+    if (maxScroll <= 0) return;
+    
+    // Calculate target scroll position
+    const thumbWidthPercent = (clientWidth / scrollWidth) * 100;
+    const maxThumbLeft = 100 - thumbWidthPercent;
+    const clickPercent = (clickX / trackWidth) * 100;
+    
+    // Clamp to valid range
+    const targetThumbLeft = Math.max(0, Math.min(maxThumbLeft, clickPercent));
+    
+    // Convert to scroll position
+    const targetScroll = (targetThumbLeft / maxThumbLeft) * maxScroll;
+    
+    scrollRef.current.scrollTo({
+      left: targetScroll,
+      behavior: 'smooth',
+    });
+  }, [isDragging]);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!dragRef.current.isDragging || !scrollRef.current) return;
+      
+      const deltaX = e.clientX - dragRef.current.startX;
+      const trackWidth = trackRef.current?.offsetWidth || 0;
+      
+      if (trackWidth <= 0) return;
+      
+      const { scrollWidth, clientWidth } = scrollRef.current;
+      const maxScroll = scrollWidth - clientWidth;
+      const thumbWidthPercent = (clientWidth / scrollWidth) * 100;
+      const maxThumbLeft = 100 - thumbWidthPercent;
+      
+      // Calculate new thumb position
+      const deltaPercent = (deltaX / trackWidth) * 100;
+      const newThumbLeft = Math.max(0, Math.min(maxThumbLeft, dragRef.current.startThumbLeft + deltaPercent));
+      
+      setThumbLeft(newThumbLeft);
+      
+      // Update scroll position
+      const newScroll = (newThumbLeft / maxThumbLeft) * maxScroll;
+      scrollRef.current.scrollLeft = newScroll;
+    };
+
+    const handleMouseUp = () => {
+      if (dragRef.current.isDragging) {
+        dragRef.current.isDragging = false;
+        setIsDragging(false);
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      }
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, []);
 
   const variantConfig = {
     movies: {
@@ -112,9 +174,8 @@ export function Carousel({ title, subtitle, items, variant = "movies" }: Carouse
           <path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/>
         </svg>
       ),
-      gradient: "from-amber-500/20 to-orange-500/20",
-      accent: "bg-gradient-to-r from-amber-500 to-orange-500",
-      glow: "shadow-amber-500/20",
+      accentClass: "bg-gradient-to-r from-amber-500 to-orange-500",
+      glowClass: "shadow-amber-500/50",
     },
     tv: {
       icon: (
@@ -122,9 +183,8 @@ export function Carousel({ title, subtitle, items, variant = "movies" }: Carouse
           <path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z"/>
         </svg>
       ),
-      gradient: "from-cyan-500/20 to-blue-500/20",
-      accent: "bg-gradient-to-r from-cyan-500 to-blue-500",
-      glow: "shadow-cyan-500/20",
+      accentClass: "bg-gradient-to-r from-cyan-500 to-blue-500",
+      glowClass: "shadow-cyan-500/50",
     },
     games: {
       icon: (
@@ -132,9 +192,8 @@ export function Carousel({ title, subtitle, items, variant = "movies" }: Carouse
           <path d="M21.58 16.09l-1.09-7.66C20.21 6.46 18.52 5 16.53 5H7.47C5.48 5 3.79 6.46 3.51 8.43l-1.09 7.66C2.2 17.63 3.39 19 4.94 19h0c.68 0 1.32-.27 1.8-.75L9 16h6l2.25 2.25c.48.48 1.13.75 1.8.75h0c1.56 0 2.74-1.37 2.53-2.91zM11 11H9v2H8v-2H6v-2h2V7h1v2h2v2zm4-1.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm2 4.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
         </svg>
       ),
-      gradient: "from-emerald-500/20 to-teal-500/20",
-      accent: "bg-gradient-to-r from-emerald-500 to-teal-500",
-      glow: "shadow-emerald-500/20",
+      accentClass: "bg-gradient-to-r from-emerald-500 to-teal-500",
+      glowClass: "shadow-emerald-500/50",
     },
   };
 
@@ -142,7 +201,7 @@ export function Carousel({ title, subtitle, items, variant = "movies" }: Carouse
 
   return (
     <section 
-      className="mb-12 group/carousel"
+      className="mb-12 group/carousel select-none"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -158,7 +217,7 @@ export function Carousel({ title, subtitle, items, variant = "movies" }: Carouse
           </div>
         </div>
         
-        {/* Navigation Buttons - appear on hover with smooth animation */}
+        {/* Navigation Buttons */}
         <div className={`flex gap-2 transition-all duration-300 ${isHovered ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4'}`}>
           <button
             onClick={() => scroll("left")}
@@ -187,10 +246,6 @@ export function Carousel({ title, subtitle, items, variant = "movies" }: Carouse
       <div
         ref={scrollRef}
         className="flex gap-4 overflow-x-auto scroll-smooth pb-4 snap-x snap-mandatory"
-        style={{
-          scrollbarWidth: 'thin',
-          scrollbarColor: 'transparent transparent',
-        }}
       >
         {items.map((item, index) => (
           <article
@@ -216,7 +271,7 @@ export function Carousel({ title, subtitle, items, variant = "movies" }: Carouse
                 </div>
               )}
               
-              {/* Rating Badge - glass morphism effect */}
+              {/* Rating Badge */}
               {item.rating && (
                 <div className="absolute top-3 right-3 px-2.5 py-1 rounded-lg backdrop-blur-md bg-black/60 border border-white/10 flex items-center gap-1.5 shadow-lg">
                   <svg className="w-3.5 h-3.5 text-amber-400 drop-shadow-lg" fill="currentColor" viewBox="0 0 20 20">
@@ -226,7 +281,7 @@ export function Carousel({ title, subtitle, items, variant = "movies" }: Carouse
                 </div>
               )}
 
-              {/* Hover Overlay - elegant gradient reveal */}
+              {/* Hover Overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-transparent opacity-0 group-hover/item:opacity-100 transition-all duration-500 flex flex-col justify-end p-4">
                 <h3 className="text-sm font-semibold text-white line-clamp-2 mb-1 drop-shadow-lg">
                   {item.title}
@@ -243,58 +298,25 @@ export function Carousel({ title, subtitle, items, variant = "movies" }: Carouse
         ))}
       </div>
 
-      {/* Premium Custom Scrollbar */}
+      {/* Custom Scrollbar - draggable thumb */}
       <div 
-        className={`relative h-1.5 mt-3 transition-all duration-500 ${isHovered ? 'opacity-100 scale-y-100' : 'opacity-0 scale-y-50'}`}
         ref={trackRef}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-        style={{ cursor: isDragging ? 'grabbing' : 'default' }}
+        className={`relative mt-3 h-1.5 rounded-full bg-zinc-800/80 cursor-pointer overflow-visible transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}
+        onClick={handleTrackClick}
       >
-        {/* Track background */}
-        <div className="absolute inset-0 rounded-full bg-zinc-800/80 backdrop-blur-sm" />
-        
-        {/* Clickable zone - starts from thumb position and extends to end */}
-        <div 
-          className="absolute top-0 bottom-0"
-          style={{ left: `${thumbPosition}%`, right: 0 }}
-        />
-        
-        {/* Glow effect */}
-        <div 
-          className={`absolute top-0 h-full rounded-full ${config.accent} transition-all duration-300 ease-out`}
-          style={{ 
-            left: `${thumbPosition}%`, 
-            width: `${thumbWidth}%`,
-            filter: 'blur(8px)',
-            opacity: 0.6,
-            maxWidth: 'calc(100% - 2px)',
-          }}
-        />
-        
         {/* Thumb */}
         <div 
-          className={`absolute top-0 h-full rounded-full ${config.accent} shadow-lg transition-all duration-150 ease-out`}
-          style={{ 
-            left: `${thumbPosition}%`, 
+          className={`absolute top-1/2 -translate-y-1/2 h-5 rounded-full ${config.accentClass} ${config.glowClass} cursor-grab active:cursor-grabbing transition-shadow`}
+          style={{
+            left: `${thumbLeft}%`,
             width: `${thumbWidth}%`,
-            maxWidth: 'calc(100% - 2px)',
+            transform: 'translateY(-50%)',
+            boxShadow: isDragging ? `0 0 16px currentColor` : `0 0 8px rgba(249, 115, 22, 0.4)`,
           }}
-        />
-        
-        {/* Inner shine */}
-        <div 
-          className="absolute top-0 h-full rounded-full bg-gradient-to-b from-white/30 to-transparent pointer-events-none"
-          style={{ 
-            left: `${thumbPosition}%`, 
-            width: `${thumbWidth}%`,
-            maxWidth: 'calc(100% - 2px)',
-          }}
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={handleThumbMouseDown}
         />
       </div>
-
     </section>
   );
 }
