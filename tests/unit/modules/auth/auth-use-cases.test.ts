@@ -29,6 +29,7 @@ describe('SignInUseCase', () => {
   });
 
   it('should call repository when valid credentials', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const mockUser = { id: '123', email: 'test@example.com', emailVerified: true } as any;
     mockRepository.signIn.mockResolvedValue({ user: mockUser });
     

@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useAuth } from '@/modules/auth/infrastructure/contexts/AuthContext';
 import LoginModal from '@/modules/auth/ui/components/LoginModal';
 
@@ -9,25 +10,47 @@ export default function Header() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [avatarCacheKey, setAvatarCacheKey] = useState(0);
   const { user, signOut, isLoading } = useAuth();
+  const pathname = usePathname();
+
+  // Update avatar cache key when user data changes (e.g., after profile update)
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- Intentional: needed for avatar cache busting
+  useEffect(() => {
+    if (user?.avatarUrl) {
+      setAvatarCacheKey(prev => prev + 1);
+    }
+  }, [user?.avatarUrl]);
+
+  // Helper to get avatar URL with cache busting
+  const getAvatarUrl = (url?: string) => {
+    if (!url) return undefined;
+    // Add cache-busting query param to force browser to reload image
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}t=${avatarCacheKey}`;
+  };
 
   // Close menus on route change
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- Intentional: needed to close menus on navigation
   useEffect(() => {
     setIsMobileMenuOpen(false);
     setIsUserMenuOpen(false);
-  }, []);
+  }, [pathname]);
 
   const handleSignOut = async () => {
     await signOut();
     window.location.href = '/';
   };
 
+  const closeMobileMenu = useCallback(() => setIsMobileMenuOpen(false), []);
+  const closeUserMenu = useCallback(() => setIsUserMenuOpen(false), []);
+
   return (
     <>
       <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-zinc-950/95 backdrop-blur-xl border-b border-zinc-800/50">
         <div className="h-full px-4 md:px-6 flex items-center justify-between max-w-7xl mx-auto">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2 md:space-x-3 group">
+          <Link href="/" className="flex items-center space-x-2 md:space-x-3 group" onClick={closeMobileMenu}>
             <div className="w-8 h-8 md:w-9 md:h-9 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg md:rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/25 transform group-hover:scale-105 transition-transform duration-200">
               <span className="text-white font-bold text-sm tracking-wider">L</span>
             </div>
@@ -72,7 +95,7 @@ export default function Header() {
                 >
                   {user.avatarUrl ? (
                     <img
-                      src={user.avatarUrl}
+                      src={getAvatarUrl(user.avatarUrl)}
                       alt="Avatar"
                       className="w-8 h-8 rounded-full object-cover border-2 border-zinc-700"
                     />
@@ -93,7 +116,7 @@ export default function Header() {
                   >
                     {user.avatarUrl ? (
                       <img
-                        src={user.avatarUrl}
+                        src={getAvatarUrl(user.avatarUrl)}
                         alt="Avatar"
                         className="w-8 h-8 rounded-full object-cover border-2 border-zinc-700 group-hover:border-indigo-500 transition-colors"
                       />
@@ -114,7 +137,7 @@ export default function Header() {
                     <div className="p-4 border-b border-zinc-800/50">
                       <div className="flex items-center space-x-3">
                         {user.avatarUrl ? (
-                          <img src={user.avatarUrl} alt="Avatar" className="w-10 h-10 rounded-full object-cover" />
+                          <img src={getAvatarUrl(user.avatarUrl)} alt="Avatar" className="w-10 h-10 rounded-full object-cover" />
                         ) : (
                           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
                             <span className="text-white text-sm font-semibold">
@@ -131,7 +154,10 @@ export default function Header() {
                       </div>
                     </div>
                     <div className="py-2">
-                      <Link href={`/profile/${user.username || user.fullName || user.email?.split('@')[0]}`} className="flex items-center space-x-3 px-4 py-2.5 text-zinc-400 hover:text-white hover:bg-zinc-800/50 transition-all">
+                      <Link 
+                        href={`/profile/${user.username || user.fullName || user.email?.split('@')[0]}`} 
+                        className="flex items-center space-x-3 px-4 py-2.5 text-zinc-400 hover:text-white hover:bg-zinc-800/50 transition-all"
+                      >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                         <span>Mi Perfil</span>
                       </Link>
@@ -153,7 +179,7 @@ export default function Header() {
                     <div className="p-4 border-b border-zinc-800/50">
                       <div className="flex items-center space-x-3">
                         {user.avatarUrl ? (
-                          <img src={user.avatarUrl} alt="Avatar" className="w-10 h-10 rounded-full object-cover" />
+                          <img src={getAvatarUrl(user.avatarUrl)} alt="Avatar" className="w-10 h-10 rounded-full object-cover" />
                         ) : (
                           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
                             <span className="text-white text-sm font-semibold">{user.username?.charAt(0).toUpperCase() || 'U'}</span>
@@ -166,11 +192,15 @@ export default function Header() {
                       </div>
                     </div>
                     <div className="py-2">
-                      <Link href={`/profile/${user.username || user.fullName || user.email?.split('@')[0]}`} className="flex items-center space-x-3 px-4 py-3 text-zinc-400 hover:text-white hover:bg-zinc-800/50">
+                      <Link 
+                        href={`/profile/${user.username || user.fullName || user.email?.split('@')[0]}`} 
+                        onClick={closeUserMenu}
+                        className="flex items-center space-x-3 px-4 py-3 text-zinc-400 hover:text-white hover:bg-zinc-800/50"
+                      >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                         <span>Mi Perfil</span>
                       </Link>
-                      <Link href="/profile/edit" className="flex items-center space-x-3 px-4 py-3 text-zinc-400 hover:text-white hover:bg-zinc-800/50">
+                      <Link href="/profile/edit" onClick={closeUserMenu} className="flex items-center space-x-3 px-4 py-3 text-zinc-400 hover:text-white hover:bg-zinc-800/50">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                         <span>Editar Perfil</span>
                       </Link>
@@ -214,15 +244,15 @@ export default function Header() {
         {isMobileMenuOpen && (
           <div className="md:hidden absolute top-16 left-0 right-0 bg-zinc-950/95 backdrop-blur-xl border-b border-zinc-800/50">
             <nav className="flex flex-col p-4 space-y-2">
-              <Link href="/" className="flex items-center px-4 py-3 text-zinc-400 hover:text-white hover:bg-zinc-800/50 rounded-lg transition-colors">
+              <Link href="/" onClick={closeMobileMenu} className="flex items-center px-4 py-3 text-zinc-400 hover:text-white hover:bg-zinc-800/50 rounded-lg transition-colors">
                 <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
                 Inicio
               </Link>
-              <Link href="/search" className="flex items-center px-4 py-3 text-zinc-400 hover:text-white hover:bg-zinc-800/50 rounded-lg transition-colors">
+              <Link href="/search" onClick={closeMobileMenu} className="flex items-center px-4 py-3 text-zinc-400 hover:text-white hover:bg-zinc-800/50 rounded-lg transition-colors">
                 <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                 Buscar
               </Link>
-              <Link href="/rankings" className="flex items-center px-4 py-3 text-zinc-400 hover:text-white hover:bg-zinc-800/50 rounded-lg transition-colors">
+              <Link href="/rankings" onClick={closeMobileMenu} className="flex items-center px-4 py-3 text-zinc-400 hover:text-white hover:bg-zinc-800/50 rounded-lg transition-colors">
                 <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
                 Rankings
               </Link>

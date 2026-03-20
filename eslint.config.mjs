@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Ignore skills (external reference files)
+    ".gentle-ai/**",
   ]),
 ]);
 
