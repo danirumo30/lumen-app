@@ -23,28 +23,12 @@ export function Carousel({ title, subtitle, items, variant = "movies" }: Carouse
   const [isHovered, setIsHovered] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   
-  // Scroll indicator state
-  const [scrollProgress, setScrollProgress] = useState(0);
-  const [thumbWidth, setThumbWidth] = useState(20);
-  
   // Drag state
   const dragRef = useRef({
     isDragging: false,
     startX: 0,
     startScrollLeft: 0,
   });
-
-  const handleScroll = useCallback(() => {
-    if (!scrollRef.current) return;
-    
-    const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
-    const maxScroll = scrollWidth - clientWidth;
-    
-    if (maxScroll > 0) {
-      setScrollProgress((scrollLeft / maxScroll) * 100);
-      setThumbWidth((clientWidth / scrollWidth) * 100);
-    }
-  }, []);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (!scrollRef.current) return;
@@ -70,8 +54,7 @@ export function Carousel({ title, subtitle, items, variant = "movies" }: Carouse
     
     const deltaX = dragRef.current.startX - e.clientX;
     scrollRef.current.scrollLeft = dragRef.current.startScrollLeft + deltaX;
-    handleScroll();
-  }, [handleScroll]);
+  }, []);
 
   const handleMouseUp = useCallback(() => {
     if (dragRef.current.isDragging && scrollRef.current) {
@@ -89,7 +72,6 @@ export function Carousel({ title, subtitle, items, variant = "movies" }: Carouse
         left: direction === "right" ? 280 : -280,
         behavior: "smooth",
       });
-      setTimeout(handleScroll, 100);
     }
   };
 
@@ -174,7 +156,6 @@ export function Carousel({ title, subtitle, items, variant = "movies" }: Carouse
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
-        onScroll={handleScroll}
       >
         {items.map((item, index) => (
           <article
@@ -227,42 +208,10 @@ export function Carousel({ title, subtitle, items, variant = "movies" }: Carouse
         ))}
       </div>
 
-      {/* Premium Minimalist Scroll Indicator */}
-      <div 
-        className={`relative mt-5 transition-all duration-500 ${isHovered ? 'opacity-100' : 'opacity-0'}`}
-        style={{ height: '6px' }}
-      >
-        {/* Track */}
-        <div 
-          className="absolute inset-0 rounded-full bg-zinc-800/60 backdrop-blur-sm"
-        />
-        
-        {/* Progress fill */}
-        <div 
-          className="absolute top-0 left-0 h-full rounded-full transition-all duration-100"
-          style={{ 
-            width: `${thumbWidth}%`,
-            left: `${scrollProgress}%`,
-            background: `linear-gradient(90deg, ${config.accent}, ${config.accent})`,
-            boxShadow: `0 0 12px ${config.accentLight}`,
-            transform: 'translateX(-50%)',
-          }}
-        />
-        
-        {/* Thumb dot */}
-        <div 
-          className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full transition-all duration-100"
-          style={{ 
-            left: `calc(${scrollProgress}% + ${thumbWidth / 2}%)`,
-            background: 'white',
-            boxShadow: `0 0 8px ${config.accentLight}, 0 2px 4px rgba(0,0,0,0.3)`,
-          }}
-        />
-      </div>
-
       <style jsx>{`
         .hide-scrollbar::-webkit-scrollbar {
           height: 0;
+          width: 0;
         }
         .hide-scrollbar {
           -ms-overflow-style: none;
