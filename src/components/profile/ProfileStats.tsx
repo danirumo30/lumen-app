@@ -1,5 +1,4 @@
 import type { UserProfileWithStats } from "@/modules/social/domain/user-profile";
-import { useSimpleDragScroll } from "./useSimpleDragScroll";
 
 interface ProfileStatsProps {
   stats: UserProfileWithStats;
@@ -57,97 +56,85 @@ const formatTime = (minutes: number): string => {
   }
 };
 
-export function ProfileStats({ stats }: ProfileStatsProps) {
-  const { containerRef, handlers } = useSimpleDragScroll();
+// Mapeo estático de colores (Tailwind no soporta bg-${variable})
+const colorStyles = {
+  indigo: "bg-indigo-500/10",
+  cyan: "bg-cyan-500/10",
+  rose: "bg-rose-500/10",
+  emerald: "bg-emerald-500/10",
+} as const;
 
+export function ProfileStats({ stats }: ProfileStatsProps) {
   const statsData = [
     {
       label: "Tiempo Total",
       value: formatTime(stats.totalMinutes),
       icon: (
-        <svg className="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       ),
-      color: "indigo",
+      colorKey: "indigo" as const,
     },
     {
       label: "Series",
       value: formatTime(stats.totalTvMinutes),
       icon: (
-        <svg className="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
         </svg>
       ),
-      color: "cyan",
+      colorKey: "cyan" as const,
     },
     {
       label: "Películas",
       value: formatTime(stats.totalMovieMinutes),
       icon: (
-        <svg className="w-5 h-5 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-4 h-4 sm:w-5 sm:h-5 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
         </svg>
       ),
-      color: "rose",
+      colorKey: "rose" as const,
     },
     {
       label: "Juegos",
       value: formatTime(stats.totalGameMinutes),
       icon: (
-        <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
         </svg>
       ),
-      color: "emerald",
+      colorKey: "emerald" as const,
     },
   ];
 
   return (
-    <div className="mb-8">
+    <div className="mb-6 sm:mb-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-white/90 tracking-tight">Estadísticas</h2>
+      <div className="flex items-center justify-between mb-3 sm:mb-4 px-1">
+        <h2 className="text-base sm:text-lg font-semibold text-white/90 tracking-tight">Estadísticas</h2>
       </div>
 
-      {/* Stats Carousel - drag only, no scrollbar, no arrows */}
-      <div
-        ref={containerRef}
-        className="flex gap-3"
-        {...handlers}
-        style={{
-          overflowX: "auto",
-          overflowY: "hidden",
-          cursor: "grab",
-          scrollBehavior: "smooth",
-          WebkitOverflowScrolling: "touch",
-          scrollbarWidth: "none",
-          msOverflowStyle: "none",
-        }}
-      >
+      {/* Stats Grid - responsive 2x2 on mobile, 4 columns on larger screens */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 px-1">
         {statsData.map((stat, index) => (
           <div
             key={index}
-            className="flex-shrink-0 w-36 sm:w-44 bg-zinc-900/50 backdrop-blur-sm rounded-xl p-3 border border-white/[0.03] hover:border-white/[0.06] transition-all"
+            className="bg-zinc-900/50 backdrop-blur-sm rounded-xl p-2.5 sm:p-3 border border-white/[0.03] hover:border-white/[0.06] transition-all"
           >
-            <div className="flex items-center gap-2.5">
-              <div className={`p-1.5 bg-${stat.color}-500/10 rounded-lg`}>
+            <div className="flex items-center gap-2">
+              {/* Static color class instead of dynamic bg-${color} */}
+              <div className={`p-1.5 rounded-lg ${colorStyles[stat.colorKey]}`}>
                 {stat.icon}
               </div>
-              <div className="min-w-0">
-                <p className="text-xs text-zinc-500 uppercase tracking-wider truncate">{stat.label}</p>
-                <p className="text-sm font-semibold text-white/90 mt-0.5 truncate">{stat.value}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] sm:text-xs text-zinc-500 uppercase tracking-wider truncate">{stat.label}</p>
+                <p className="text-xs sm:text-sm font-semibold text-white/90 truncate">{stat.value}</p>
               </div>
             </div>
           </div>
         ))}
       </div>
-
-      <style jsx>{`
-        div::-webkit-scrollbar {
-          display: none;
-        }
-      `}</style>
     </div>
   );
 }

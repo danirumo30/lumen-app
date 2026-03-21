@@ -14,18 +14,30 @@ export async function GET(
     // Remove 'movie_' or 'tmdb_' prefix if present
     const tmdbId = id.replace(/^(movie_|tmdb_)/, '');
 
-    const response = await fetch(
-      `${TMDB_BASE_URL}/movie/${tmdbId}?api_key=${TMDB_API_KEY}&language=es-ES&append_to_response=release_dates`,
-      { 
-        headers: { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400" }
-      }
-    );
+    // Get country from query param or default to ES
+    const url = new URL(request.url);
+    const country = url.searchParams.get("country") || "ES";
 
-    if (!response.ok) {
-      throw new Error(`TMDB API error: ${response.status}`);
+    const [movieResponse, watchProvidersResponse] = await Promise.all([
+      fetch(
+        `${TMDB_BASE_URL}/movie/${tmdbId}?api_key=${TMDB_API_KEY}&language=es-ES&append_to_response=release_dates`,
+        {
+          headers: { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400" }
+        }
+      ),
+      fetch(
+        `${TMDB_BASE_URL}/movie/${tmdbId}/watch/providers?api_key=${TMDB_API_KEY}`,
+        {
+          headers: { "Cache-Control": "public, s-maxage=86400" }
+        }
+      ),
+    ]);
+
+    if (!movieResponse.ok) {
+      throw new Error(`TMDB API error: ${movieResponse.status}`);
     }
 
-    const movie = await response.json();
+    const movie = await movieResponse.json();
 
     // Get certification from release_dates
     let certification = null;
@@ -35,6 +47,30 @@ export async function GET(
         certification = usRelease.release_dates[0].certification;
       }
     }
+
+    // Get watch providers for the specified country
+    let watchProviders: any = null;
+    if (watchProvidersResponse.ok) {
+      const providersData = await watchProvidersResponse.json();
+      watchProviders = providersData.results?.[country] || null;
+    }
+
+    // Transform watch providers to a cleaner format
+    const formattedWatchProviders = watchProviders ? {
+      link: watchProviders.link,
+      providers: [
+        ...(watchProviders.flatrate || []).map((p: any) => ({ ...p, type: "subscription" })),
+        ...(watchProviders.free || []).map((p: any) => ({ ...p, type: "free" })),
+        ...(watchProviders.ads || []).map((p: any) => ({ ...p, type: "ads" })),
+        ...(watchProviders.rent || []).map((p: any) => ({ ...p, type: "rent" })),
+        ...(watchProviders.buy || []).map((p: any) => ({ ...p, type: "buy" })),
+      ].map((p: any) => ({
+        id: p.provider_id,
+        name: p.provider_name,
+        logoUrl: p.logo_path ? `https://image.tmdb.org/t/p/original${p.logo_path}` : null,
+        type: p.type,
+      })),
+    } : null;
 
     const result = {
       id: `tmdb_${movie.id}`,
@@ -58,6 +94,7 @@ export async function GET(
       status: movie.status,
       tagline: movie.tagline,
       homepage: movie.homepage,
+      watchProviders: formattedWatchProviders,
     };
 
     return NextResponse.json(result);

@@ -25,22 +25,22 @@ export function CastCarousel({ cast, accentColor = "violet" }: CastCarouselProps
   }
 
   return (
-    <section className="mb-8">
+    <section className="mb-10">
       <h2 className="text-lg font-semibold text-white/90 tracking-tight mb-4">Reparto</h2>
       
       <div
         ref={containerRef}
-        className={`flex gap-3 carousel-scroll ${isHovered ? 'is-scrolling' : ''}`}
+        className={`flex gap-3 snap-x snap-mandatory carousel-scroll touch-native-scroll ${isHovered ? 'is-scrolling' : ''}`}
         {...handlers}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         style={{
           overflowX: "auto",
           overflowY: "hidden",
-          cursor: "grab",
           scrollBehavior: "smooth",
           WebkitOverflowScrolling: "touch",
           paddingBottom: "16px",
+          touchAction: "pan-x",
         }}
       >
         {cast.map((person) => (

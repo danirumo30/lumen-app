@@ -78,6 +78,15 @@ interface TvShow {
   inProduction: boolean;
   networks: { id: number; name: string; logoPath: string | null }[];
   createdBy: { id: number; name: string; profilePath: string | null }[];
+  watchProviders?: {
+    link: string;
+    providers: Array<{
+      id: number;
+      name: string;
+      logoUrl: string | null;
+      type: "subscription" | "free" | "ads" | "rent" | "buy";
+    }>;
+  } | null;
 }
 
 interface FavoriteStatus {
@@ -771,6 +780,7 @@ export default function TvDetailPage({ params }: { params: Promise<{ id: string 
           favoriteStatus={favoriteStatus}
           onSeriesToggle={handleSeriesToggle}
           onFavoriteToggle={handleFavoriteToggle}
+          watchProviders={tv.watchProviders}
         />
 
         {tv.seasons && tv.seasons.length > 0 && (

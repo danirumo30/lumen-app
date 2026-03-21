@@ -1,9 +1,20 @@
 .drag-scroll-container {
   overflow-x: auto;
   overflow-y: hidden;
-  cursor: grab;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
+}
+
+/* Desktop: enable grab cursor for custom drag */
+@media (hover: hover) and (pointer: fine) {
+  .drag-scroll-container {
+    cursor: grab;
+  }
+  
+  .drag-scroll-container:active {
+    cursor: grabbing;
+  }
 }
 
 /* Hide scrollbar */

@@ -23,6 +23,15 @@ interface Movie {
   certification: string | null;
   status: string;
   tagline: string | null;
+  watchProviders?: {
+    link: string;
+    providers: Array<{
+      id: number;
+      name: string;
+      logoUrl: string | null;
+      type: "subscription" | "free" | "ads" | "rent" | "buy";
+    }>;
+  } | null;
 }
 
 interface CastMember {

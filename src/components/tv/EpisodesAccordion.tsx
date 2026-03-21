@@ -212,21 +212,25 @@ export function EpisodesAccordion({
             {/* Season Header */}
             <div className="px-4 py-4 flex items-center justify-between hover:bg-white/[0.02] transition-colors">
               {/* Left side - poster with mark button + title (clickeable) */}
-              <div className="flex items-center gap-4 flex-1">
-                {/* Poster container with mark button overlay */}
-                <div className="relative">
+              <div className="flex items-center gap-3 sm:gap-4 flex-1">
+                {/* Poster container with mark button overlay - visible on both mobile and desktop */}
+                <div className="relative flex-shrink-0">
                   <button
                     onClick={() => toggleSeason(season.seasonNumber)}
                     className="block"
                   >
                     {season.posterPath ? (
-                      <img src={season.posterPath} alt={season.name} className="w-12 h-16 object-cover rounded-lg hidden sm:block" />
+                      <img src={season.posterPath} alt={season.name} className="w-10 h-14 sm:w-12 sm:h-16 object-cover rounded-lg" />
                     ) : (
-                      <div className="w-12 h-16 bg-zinc-800 rounded-lg hidden sm:block" />
+                      <div className="w-10 h-14 sm:w-12 sm:h-16 bg-zinc-800 rounded-lg flex items-center justify-center">
+                        <svg className="w-5 h-5 sm:w-6 sm:h-6 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                      </div>
                     )}
                   </button>
                   
-                  {/* Mark season button - always visible over poster */}
+                  {/* Mark season button - visible on both mobile and desktop */}
                   <button
                     onClick={async (e) => {
                       e.stopPropagation();
@@ -237,7 +241,7 @@ export function EpisodesAccordion({
                       }
                       onSeasonToggle(season.seasonNumber, !seasonComplete);
                     }}
-                    className={`absolute -top-2 -right-2 w-7 h-7 rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer hover:scale-110 hover:shadow-lg hover:shadow-cyan-500/40 ${
+                    className={`absolute -top-1.5 -right-1.5 sm:-top-2 sm:-right-2 w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer hover:scale-110 hover:shadow-lg hover:shadow-cyan-500/40 ${
                       seasonComplete
                         ? "bg-rose-500 text-white hover:bg-rose-400 hover:shadow-rose-500/40"
                         : "bg-cyan-500 text-white hover:bg-cyan-400"
@@ -245,11 +249,11 @@ export function EpisodesAccordion({
                     title={seasonComplete ? "Desmarcar temporada" : "Marcar temporada"}
                   >
                     {seasonComplete ? (
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     ) : (
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                       </svg>
                     )}
@@ -259,18 +263,18 @@ export function EpisodesAccordion({
                 {/* Season info (clickeable) */}
                 <button
                   onClick={() => toggleSeason(season.seasonNumber)}
-                  className="flex-1 text-left"
+                  className="flex-1 text-left min-w-0"
                 >
                   <div>
                     <div className="flex items-center gap-2">
-                      <h4 className="text-white font-medium">{season.name}</h4>
+                      <h4 className="text-white font-medium truncate">{season.name}</h4>
                       {seasonComplete && (
-                        <svg className="w-4 h-4 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
+                        <svg className="w-4 h-4 text-emerald-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                         </svg>
                       )}
                     </div>
-                    <p className="text-sm text-zinc-400">
+                    <p className="text-xs sm:text-sm text-zinc-400">
                       {totalInSeason} episodios
                       {season.airDate && ` • ${new Date(season.airDate).getFullYear()}`}
                       {watchedInSeason > 0 && (
@@ -283,44 +287,21 @@ export function EpisodesAccordion({
                 </button>
               </div>
               
-              {/* Right side - mobile mark button + arrow button */}
-              <div className="flex items-center gap-2">
-                {/* Mark season button for mobile (hidden on desktop) */}
-                <button
-                  onClick={async (e) => {
-                    e.stopPropagation();
-                    const { data: { session } } = await supabase.auth.getSession();
-                    if (!session) {
-                      setShowLoginPrompt(true);
-                      return;
-                    }
-                    onSeasonToggle(season.seasonNumber, !seasonComplete);
-                  }}
-                  className={`sm:hidden px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 cursor-pointer hover:scale-105 ${
-                    seasonComplete
-                      ? "bg-rose-500/20 text-rose-400 border border-rose-500/30 hover:bg-rose-500/40 hover:border-rose-500/60"
-                      : "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 hover:bg-cyan-500/40 hover:border-cyan-500/60"
-                  }`}
+              {/* Arrow button - explicit click target for expand/collapse */}
+              <button
+                onClick={() => toggleSeason(season.seasonNumber)}
+                className={`w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors flex-shrink-0`}
+                aria-label={isExpanded ? "Colapsar temporada" : "Expandir temporada"}
+              >
+                <svg
+                  className={`w-5 h-5 text-zinc-400 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
                 >
-                  {seasonComplete ? "Desmarcar" : "Marcar"}
-                </button>
-                
-                {/* Arrow button - explicit click target for expand/collapse */}
-                <button
-                  onClick={() => toggleSeason(season.seasonNumber)}
-                  className={`w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors`}
-                  aria-label={isExpanded ? "Colapsar temporada" : "Expandir temporada"}
-                >
-                  <svg
-                    className={`w-5 h-5 text-zinc-400 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-              </div>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
             </div>
 
             {/* Episodes List */}
@@ -336,18 +317,18 @@ export function EpisodesAccordion({
                       const watched = isEpisodeWatched(episode.seasonNumber, episode.episodeNumber);
                       
                       return (
-                        <div key={episode.id} className="p-4 hover:bg-white/[0.02] transition-colors">
-                          <div className="flex gap-4">
-                            {/* Episode thumbnail */}
+                        <div key={episode.id} className="p-3 sm:p-4 hover:bg-white/[0.02] transition-colors">
+                          <div className="flex gap-2 sm:gap-4">
+                            {/* Episode thumbnail - responsive sizes */}
                             {episode.stillPath ? (
                               <img
                                 src={episode.stillPath}
                                 alt={episode.name}
-                                className={`w-32 h-20 object-cover rounded-lg flex-shrink-0 transition-all ${watched ? "opacity-60" : ""}`}
+                                className={`w-20 h-14 sm:w-28 sm:h-[72px] object-cover rounded-lg flex-shrink-0 transition-all ${watched ? "opacity-60" : ""}`}
                               />
                             ) : (
-                              <div className={`w-32 h-20 rounded-lg flex-shrink-0 flex items-center justify-center transition-all ${watched ? "bg-emerald-900/30 opacity-60" : "bg-zinc-800"}`}>
-                                <svg className="w-8 h-8 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <div className={`w-20 h-14 sm:w-28 sm:h-[72px] rounded-lg flex-shrink-0 flex items-center justify-center transition-all ${watched ? "bg-emerald-900/30 opacity-60" : "bg-zinc-800"}`}>
+                                <svg className="w-6 h-6 sm:w-8 sm:h-8 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                 </svg>
                               </div>
@@ -356,21 +337,21 @@ export function EpisodesAccordion({
                             <div className="flex-1 min-w-0">
                               {/* Episode header */}
                               <div className="flex items-start justify-between gap-2 mb-1">
-                                <div className="flex items-center gap-2 flex-1">
-                                  <span className="text-zinc-500 text-sm font-mono">
+                                <div className="flex items-center gap-1 sm:gap-2 flex-1 min-w-0">
+                                  <span className="text-zinc-500 text-xs sm:text-sm font-mono flex-shrink-0">
                                     {episode.seasonNumber}x{episode.episodeNumber.toString().padStart(2, "0")}
                                   </span>
-                                  <h5 className={`font-medium truncate ${watched ? "text-emerald-400" : "text-white"}`}>
+                                  <h5 className={`font-medium text-sm sm:text-base truncate ${watched ? "text-emerald-400" : "text-white"}`}>
                                     {episode.name}
                                   </h5>
                                   {watched && (
-                                    <svg className="w-4 h-4 text-emerald-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <svg className="w-3 h-3 sm:w-4 sm:h-4 text-emerald-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                     </svg>
                                   )}
                                 </div>
                                 
-                                <div className="flex items-center gap-2 flex-shrink-0">
+                                <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                                   {/* Episode toggle button */}
                                   <button
                                     onClick={async () => {

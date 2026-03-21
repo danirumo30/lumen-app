@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useAuth } from "@/modules/auth/infrastructure/contexts/AuthContext";
 import { Modal } from "@/components/ui/Modal";
 import { supabase } from "@/lib/supabase";
+import { WatchProvidersSection, type WatchProvider } from "@/components/shared/WatchProvidersSection";
 
 interface Movie {
   id: string;
@@ -22,6 +23,10 @@ interface Movie {
   certification: string | null;
   status: string;
   tagline: string | null;
+  watchProviders?: {
+    link: string;
+    providers: WatchProvider[];
+  } | null;
 }
 
 interface WatchedStatus {
@@ -254,8 +259,16 @@ export function MovieInfo({ movie, watchedStatus, favoriteStatus, onWatchedChang
           )}
         </div>
 
+        {/* Watch Providers - Compact inline design */}
+        {movie.watchProviders?.providers && movie.watchProviders.providers.length > 0 && (
+          <WatchProvidersSection 
+            providers={movie.watchProviders.providers}
+            link={movie.watchProviders.link}
+          />
+        )}
+
         {/* Watched & Favorite section */}
-        <div className="border-t border-white/5 pt-6">
+        <div className="border-t border-white/5 pt-6 mb-6 md:mb-0">
           <div className="flex gap-3">
             {/* Watched Button */}
             <button
