@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, ReactNode } from "react";
+import { useState, ReactNode } from "react";
+import { useDragScroll } from "../home/useDragScroll";
 
 interface CarouselProps {
   title: string;
@@ -10,45 +11,40 @@ interface CarouselProps {
 }
 
 export function Carousel({ title, icon, children, emptyMessage }: CarouselProps) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  const scroll = (direction: "left" | "right") => {
-    if (scrollRef.current) {
-      const scrollAmount = 280; // Card width + gap
-      scrollRef.current.scrollBy({
-        left: direction === "right" ? scrollAmount : -scrollAmount,
-        behavior: "smooth",
-      });
-    }
-  };
+  const { containerRef, handlers } = useDragScroll({ snap: true });
+  const [isHovered, setIsHovered] = useState(false);
 
   return (
-    <div className="mb-8">
-      {/* Section Header */}
-      <div className="flex items-center justify-between mb-4">
+    <section 
+      className="mb-8 group/carousel relative"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {/* Header */}
+      <div className="flex items-end justify-between mb-4 px-1">
         <div className="flex items-center gap-3">
           {icon && <div className="text-zinc-400">{icon}</div>}
-          <h2 className="text-lg font-semibold text-white">{title}</h2>
+          <h2 className="text-lg font-semibold text-white/90 tracking-tight">{title}</h2>
         </div>
         
-        {/* Navigation Arrows */}
-        <div className="flex gap-1">
+        {/* Glassmorphism Navigation Buttons */}
+        <div className="flex gap-1.5 opacity-0 group-hover/carousel:opacity-100 transition-all duration-300">
           <button
-            onClick={() => scroll("left")}
-            className="p-2 rounded-lg bg-zinc-800/50 hover:bg-zinc-700/50 text-zinc-400 hover:text-white transition-colors"
-            aria-label="Scroll left"
+            onClick={() => containerRef.current?.scrollBy({ left: -300, behavior: "smooth" })}
+            className="p-2 rounded-xl bg-white/5 backdrop-blur-xl border border-white/5 text-zinc-400 hover:text-white hover:bg-white/10 hover:border-white/10 transition-all duration-200"
+            aria-label="Anterior"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
           <button
-            onClick={() => scroll("right")}
-            className="p-2 rounded-lg bg-zinc-800/50 hover:bg-zinc-700/50 text-zinc-400 hover:text-white transition-colors"
-            aria-label="Scroll right"
+            onClick={() => containerRef.current?.scrollBy({ left: 300, behavior: "smooth" })}
+            className="p-2 rounded-xl bg-white/5 backdrop-blur-xl border border-white/5 text-zinc-400 hover:text-white hover:bg-white/10 hover:border-white/10 transition-all duration-200"
+            aria-label="Siguiente"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
             </svg>
           </button>
         </div>
@@ -57,22 +53,24 @@ export function Carousel({ title, icon, children, emptyMessage }: CarouselProps)
       {/* Carousel Content */}
       {children ? (
         <div
-          ref={scrollRef}
-          className="flex gap-3 overflow-x-auto scrollbar-hide pb-2"
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+          ref={containerRef}
+          className={`flex gap-3 overflow-x-auto snap-x snap-mandatory carousel-scroll ${isHovered ? 'is-scrolling' : ''}`}
+          {...handlers}
+          style={{
+            overflowX: "auto",
+            overflowY: "hidden",
+            cursor: "grab",
+            scrollBehavior: "smooth",
+            WebkitOverflowScrolling: "touch",
+            paddingBottom: "16px",
+          }}
         >
           {children}
         </div>
       ) : (
         <p className="text-zinc-500 text-sm py-8 text-center">{emptyMessage || "No hay contenido"}</p>
       )}
-
-      <style jsx>{`
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;
-        }
-      `}</style>
-    </div>
+    </section>
   );
 }
 

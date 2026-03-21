@@ -31,3 +31,35 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Premium Dark Carousel Scrollbar */
+.carousel-scroll::-webkit-scrollbar {
+  height: 4px;
+}
+
+.carousel-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.carousel-scroll::-webkit-scrollbar-thumb {
+  background: rgba(168, 85, 247, 0);
+  border-radius: 999px;
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+
+/* Show scrollbar when hovering anywhere in carousel */
+.carousel-scroll.is-scrolling::-webkit-scrollbar-thumb {
+  background: rgba(168, 85, 247, 0.5);
+}
+
+.carousel-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(168, 85, 247, 0.8) !important;
+  transform: scaleY(1.3);
+}
+
+/* Shimmer animation */
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}

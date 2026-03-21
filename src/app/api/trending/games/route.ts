@@ -38,8 +38,8 @@ async function fetchGames(accessToken: string, retry = false): Promise<Response>
     },
     body: `
       fields id, name, cover.url, rating, first_release_date, summary;
-      where rating != null & first_release_date != null;
-      sort rating desc;
+      where rating != null & first_release_date != null & first_release_date >= 1735689600;
+      sort first_release_date desc;
       limit 20;
     `,
   });
