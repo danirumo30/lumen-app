@@ -3,12 +3,14 @@
 import { useRef, useCallback, useEffect, RefObject } from "react";
 
 interface UseDragScrollOptions {
-  /** Velocidad del scroll relativo al arrastre (1 = 1:1) */
+  /** Velocidad del scroll relativo al arrastre (1 = 1:1) - solo desktop */
   speed?: number;
   /** Habilitar snap a elementos hijos */
   snap?: boolean;
-  /** Selector CSS para elementos que hacen snap (ej: 'article', '.item') */
+  /** Selector CSS para elementos que hacen snap */
   snapSelector?: string;
+  /** Forzar uso de drag custom incluso en mobile (default: false = usar scroll nativo) */
+  forceDragOnMobile?: boolean;
 }
 
 interface UseDragScrollReturn {
@@ -19,18 +21,23 @@ interface UseDragScrollReturn {
     onMouseMove: (e: React.MouseEvent) => void;
     onMouseUp: () => void;
     onMouseLeave: () => void;
-    onTouchStart: (e: React.TouchEvent) => void;
-    onTouchMove: (e: React.TouchEvent) => void;
-    onTouchEnd: () => void;
+  };
+  /** CSS classes para aplicar al contenedor */
+  containerProps?: {
+    className?: string;
+    style?: React.CSSProperties;
   };
 }
 
 /**
- * Hook para scroll horizontal por arrastre (drag-to-scroll)
- * Sin dependencias externas
+ * Hook para scroll horizontal con soporte nativo en mobile
+ * 
+ * Estrategia:
+ * - Mobile/Touch: Usa scroll NATIVO del navegador (óptimo, con momentum)
+ * - Desktop/Mouse: Usa drag custom para mejor control
  */
 export function useDragScroll(options: UseDragScrollOptions = {}): UseDragScrollReturn {
-  const { speed = 1, snap = false } = options;
+  const { speed = 1, snap = false, forceDragOnMobile = false } = options;
 
   const containerRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
@@ -38,14 +45,34 @@ export function useDragScroll(options: UseDragScrollOptions = {}): UseDragScroll
   const startScrollLeft = useRef(0);
   const hasDragged = useRef(false);
   const lastDragTime = useRef(0);
-  const DRAG_THRESHOLD = 5; // pixels para distinguir drag de click
-  const CLICK_CANCEL_THRESHOLD = 200; // ms para cancelar clicks después de drag
+  const DRAG_THRESHOLD = 5;
+  const CLICK_CANCEL_THRESHOLD = 200;
+
+  // Detectar si es dispositivo táctil
+  const isTouchDevice = useRef(
+    typeof window !== "undefined" && 
+    ("ontouchstart" in window || navigator.maxTouchPoints > 0)
+  );
+
+  // Actualizar detección de touch en resize (para hybrid devices)
+  useEffect(() => {
+    const updateTouchDetection = () => {
+      isTouchDevice.current = 
+        "ontouchstart" in window || 
+        navigator.maxTouchPoints > 0;
+    };
+    
+    window.addEventListener("resize", updateTouchDetection);
+    return () => window.removeEventListener("resize", updateTouchDetection);
+  }, []);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     const container = containerRef.current;
     if (!container) return;
 
-    // Prevenir que el navegador interprete esto como drag de imagen/enlace
+    // Solo usar drag custom en desktop
+    if (isTouchDevice.current && !forceDragOnMobile) return;
+
     e.preventDefault();
 
     isDragging.current = true;
@@ -56,20 +83,18 @@ export function useDragScroll(options: UseDragScrollOptions = {}): UseDragScroll
     container.style.cursor = "grabbing";
     container.style.userSelect = "none";
     container.style.scrollBehavior = "auto";
-  }, []);
+  }, [forceDragOnMobile]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (!isDragging.current || !containerRef.current) return;
 
     const deltaX = e.clientX - startX.current;
 
-    // Solo marcar como drag si superó el threshold
     if (Math.abs(deltaX) > DRAG_THRESHOLD) {
       hasDragged.current = true;
       lastDragTime.current = Date.now();
     }
 
-    // Solo hacer scroll si realmente estamos arrastrando
     if (hasDragged.current) {
       containerRef.current.scrollLeft = startScrollLeft.current - deltaX * speed;
     }
@@ -95,47 +120,7 @@ export function useDragScroll(options: UseDragScrollOptions = {}): UseDragScroll
     }
   }, [handleMouseUp]);
 
-  // Touch support para móviles
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    isDragging.current = true;
-    hasDragged.current = false;
-    startX.current = e.touches[0].clientX;
-    startScrollLeft.current = container.scrollLeft;
-  }, []);
-
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (!isDragging.current || !containerRef.current) return;
-
-    // Prevenir scroll nativo del navegador para evitar delay/conflicto
-    e.preventDefault();
-
-    const deltaX = e.touches[0].clientX - startX.current;
-
-    // Solo marcar como drag si superó el threshold
-    if (Math.abs(deltaX) > DRAG_THRESHOLD) {
-      hasDragged.current = true;
-    }
-
-    // Solo hacer scroll si realmente estamos arrastrando
-    if (hasDragged.current) {
-      containerRef.current.scrollLeft = startScrollLeft.current - deltaX * speed;
-    }
-  }, [speed]);
-
-  const handleTouchEnd = useCallback(() => {
-    isDragging.current = false;
-    hasDragged.current = false;
-    
-    if (snap && containerRef.current) {
-      containerRef.current.style.scrollBehavior = "smooth";
-      snapToNearest(containerRef.current);
-    }
-  }, [snap]);
-
-  // Cancelar clicks fantasma a nivel de documento después de drag
+  // Cancelar clicks fantasma después de drag en desktop
   useEffect(() => {
     const handleGlobalClick = (e: MouseEvent) => {
       const timeSinceDrag = Date.now() - lastDragTime.current;
@@ -162,6 +147,16 @@ export function useDragScroll(options: UseDragScrollOptions = {}): UseDragScroll
     };
   }, []);
 
+  // Props para aplicar al contenedor
+  const containerProps = {
+    className: isTouchDevice.current && !forceDragOnMobile ? "touch-native-scroll" : "",
+    style: {
+      overflowX: "auto",
+      overflowY: "hidden",
+      WebkitOverflowScrolling: "touch", // Momentum scrolling en iOS
+    } as React.CSSProperties,
+  };
+
   return {
     containerRef,
     isDragging,
@@ -170,10 +165,8 @@ export function useDragScroll(options: UseDragScrollOptions = {}): UseDragScroll
       onMouseMove: handleMouseMove,
       onMouseUp: handleMouseUp,
       onMouseLeave: handleMouseLeave,
-      onTouchStart: handleTouchStart,
-      onTouchMove: handleTouchMove,
-      onTouchEnd: handleTouchEnd,
     },
+    containerProps,
   };
 }
 

@@ -36,17 +36,17 @@ export function SimilarMediaCarousel({ items, type = "movie" }: SimilarMediaCaro
       
       <div
         ref={containerRef}
-        className={`flex gap-3 snap-x snap-mandatory carousel-scroll ${isHovered ? 'is-scrolling' : ''}`}
+        className={`flex gap-3 snap-x snap-mandatory carousel-scroll touch-native-scroll ${isHovered ? 'is-scrolling' : ''}`}
         {...handlers}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         style={{
           overflowX: "auto",
           overflowY: "hidden",
-          cursor: "grab",
           scrollBehavior: "smooth",
           WebkitOverflowScrolling: "touch",
           paddingBottom: "16px",
+          touchAction: "pan-x",
         }}
       >
         {items.map((item) => {

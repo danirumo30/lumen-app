@@ -79,15 +79,15 @@ function CarouselSection({ title, icon, mediaList }: CarouselSectionProps) {
       {hasContent ? (
         <div
           ref={containerRef}
-          className={`flex gap-3 snap-x snap-mandatory carousel-scroll ${isHovered ? 'is-scrolling' : ''}`}
+          className={`flex gap-3 snap-x snap-mandatory carousel-scroll touch-native-scroll ${isHovered ? 'is-scrolling' : ''}`}
           {...handlers}
           style={{
             overflowX: "auto",
             overflowY: "hidden",
-            cursor: "grab",
             scrollBehavior: "smooth",
             WebkitOverflowScrolling: "touch",
             paddingBottom: "16px",
+            touchAction: "pan-x",
           }}
         >
           {mediaList.map((media) => (

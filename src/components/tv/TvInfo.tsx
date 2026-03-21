@@ -100,19 +100,20 @@ export function TvInfo({
 
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-8 mb-12">
+      <div className="grid grid-cols-1 sm:grid-cols-[180px_1fr] md:grid-cols-[220px_1fr] lg:grid-cols-[300px_1fr] gap-4 sm:gap-6 md:gap-8 mb-8 sm:mb-12">
         {/* Poster */}
         <div className="relative">
-          <div className="sticky top-24">
+          {/* Mobile: centered poster, Desktop: sticky */}
+          <div className="sm:sticky sm:top-24 mx-auto sm:mx-0 max-w-[200px] sm:max-w-none">
             {tv.posterUrl ? (
               <img
                 src={tv.posterUrl}
                 alt={tv.title}
-                className="w-full rounded-2xl shadow-2xl shadow-black/50"
+                className="w-full rounded-xl sm:rounded-2xl shadow-2xl shadow-black/50"
               />
             ) : (
-              <div className="aspect-[2/3] rounded-2xl bg-zinc-800 flex items-center justify-center">
-                <svg className="w-16 h-16 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="aspect-[2/3] rounded-xl sm:rounded-2xl bg-zinc-800 flex items-center justify-center">
+                <svg className="w-12 h-12 sm:w-16 sm:h-16 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
               </div>
@@ -121,17 +122,17 @@ export function TvInfo({
         </div>
 
         {/* Info */}
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Title */}
           <div>
-            <h1 className="text-3xl font-bold text-white tracking-tight">{tv.title}</h1>
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white tracking-tight leading-tight">{tv.title}</h1>
             {tv.originalTitle !== tv.title && (
-              <p className="text-zinc-400 mt-1">{tv.originalTitle}</p>
+              <p className="text-zinc-400 mt-1 text-sm sm:text-base">{tv.originalTitle}</p>
             )}
           </div>
 
           {/* Meta info */}
-          <div className="flex flex-wrap items-center gap-3 text-sm text-zinc-400">
+          <div className="flex flex-wrap items-center gap-x-2 sm:gap-3 text-xs sm:text-sm text-zinc-400">
             {tv.certification && (
               <span className="px-2 py-0.5 rounded bg-zinc-800 border border-zinc-700 text-zinc-300 font-medium">
                 {tv.certification}
@@ -200,7 +201,7 @@ export function TvInfo({
 
           {/* Tagline */}
           {tv.tagline && (
-            <p className="text-zinc-400 italic text-lg">"{tv.tagline}"</p>
+            <p className="text-zinc-400 italic text-sm sm:text-base md:text-lg">"{tv.tagline}"</p>
           )}
 
           {/* Overview */}
@@ -235,17 +236,16 @@ export function TvInfo({
           </div>
 
           {/* Action buttons */}
-          <div className="border-t border-white/5 pt-6">
-            <div className="flex flex-wrap gap-3">
+          <div className="border-t border-white/5 pt-4 sm:pt-6">
+            <div className="flex flex-col sm:flex-row gap-3">
               {/* Mark series button */}
               <button
                 onClick={handleSeriesClick}
-                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-all ${
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
                   isSeriesWatched
                     ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-rose-500/30 hover:border-rose-500/30 hover:text-rose-400"
                     : "bg-white text-zinc-900 hover:bg-zinc-200"
                 }`}
-                style={{ minWidth: "160px" }}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -256,7 +256,7 @@ export function TvInfo({
               {/* Favorite button */}
               <button
                 onClick={handleFavoriteClick}
-                className={`flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-all ${
+                className={`flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
                   favoriteStatus.favorite
                     ? "bg-rose-500/20 text-rose-400 border border-rose-500/30 hover:bg-rose-500/30"
                     : "bg-zinc-800/80 text-zinc-300 border border-zinc-700/50 hover:bg-zinc-700/80 hover:text-white"
