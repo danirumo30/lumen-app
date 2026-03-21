@@ -108,25 +108,46 @@ interface MediaTabsProps {
 export function MediaTabs({ content }: MediaTabsProps) {
   return (
     <div>
-      {/* Series Carousel */}
+      {/* Series Vistas */}
       <CarouselSection
-        title="Series"
+        title="Series vistas"
         icon={<TvIcon />}
         mediaList={content.watchedTvShows}
       />
 
-      {/* Movies Carousel */}
+      {/* Series Favoritas */}
       <CarouselSection
-        title="Películas"
+        title="Series favoritas"
+        icon={<TvIcon />}
+        mediaList={content.favoriteTvShows}
+      />
+
+      {/* Películas Vistas */}
+      <CarouselSection
+        title="Películas vistas"
         icon={<MovieIcon />}
         mediaList={content.watchedMovies}
       />
 
-      {/* Games Carousel */}
+      {/* Películas Favoritas */}
       <CarouselSection
-        title="Videojuegos"
+        title="Películas favoritas"
+        icon={<MovieIcon />}
+        mediaList={content.favoriteMovies}
+      />
+
+      {/* Videojuegos Vistos */}
+      <CarouselSection
+        title="Videojuegos jugados"
         icon={<GameIcon />}
         mediaList={content.watchedGames}
+      />
+
+      {/* Videojuegos Favoritos */}
+      <CarouselSection
+        title="Videojuegos favoritos"
+        icon={<GameIcon />}
+        mediaList={content.favoriteGames}
       />
     </div>
   );

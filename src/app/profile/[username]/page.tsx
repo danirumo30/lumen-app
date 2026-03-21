@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, notFound } from "next/navigation";
 
 import { SupabaseUserProfileRepository } from "@/modules/social/infrastructure/repositories/supabase-user-profile.repository";
@@ -9,6 +9,11 @@ import { ProfileStats } from "@/components/profile/ProfileStats";
 import { MediaTabs } from "@/components/profile/MediaTabs";
 import { FollowersModal } from "@/components/profile/FollowersModal";
 import { getSupabaseClient } from "@/lib/supabase";
+import {
+  useProfileStats,
+  useCurrentUserProfile,
+  useProfileInvalidation,
+} from "@/modules/social/infrastructure/hooks/use-profile-stats.hook";
 import type { Follower, UserProfileWithContent, UserProfileWithStats } from "@/modules/social/domain/user-profile";
 
 export default function ProfilePage() {
@@ -19,80 +24,115 @@ export default function ProfilePage() {
   const [modalType, setModalType] = useState<"followers" | "following">("followers");
   const [followers, setFollowers] = useState<Follower[]>([]);
   const [following, setFollowing] = useState<Follower[]>([]);
-  const [profile, setProfile] = useState<UserProfileWithStats | null>(null);
   const [content, setContent] = useState<UserProfileWithContent | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isFollowing, setIsFollowing] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [profileUserId, setProfileUserId] = useState<string | null>(null);
+  
+  // React Query hooks for real-time stats
+  const { data: profileStats } = useProfileStats(profileUserId);
+  
+  // Hook for invalidating profile stats
+  const { invalidate } = useProfileInvalidation();
 
-  // Fetch profile data
-  useEffect(() => {
-    const loadProfile = async () => {
-      try {
-        const supabase = getSupabaseClient();
-        const repository = new SupabaseUserProfileRepository(supabase);
+  // Merge stats into a single profile object
+  const profile: UserProfileWithStats | null = profileStats ?? null;
 
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (user) {
-          setCurrentUserId(user.id);
-        }
-        
-        const profileData = await repository.getProfileByUsername(username);
-        
-        if (!profileData) {
-          notFound();
-        }
+  // Load profile data function
+  const loadProfile = useCallback(async () => {
+    try {
+      const supabase = getSupabaseClient();
+      const repository = new SupabaseUserProfileRepository(supabase);
 
-        setProfile(profileData);
-
-        // Check if current user is following this profile
-        let isFollowingUser = false;
-        if (user && user.id !== profileData.id) {
-          isFollowingUser = await repository.isFollowing(user.id, profileData.id);
-          setIsFollowing(isFollowingUser);
-        }
-
-        // Load content
-        const contentData = await repository.getProfileContent({
-          userId: profileData.id,
-          includeFavorites: true,
-          includeWatched: true,
-          mediaTypes: ["movie", "tv", "game"],
-        });
-
-        // Get follower counts
-        const [followersCount, followingCount] = await Promise.all([
-          repository.getFollowersCount(profileData.id),
-          repository.getFollowingCount(profileData.id),
-        ]);
-
-        setContent({
-          ...contentData,
-          followersCount,
-          followingCount,
-          isFollowing: isFollowingUser,
-          isFollower: user ? await repository.isFollowing(profileData.id, user.id) : false,
-        });
-
-        // Load followers and following lists
-        const [followersList, followingList] = await Promise.all([
-          repository.getFollowers(profileData.id),
-          repository.getFollowing(profileData.id),
-        ]);
-        
-        setFollowers(followersList);
-        setFollowing(followingList);
-      } catch (err) {
-        console.error("Error loading profile:", err);
-        notFound();
-      } finally {
-        setIsLoading(false);
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        setCurrentUserId(user.id);
       }
+      
+      const profileData = await repository.getProfileByUsername(username);
+      
+      if (!profileData) {
+        notFound();
+        return;
+      }
+
+      setProfileUserId(profileData.id);
+
+      // Check if current user is following this profile
+      let isFollowingUser = false;
+      if (user && user.id !== profileData.id) {
+        isFollowingUser = await repository.isFollowing(user.id, profileData.id);
+        setIsFollowing(isFollowingUser);
+      }
+
+      // Load content
+      const contentData = await repository.getProfileContent({
+        userId: profileData.id,
+        includeFavorites: true,
+        includeWatched: true,
+        mediaTypes: ["movie", "tv", "game"],
+      });
+
+      // Get follower counts
+      const [followersCount, followingCount] = await Promise.all([
+        repository.getFollowersCount(profileData.id),
+        repository.getFollowingCount(profileData.id),
+      ]);
+
+      setContent({
+        ...contentData,
+        followersCount,
+        followingCount,
+        isFollowing: isFollowingUser,
+        isFollower: user ? await repository.isFollowing(profileData.id, user.id) : false,
+      });
+
+      // Load followers and following lists
+      const [followersList, followingList] = await Promise.all([
+        repository.getFollowers(profileData.id),
+        repository.getFollowing(profileData.id),
+      ]);
+      
+      setFollowers(followersList);
+      setFollowing(followingList);
+    } catch (err) {
+      console.error("Error loading profile:", err);
+      notFound();
+    } finally {
+      setIsLoading(false);
+    }
+  }, [username]);
+
+  // Initial load
+  useEffect(() => {
+    loadProfile();
+  }, [loadProfile]);
+
+  // Listen for episode sync events to trigger refresh
+  useEffect(() => {
+    const handleSyncSuccess = async () => {
+      // Invalidate React Query cache
+      invalidate();
+      
+      // Reload profile data manually for immediate update
+      await loadProfile();
     };
 
-    loadProfile();
-  }, [username]);
+    const handleSyncError = () => {
+      // Invalidate profile to show error state
+      invalidate();
+    };
+
+    window.addEventListener("episode-sync-success", handleSyncSuccess);
+    window.addEventListener("episode-sync-error", handleSyncError);
+    
+    return () => {
+      window.removeEventListener("episode-sync-success", handleSyncSuccess);
+      window.removeEventListener("episode-sync-error", handleSyncError);
+    };
+  }, [invalidate, loadProfile]);
 
   const handleFollowToggle = async () => {
     try {
@@ -158,6 +198,7 @@ export default function ProfilePage() {
 
   if (!profile || !content) {
     notFound();
+    return null;
   }
 
   // Check if viewing own profile
@@ -178,7 +219,7 @@ export default function ProfilePage() {
       />
 
       <div className="max-w-6xl mx-auto px-4 py-8">
-        {/* Profile Stats */}
+        {/* Profile Stats - now uses React Query with real-time updates */}
         <ProfileStats stats={profile} />
 
         {/* Media Tabs with Content */}

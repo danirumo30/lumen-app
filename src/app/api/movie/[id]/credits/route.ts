@@ -11,7 +11,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const tmdbId = id.replace('tmdb_', '');
+    const tmdbId = id.replace(/^(movie_|tmdb_)/, '');
 
     const response = await fetch(
       `${TMDB_BASE_URL}/movie/${tmdbId}/credits?api_key=${TMDB_API_KEY}&language=es-ES`,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useCallback, RefObject } from "react";
+import { useRef, useCallback, RefObject, useEffect } from "react";
 
 interface UseSimpleDragScrollReturn {
   containerRef: RefObject<HTMLDivElement | null>;
@@ -24,12 +24,18 @@ export function useSimpleDragScroll(): UseSimpleDragScrollReturn {
   const isDragging = useRef(false);
   const startX = useRef(0);
   const startScrollLeft = useRef(0);
+  const hasDragged = useRef(false);
+  const lastDragTime = useRef(0);
+  const DRAG_THRESHOLD = 5;
+  const CLICK_CANCEL_THRESHOLD = 200;
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     const container = containerRef.current;
     if (!container) return;
 
+    e.preventDefault();
     isDragging.current = true;
+    hasDragged.current = false;
     startX.current = e.clientX;
     startScrollLeft.current = container.scrollLeft;
 
@@ -41,14 +47,23 @@ export function useSimpleDragScroll(): UseSimpleDragScrollReturn {
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (!isDragging.current || !containerRef.current) return;
 
-    const deltaX = startX.current - e.clientX;
-    containerRef.current.scrollLeft = startScrollLeft.current + deltaX;
+    const deltaX = e.clientX - startX.current;
+
+    if (Math.abs(deltaX) > DRAG_THRESHOLD) {
+      hasDragged.current = true;
+      lastDragTime.current = Date.now();
+    }
+
+    if (hasDragged.current) {
+      containerRef.current.scrollLeft = startScrollLeft.current - deltaX;
+    }
   }, []);
 
   const handleMouseUp = useCallback(() => {
     if (!containerRef.current) return;
 
     isDragging.current = false;
+    hasDragged.current = false;
     containerRef.current.style.cursor = "";
     containerRef.current.style.userSelect = "";
     containerRef.current.style.scrollBehavior = "smooth";
@@ -65,6 +80,7 @@ export function useSimpleDragScroll(): UseSimpleDragScrollReturn {
     if (!container) return;
 
     isDragging.current = true;
+    hasDragged.current = false;
     startX.current = e.touches[0].clientX;
     startScrollLeft.current = container.scrollLeft;
   }, []);
@@ -72,12 +88,38 @@ export function useSimpleDragScroll(): UseSimpleDragScrollReturn {
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
     if (!isDragging.current || !containerRef.current) return;
 
-    const deltaX = startX.current - e.touches[0].clientX;
-    containerRef.current.scrollLeft = startScrollLeft.current + deltaX;
+    e.preventDefault();
+
+    const deltaX = e.touches[0].clientX - startX.current;
+
+    if (Math.abs(deltaX) > DRAG_THRESHOLD) {
+      hasDragged.current = true;
+    }
+
+    if (hasDragged.current) {
+      containerRef.current.scrollLeft = startScrollLeft.current - deltaX;
+    }
   }, []);
 
   const handleTouchEnd = useCallback(() => {
     isDragging.current = false;
+    hasDragged.current = false;
+  }, []);
+
+  // Cancelar clicks fantasma a nivel de documento después de drag
+  useEffect(() => {
+    const handleGlobalClick = (e: MouseEvent) => {
+      const timeSinceDrag = Date.now() - lastDragTime.current;
+      if (timeSinceDrag < CLICK_CANCEL_THRESHOLD) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+
+    document.addEventListener("click", handleGlobalClick, true);
+    return () => {
+      document.removeEventListener("click", handleGlobalClick, true);
+    };
   }, []);
 
   return {

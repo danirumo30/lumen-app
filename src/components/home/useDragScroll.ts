@@ -36,13 +36,20 @@ export function useDragScroll(options: UseDragScrollOptions = {}): UseDragScroll
   const isDragging = useRef(false);
   const startX = useRef(0);
   const startScrollLeft = useRef(0);
+  const hasDragged = useRef(false);
+  const lastDragTime = useRef(0);
+  const DRAG_THRESHOLD = 5; // pixels para distinguir drag de click
+  const CLICK_CANCEL_THRESHOLD = 200; // ms para cancelar clicks después de drag
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     const container = containerRef.current;
     if (!container) return;
 
-    // Solo iniciar si el click es dentro del contenedor
+    // Prevenir que el navegador interprete esto como drag de imagen/enlace
+    e.preventDefault();
+
     isDragging.current = true;
+    hasDragged.current = false;
     startX.current = e.clientX;
     startScrollLeft.current = container.scrollLeft;
 
@@ -54,14 +61,25 @@ export function useDragScroll(options: UseDragScrollOptions = {}): UseDragScroll
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (!isDragging.current || !containerRef.current) return;
 
-    const deltaX = startX.current - e.clientX;
-    containerRef.current.scrollLeft = startScrollLeft.current + deltaX * speed;
+    const deltaX = e.clientX - startX.current;
+
+    // Solo marcar como drag si superó el threshold
+    if (Math.abs(deltaX) > DRAG_THRESHOLD) {
+      hasDragged.current = true;
+      lastDragTime.current = Date.now();
+    }
+
+    // Solo hacer scroll si realmente estamos arrastrando
+    if (hasDragged.current) {
+      containerRef.current.scrollLeft = startScrollLeft.current - deltaX * speed;
+    }
   }, [speed]);
 
   const handleMouseUp = useCallback(() => {
     if (!containerRef.current) return;
 
     isDragging.current = false;
+    hasDragged.current = false;
     containerRef.current.style.cursor = "";
     containerRef.current.style.userSelect = "";
     
@@ -83,6 +101,7 @@ export function useDragScroll(options: UseDragScrollOptions = {}): UseDragScroll
     if (!container) return;
 
     isDragging.current = true;
+    hasDragged.current = false;
     startX.current = e.touches[0].clientX;
     startScrollLeft.current = container.scrollLeft;
   }, []);
@@ -90,18 +109,47 @@ export function useDragScroll(options: UseDragScrollOptions = {}): UseDragScroll
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
     if (!isDragging.current || !containerRef.current) return;
 
-    const deltaX = startX.current - e.touches[0].clientX;
-    containerRef.current.scrollLeft = startScrollLeft.current + deltaX * speed;
+    // Prevenir scroll nativo del navegador para evitar delay/conflicto
+    e.preventDefault();
+
+    const deltaX = e.touches[0].clientX - startX.current;
+
+    // Solo marcar como drag si superó el threshold
+    if (Math.abs(deltaX) > DRAG_THRESHOLD) {
+      hasDragged.current = true;
+    }
+
+    // Solo hacer scroll si realmente estamos arrastrando
+    if (hasDragged.current) {
+      containerRef.current.scrollLeft = startScrollLeft.current - deltaX * speed;
+    }
   }, [speed]);
 
   const handleTouchEnd = useCallback(() => {
     isDragging.current = false;
+    hasDragged.current = false;
     
     if (snap && containerRef.current) {
       containerRef.current.style.scrollBehavior = "smooth";
       snapToNearest(containerRef.current);
     }
   }, [snap]);
+
+  // Cancelar clicks fantasma a nivel de documento después de drag
+  useEffect(() => {
+    const handleGlobalClick = (e: MouseEvent) => {
+      const timeSinceDrag = Date.now() - lastDragTime.current;
+      if (timeSinceDrag < CLICK_CANCEL_THRESHOLD) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+
+    document.addEventListener("click", handleGlobalClick, true);
+    return () => {
+      document.removeEventListener("click", handleGlobalClick, true);
+    };
+  }, []);
 
   // Cleanup al desmontar
   useEffect(() => {

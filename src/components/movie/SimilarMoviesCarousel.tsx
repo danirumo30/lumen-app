@@ -45,10 +45,13 @@ export function SimilarMoviesCarousel({ movies }: SimilarMoviesCarouselProps) {
           paddingBottom: "16px",
         }}
       >
-        {movies.map((movie) => (
+        {movies.map((movie) => {
+          // Strip prefix if present (e.g., "tmdb_550" → "550")
+          const cleanId = movie.id.replace(/^(tmdb_|movie_|tv_|igdb_)/, '');
+          return (
           <a
             key={movie.id}
-            href={`/movie/${movie.id}`}
+            href={`/movie/${cleanId}`}
             className="flex-shrink-0 w-36 snap-start group/movie"
           >
             {/* Poster */}
@@ -86,7 +89,8 @@ export function SimilarMoviesCarousel({ movies }: SimilarMoviesCarouselProps) {
               <p className="text-[10px] text-zinc-500 mt-0.5">{movie.releaseYear}</p>
             )}
           </a>
-        ))}
+          );
+        })}
       </div>
     </section>
   );
