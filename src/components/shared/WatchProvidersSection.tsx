@@ -111,7 +111,7 @@ export function WatchProvidersSection({ providers, link, className = "" }: Watch
           
           {/* Logo container */}
           <div className={`
-            relative ${size === "small" ? "w-8 h-8" : "w-10 h-10 sm:w-12 sm:h-12"} rounded-xl
+            relative ${size === "small" ? "w-12 h-12" : "w-10 h-10 sm:w-12 sm:h-12"} rounded-xl
             overflow-hidden transition-all duration-200
             border border-white/10
             group-hover/link:border-white/20
@@ -125,7 +125,7 @@ export function WatchProvidersSection({ providers, link, className = "" }: Watch
               />
             ) : (
               <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
-                <span className={`${size === "small" ? "text-[8px]" : "text-[9px]"} text-zinc-400 font-medium text-center leading-tight px-1`}>
+                <span className={`${size === "small" ? "text-[10px]" : "text-[9px]"} text-zinc-400 font-medium text-center leading-tight px-1`}>
                   {provider.name}
                 </span>
               </div>

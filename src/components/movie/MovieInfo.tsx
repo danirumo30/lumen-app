@@ -268,7 +268,7 @@ export function MovieInfo({ movie, watchedStatus, favoriteStatus, onWatchedChang
         )}
 
         {/* Watched & Favorite section */}
-        <div className="border-t border-white/5 pt-6">
+        <div className="border-t border-white/5 pt-6 mb-6 md:mb-0">
           <div className="flex gap-3">
             {/* Watched Button */}
             <button
