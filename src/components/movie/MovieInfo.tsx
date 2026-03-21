@@ -259,14 +259,12 @@ export function MovieInfo({ movie, watchedStatus, favoriteStatus, onWatchedChang
           )}
         </div>
 
-        {/* Watch Providers - Beautiful integration */}
+        {/* Watch Providers - Compact inline design */}
         {movie.watchProviders?.providers && movie.watchProviders.providers.length > 0 && (
-          <div className="mt-6 p-4 rounded-2xl bg-gradient-to-br from-zinc-900/80 to-zinc-900/40 backdrop-blur-sm border border-white/5">
-            <WatchProvidersSection 
-              providers={movie.watchProviders.providers}
-              link={movie.watchProviders.link}
-            />
-          </div>
+          <WatchProvidersSection 
+            providers={movie.watchProviders.providers}
+            link={movie.watchProviders.link}
+          />
         )}
 
         {/* Watched & Favorite section */}
