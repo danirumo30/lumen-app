@@ -7,6 +7,7 @@ import { TvInfo } from "@/components/tv/TvInfo";
 import { EpisodesAccordion } from "@/components/tv/EpisodesAccordion";
 import { SimilarMediaCarousel } from "@/components/tv/SimilarTvCarousel";
 import { CastCarousel } from "@/components/movie/CastCarousel";
+import { WatchProvidersCarousel } from "@/components/shared/WatchProvidersCarousel";
 import { ErrorToast, useToasts } from "@/components/ui/Toast";
 import { supabase } from "@/lib/supabase";
 import {
@@ -78,6 +79,15 @@ interface TvShow {
   inProduction: boolean;
   networks: { id: number; name: string; logoPath: string | null }[];
   createdBy: { id: number; name: string; profilePath: string | null }[];
+  watchProviders?: {
+    link: string;
+    providers: Array<{
+      id: number;
+      name: string;
+      logoUrl: string | null;
+      type: "subscription" | "free" | "ads" | "rent" | "buy";
+    }>;
+  } | null;
 }
 
 interface FavoriteStatus {
@@ -792,6 +802,14 @@ export default function TvDetailPage({ params }: { params: Promise<{ id: string 
 
         {tv.cast && tv.cast.length > 0 && (
           <CastCarousel cast={tv.cast} />
+        )}
+
+        {/* Watch Providers */}
+        {tv.watchProviders?.providers && tv.watchProviders.providers.length > 0 && (
+          <WatchProvidersCarousel 
+            providers={tv.watchProviders.providers} 
+            title="Dónde ver"
+          />
         )}
 
         <SimilarMediaCarousel items={similar} type="tv" />

@@ -4,6 +4,7 @@ import { useState, useEffect, use } from "react";
 import { MovieInfo } from "@/components/movie/MovieInfo";
 import { CastCarousel } from "@/components/movie/CastCarousel";
 import { SimilarMoviesCarousel } from "@/components/movie/SimilarMoviesCarousel";
+import { WatchProvidersCarousel } from "@/components/shared/WatchProvidersCarousel";
 import { supabase } from "@/lib/supabase";
 
 interface Movie {
@@ -23,6 +24,15 @@ interface Movie {
   certification: string | null;
   status: string;
   tagline: string | null;
+  watchProviders?: {
+    link: string;
+    providers: Array<{
+      id: number;
+      name: string;
+      logoUrl: string | null;
+      type: "subscription" | "free" | "ads" | "rent" | "buy";
+    }>;
+  } | null;
 }
 
 interface CastMember {
@@ -186,6 +196,14 @@ export default function MovieDetailPage({ params }: { params: Promise<{ id: stri
             });
           }}
         />
+
+        {/* Watch Providers */}
+        {movie.watchProviders?.providers && movie.watchProviders.providers.length > 0 && (
+          <WatchProvidersCarousel 
+            providers={movie.watchProviders.providers} 
+            title="Dónde ver"
+          />
+        )}
 
         {/* Cast */}
         <CastCarousel cast={cast} />
