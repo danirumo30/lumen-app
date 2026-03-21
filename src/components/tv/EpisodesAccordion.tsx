@@ -209,83 +209,30 @@ export function EpisodesAccordion({
             key={season.seasonNumber}
             className="bg-zinc-900/50 rounded-xl border border-white/[0.05] overflow-hidden"
           >
-            {/* Season Header */}
-            <div className="px-4 py-4 flex items-center justify-between hover:bg-white/[0.02] transition-colors">
-              {/* Left side - poster with mark button + title (clickeable) */}
-              <div className="flex items-center gap-4 flex-1">
-                {/* Poster container with mark button overlay */}
-                <div className="relative">
-                  <button
-                    onClick={() => toggleSeason(season.seasonNumber)}
-                    className="block"
-                  >
-                    {season.posterPath ? (
-                      <img src={season.posterPath} alt={season.name} className="w-12 h-16 object-cover rounded-lg hidden sm:block" />
-                    ) : (
-                      <div className="w-12 h-16 bg-zinc-800 rounded-lg hidden sm:block" />
-                    )}
-                  </button>
-                  
-                  {/* Mark season button - always visible over poster */}
-                  <button
-                    onClick={async (e) => {
-                      e.stopPropagation();
-                      const { data: { session } } = await supabase.auth.getSession();
-                      if (!session) {
-                        setShowLoginPrompt(true);
-                        return;
-                      }
-                      onSeasonToggle(season.seasonNumber, !seasonComplete);
-                    }}
-                    className={`absolute -top-2 -right-2 w-7 h-7 rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer hover:scale-110 hover:shadow-lg hover:shadow-cyan-500/40 ${
-                      seasonComplete
-                        ? "bg-rose-500 text-white hover:bg-rose-400 hover:shadow-rose-500/40"
-                        : "bg-cyan-500 text-white hover:bg-cyan-400"
-                    }`}
-                    title={seasonComplete ? "Desmarcar temporada" : "Marcar temporada"}
-                  >
-                    {seasonComplete ? (
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+            {/* Season Header - Mobile First Design */}
+            <button
+              onClick={() => toggleSeason(season.seasonNumber)}
+              className="w-full px-4 py-4 sm:py-4 flex flex-col sm:flex-row items-center gap-4 hover:bg-white/[0.02] transition-colors text-left"
+            >
+              {/* Mobile: Large poster centered, Desktop: Small poster left */}
+              <div className="relative w-full sm:w-auto">
+                <div className="flex justify-center sm:justify-start">
+                  {season.posterPath ? (
+                    <img 
+                      src={season.posterPath} 
+                      alt={season.name} 
+                      className="w-28 h-40 sm:w-16 sm:h-20 object-cover rounded-xl shadow-lg shadow-black/40" 
+                    />
+                  ) : (
+                    <div className="w-28 h-40 sm:w-16 sm:h-20 bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-xl flex items-center justify-center">
+                      <svg className="w-10 h-10 sm:w-8 sm:h-8 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                       </svg>
-                    ) : (
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                      </svg>
-                    )}
-                  </button>
+                    </div>
+                  )}
                 </div>
                 
-                {/* Season info (clickeable) */}
-                <button
-                  onClick={() => toggleSeason(season.seasonNumber)}
-                  className="flex-1 text-left"
-                >
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h4 className="text-white font-medium">{season.name}</h4>
-                      {seasonComplete && (
-                        <svg className="w-4 h-4 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      )}
-                    </div>
-                    <p className="text-sm text-zinc-400">
-                      {totalInSeason} episodios
-                      {season.airDate && ` • ${new Date(season.airDate).getFullYear()}`}
-                      {watchedInSeason > 0 && (
-                        <span className={`ml-2 ${watchedInSeason === totalInSeason ? "text-emerald-400" : "text-cyan-400"}`}>
-                          • {watchedInSeason}/{totalInSeason} vistos
-                        </span>
-                      )}
-                    </p>
-                  </div>
-                </button>
-              </div>
-              
-              {/* Right side - mobile mark button + arrow button */}
-              <div className="flex items-center gap-2">
-                {/* Mark season button for mobile (hidden on desktop) */}
+                {/* Mark button - Circle on poster corner */}
                 <button
                   onClick={async (e) => {
                     e.stopPropagation();
@@ -296,32 +243,77 @@ export function EpisodesAccordion({
                     }
                     onSeasonToggle(season.seasonNumber, !seasonComplete);
                   }}
-                  className={`sm:hidden px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 cursor-pointer hover:scale-105 ${
+                  className={`absolute -top-2 -right-2 sm:top-auto sm:right-auto sm:relative sm:top-auto sm:right-auto w-8 h-8 sm:w-7 sm:h-7 rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer hover:scale-110 shadow-lg ${
                     seasonComplete
-                      ? "bg-rose-500/20 text-rose-400 border border-rose-500/30 hover:bg-rose-500/40 hover:border-rose-500/60"
-                      : "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 hover:bg-cyan-500/40 hover:border-cyan-500/60"
+                      ? "bg-rose-500 text-white hover:bg-rose-400 hover:shadow-rose-500/40 sm:ml-2"
+                      : "bg-cyan-500 text-white hover:bg-cyan-400 hover:shadow-cyan-500/40 sm:ml-2"
                   }`}
+                  title={seasonComplete ? "Desmarcar temporada" : "Marcar temporada"}
                 >
-                  {seasonComplete ? "Desmarcar" : "Marcar"}
-                </button>
-                
-                {/* Arrow button - explicit click target for expand/collapse */}
-                <button
-                  onClick={() => toggleSeason(season.seasonNumber)}
-                  className={`w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors`}
-                  aria-label={isExpanded ? "Colapsar temporada" : "Expandir temporada"}
-                >
-                  <svg
-                    className={`w-5 h-5 text-zinc-400 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
+                  {seasonComplete ? (
+                    <svg className="w-4 h-4 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  ) : (
+                    <svg className="w-4 h-4 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
                 </button>
               </div>
-            </div>
+              
+              {/* Season info */}
+              <div className="flex-1 w-full sm:w-auto">
+                {/* Title row */}
+                <div className="flex items-center gap-2 mb-1">
+                  <h4 className="text-lg sm:text-base font-semibold text-white">{season.name}</h4>
+                  {seasonComplete && (
+                    <svg className="w-5 h-5 sm:w-4 sm:h-4 text-emerald-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  )}
+                </div>
+                
+                {/* Meta info - Line 1: Episodes count with progress */}
+                <div className="flex items-center gap-2 text-sm mb-0.5">
+                  <span className="text-zinc-300 font-medium">
+                    {totalInSeason} episodios
+                  </span>
+                  {watchedInSeason > 0 && (
+                    <span className={`text-xs px-1.5 py-0.5 rounded ${
+                      watchedInSeason === totalInSeason 
+                        ? "bg-emerald-500/20 text-emerald-400" 
+                        : "bg-cyan-500/20 text-cyan-400"
+                    }`}>
+                      {watchedInSeason}/{totalInSeason}
+                    </span>
+                  )}
+                </div>
+                
+                {/* Meta info - Line 2: Air date and status */}
+                <div className="flex items-center gap-2 text-xs text-zinc-500">
+                  {season.airDate && (
+                    <span>{new Date(season.airDate).toLocaleDateString("es-ES", { month: "short", year: "numeric" })}</span>
+                  )}
+                  {season.overview && (
+                    <span className="text-zinc-600">•</span>
+                  )}
+                  {season.overview && (
+                    <span className="line-clamp-1">{season.overview}</span>
+                  )}
+                </div>
+              </div>
+              
+              {/* Arrow indicator */}
+              <svg
+                className={`w-5 h-5 text-zinc-400 transition-transform duration-200 flex-shrink-0 ${isExpanded ? "rotate-180" : ""}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
 
             {/* Episodes List */}
             {isExpanded && (
