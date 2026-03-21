@@ -25,7 +25,7 @@ export function CastCarousel({ cast, accentColor = "violet" }: CastCarouselProps
   }
 
   return (
-    <section className="mb-8">
+    <section className="mb-10">
       <h2 className="text-lg font-semibold text-white/90 tracking-tight mb-4">Reparto</h2>
       
       <div
