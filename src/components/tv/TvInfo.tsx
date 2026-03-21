@@ -101,10 +101,10 @@ export function TvInfo({
   return (
     <>
       <div className="grid grid-cols-1 sm:grid-cols-[180px_1fr] md:grid-cols-[220px_1fr] lg:grid-cols-[300px_1fr] gap-4 sm:gap-6 md:gap-8 mb-8 sm:mb-12">
-        {/* Poster */}
+        {/* Poster - igual de grande que películas */}
         <div className="relative">
-          {/* Mobile: centered poster, Desktop: sticky */}
-          <div className="sm:sticky sm:top-24 mx-auto sm:mx-0 max-w-[200px] sm:max-w-none">
+          {/* Mobile: centered, Desktop: sticky, same size as movies */}
+          <div className="sm:sticky sm:top-24 mx-auto sm:mx-0 max-w-[200px] sm:max-w-[250px] md:max-w-[300px]">
             {tv.posterUrl ? (
               <img
                 src={tv.posterUrl}
@@ -131,33 +131,35 @@ export function TvInfo({
             )}
           </div>
 
-          {/* Meta info */}
-          <div className="flex flex-wrap items-center gap-x-2 sm:gap-3 text-xs sm:text-sm text-zinc-400">
+          {/* Meta info - Línea 1: Certificación, Año, Temporadas, Episodios */}
+          <div className="flex flex-wrap items-center gap-x-2 sm:gap-3 text-sm text-zinc-400">
             {tv.certification && (
-              <span className="px-2 py-0.5 rounded bg-zinc-800 border border-zinc-700 text-zinc-300 font-medium">
+              <span className="px-2 py-0.5 rounded bg-zinc-800 border border-zinc-700 text-zinc-300 font-medium text-xs sm:text-sm">
                 {tv.certification}
               </span>
             )}
-            {tv.releaseYear && <span>{tv.releaseYear}</span>}
+            {tv.releaseYear && (
+              <span className="text-white font-medium">{tv.releaseYear}</span>
+            )}
             <span className="text-zinc-600">•</span>
-            <span>{tv.numberOfSeasons} {tv.numberOfSeasons === 1 ? "temporada" : "temporadas"}</span>
+            <span className="text-white">{tv.numberOfSeasons} {tv.numberOfSeasons === 1 ? "temporada" : "temporadas"}</span>
             <span className="text-zinc-600">•</span>
-            <span>{tv.numberOfEpisodes} episodios</span>
-            <span className="text-zinc-600">•</span>
-            <span className={`px-2 py-0.5 rounded-full text-xs ${getStatusBadgeColor(tv.status)}`}>
+            <span className="text-white">{tv.numberOfEpisodes} epis.</span>
+          </div>
+
+          {/* Meta info - Línea 2: Status y Rating */}
+          <div className="flex flex-wrap items-center gap-x-3 text-sm">
+            <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(tv.status)}`}>
               {tv.status}
             </span>
             {tv.rating && (
-              <>
-                <span className="text-zinc-600">•</span>
-                <span className="flex items-center gap-1">
-                  <svg className="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-                  </svg>
-                  <span className="font-semibold text-white">{tv.rating.toFixed(1)}</span>
-                  <span className="text-zinc-500">({tv.voteCount.toLocaleString()})</span>
-                </span>
-              </>
+              <div className="flex items-center gap-1.5">
+                <svg className="w-5 h-5 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                </svg>
+                <span className="font-bold text-white text-base">{tv.rating.toFixed(1)}</span>
+                <span className="text-zinc-500 text-xs">({tv.voteCount.toLocaleString()})</span>
+              </div>
             )}
           </div>
 
