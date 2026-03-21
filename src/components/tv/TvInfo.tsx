@@ -75,7 +75,6 @@ export function TvInfo({
   };
 
   const handleSeriesClick = async () => {
-    // Try to get current session
     const { data: { session } } = await supabase.auth.getSession();
     
     if (!session) {
@@ -87,7 +86,6 @@ export function TvInfo({
   };
 
   const handleFavoriteClick = async () => {
-    // Try to get current session
     const { data: { session } } = await supabase.auth.getSession();
     
     if (!session) {
@@ -100,20 +98,19 @@ export function TvInfo({
 
   return (
     <>
-      <div className="grid grid-cols-1 sm:grid-cols-[180px_1fr] md:grid-cols-[220px_1fr] lg:grid-cols-[300px_1fr] gap-4 sm:gap-6 md:gap-8 mb-8 sm:mb-12">
-        {/* Poster - igual de grande que películas */}
+      <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-6 md:gap-8 mb-8 md:mb-12">
+        {/* Poster - igual de grande que películas en todas las vistas */}
         <div className="relative">
-          {/* Mobile: centered, Desktop: sticky, same size as movies */}
-          <div className="sm:sticky sm:top-24 mx-auto sm:mx-0 max-w-[200px] sm:max-w-[250px] md:max-w-[300px]">
+          <div className="sticky top-24">
             {tv.posterUrl ? (
               <img
                 src={tv.posterUrl}
                 alt={tv.title}
-                className="w-full rounded-xl sm:rounded-2xl shadow-2xl shadow-black/50"
+                className="w-full rounded-2xl shadow-2xl shadow-black/50"
               />
             ) : (
-              <div className="aspect-[2/3] rounded-xl sm:rounded-2xl bg-zinc-800 flex items-center justify-center">
-                <svg className="w-12 h-12 sm:w-16 sm:h-16 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="aspect-[2/3] rounded-2xl bg-zinc-800 flex items-center justify-center">
+                <svg className="w-16 h-16 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
               </div>
@@ -122,19 +119,19 @@ export function TvInfo({
         </div>
 
         {/* Info */}
-        <div className="space-y-4 sm:space-y-6">
-          {/* Title */}
+        <div className="space-y-5">
+          {/* Title - prominente */}
           <div>
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white tracking-tight leading-tight">{tv.title}</h1>
+            <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight leading-tight">{tv.title}</h1>
             {tv.originalTitle !== tv.title && (
-              <p className="text-zinc-400 mt-1 text-sm sm:text-base">{tv.originalTitle}</p>
+              <p className="text-zinc-400 mt-1">{tv.originalTitle}</p>
             )}
           </div>
 
-          {/* Meta info - Línea 1: Certificación, Año, Temporadas, Episodios */}
-          <div className="flex flex-wrap items-center gap-x-2 sm:gap-3 text-sm text-zinc-400">
+          {/* Meta info - Minimalista y limpio */}
+          <div className="flex flex-wrap items-center gap-3 text-sm">
             {tv.certification && (
-              <span className="px-2 py-0.5 rounded bg-zinc-800 border border-zinc-700 text-zinc-300 font-medium text-xs sm:text-sm">
+              <span className="px-2 py-0.5 rounded bg-zinc-800 border border-zinc-700 text-zinc-300 font-medium">
                 {tv.certification}
               </span>
             )}
@@ -144,26 +141,26 @@ export function TvInfo({
             <span className="text-zinc-600">•</span>
             <span className="text-white">{tv.numberOfSeasons} {tv.numberOfSeasons === 1 ? "temporada" : "temporadas"}</span>
             <span className="text-zinc-600">•</span>
-            <span className="text-white">{tv.numberOfEpisodes} epis.</span>
+            <span className="text-white">{tv.numberOfEpisodes} episodios</span>
           </div>
 
-          {/* Meta info - Línea 2: Status y Rating */}
-          <div className="flex flex-wrap items-center gap-x-3 text-sm">
-            <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(tv.status)}`}>
+          {/* Status y Rating - Fila separada para claridad */}
+          <div className="flex items-center gap-4">
+            <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(tv.status)}`}>
               {tv.status}
             </span>
             {tv.rating && (
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-2">
                 <svg className="w-5 h-5 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
                 </svg>
-                <span className="font-bold text-white text-base">{tv.rating.toFixed(1)}</span>
+                <span className="font-bold text-white text-lg">{tv.rating.toFixed(1)}</span>
                 <span className="text-zinc-500 text-xs">({tv.voteCount.toLocaleString()})</span>
               </div>
             )}
           </div>
 
-          {/* Genres */}
+          {/* Genres - Pills minimalistas */}
           {tv.genres.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {tv.genres.map((genre) => (
@@ -177,33 +174,32 @@ export function TvInfo({
             </div>
           )}
 
-          {/* Networks */}
-          {tv.networks.length > 0 && (
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-zinc-500">Cadena:</span>
-              <div className="flex items-center gap-3">
-                {tv.networks.map((network) => (
-                  network.logoPath ? (
-                    <img key={network.id} src={network.logoPath} alt={network.name} className="h-5 object-contain brightness-75" />
-                  ) : (
-                    <span key={network.id} className="text-zinc-400">{network.name}</span>
-                  )
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Created by */}
-          {tv.createdBy.length > 0 && (
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-zinc-500">Creada por:</span>
-              <span className="text-zinc-300">{tv.createdBy.map(c => c.name).join(", ")}</span>
+          {/* Networks y Created by - Compactos */}
+          {(tv.networks.length > 0 || tv.createdBy.length > 0) && (
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-zinc-400">
+              {tv.networks.length > 0 && (
+                <div className="flex items-center gap-2">
+                  {tv.networks.map((network) => (
+                    network.logoPath ? (
+                      <img key={network.id} src={network.logoPath} alt={network.name} className="h-5 object-contain brightness-75" />
+                    ) : (
+                      <span key={network.id} className="text-zinc-300">{network.name}</span>
+                    )
+                  ))}
+                </div>
+              )}
+              {tv.createdBy.length > 0 && (
+                <div className="flex items-center gap-1">
+                  <span className="text-zinc-500">Creada por</span>
+                  <span className="text-zinc-300">{tv.createdBy.map(c => c.name).join(", ")}</span>
+                </div>
+              )}
             </div>
           )}
 
           {/* Tagline */}
           {tv.tagline && (
-            <p className="text-zinc-400 italic text-sm sm:text-base md:text-lg">"{tv.tagline}"</p>
+            <p className="text-zinc-400 italic text-base">"{tv.tagline}"</p>
           )}
 
           {/* Overview */}
@@ -212,7 +208,7 @@ export function TvInfo({
           )}
 
           {/* Air date details */}
-          <div className="flex items-center gap-2 text-sm">
+          <div className="flex items-center gap-3 text-sm">
             <svg className="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
@@ -238,12 +234,12 @@ export function TvInfo({
           </div>
 
           {/* Action buttons */}
-          <div className="border-t border-white/5 pt-4 sm:pt-6">
-            <div className="flex flex-col sm:flex-row gap-3">
+          <div className="border-t border-white/5 pt-5">
+            <div className="flex gap-3">
               {/* Mark series button */}
               <button
                 onClick={handleSeriesClick}
-                className={`flex-1 flex items-center justify-center gap-2 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
+                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-all ${
                   isSeriesWatched
                     ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-rose-500/30 hover:border-rose-500/30 hover:text-rose-400"
                     : "bg-white text-zinc-900 hover:bg-zinc-200"
@@ -258,7 +254,7 @@ export function TvInfo({
               {/* Favorite button */}
               <button
                 onClick={handleFavoriteClick}
-                className={`flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
+                className={`flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-all ${
                   favoriteStatus.favorite
                     ? "bg-rose-500/20 text-rose-400 border border-rose-500/30 hover:bg-rose-500/30"
                     : "bg-zinc-800/80 text-zinc-300 border border-zinc-700/50 hover:bg-zinc-700/80 hover:text-white"
