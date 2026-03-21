@@ -7,7 +7,6 @@ import { TvInfo } from "@/components/tv/TvInfo";
 import { EpisodesAccordion } from "@/components/tv/EpisodesAccordion";
 import { SimilarMediaCarousel } from "@/components/tv/SimilarTvCarousel";
 import { CastCarousel } from "@/components/movie/CastCarousel";
-import { WatchProvidersCarousel } from "@/components/shared/WatchProvidersCarousel";
 import { ErrorToast, useToasts } from "@/components/ui/Toast";
 import { supabase } from "@/lib/supabase";
 import {
@@ -781,6 +780,7 @@ export default function TvDetailPage({ params }: { params: Promise<{ id: string 
           favoriteStatus={favoriteStatus}
           onSeriesToggle={handleSeriesToggle}
           onFavoriteToggle={handleFavoriteToggle}
+          watchProviders={tv.watchProviders}
         />
 
         {tv.seasons && tv.seasons.length > 0 && (
@@ -802,14 +802,6 @@ export default function TvDetailPage({ params }: { params: Promise<{ id: string 
 
         {tv.cast && tv.cast.length > 0 && (
           <CastCarousel cast={tv.cast} />
-        )}
-
-        {/* Watch Providers */}
-        {tv.watchProviders?.providers && tv.watchProviders.providers.length > 0 && (
-          <WatchProvidersCarousel 
-            providers={tv.watchProviders.providers} 
-            title="Dónde ver"
-          />
         )}
 
         <SimilarMediaCarousel items={similar} type="tv" />

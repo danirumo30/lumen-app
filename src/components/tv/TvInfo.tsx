@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { supabase } from "@/lib/supabase";
+import { WatchProvidersSection, type WatchProvider } from "@/components/shared/WatchProvidersSection";
 
 interface TvShow {
   id: string;
@@ -26,6 +27,10 @@ interface TvShow {
   inProduction: boolean;
   networks: { id: number; name: string; logoPath: string | null }[];
   createdBy: { id: number; name: string; profilePath: string | null }[];
+  watchProviders?: {
+    link: string;
+    providers: WatchProvider[];
+  } | null;
 }
 
 interface FavoriteStatus {
@@ -40,6 +45,10 @@ interface TvInfoProps {
   onSeriesToggle: (mark: boolean) => void;
   onFavoriteToggle: (favorite: boolean) => void;
   initialIsLoggedIn?: boolean;
+  watchProviders?: {
+    link: string;
+    providers: WatchProvider[];
+  } | null;
 }
 
 export function TvInfo({ 
@@ -49,6 +58,7 @@ export function TvInfo({
   onSeriesToggle, 
   onFavoriteToggle,
   initialIsLoggedIn = false,
+  watchProviders,
 }: TvInfoProps) {
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   
@@ -193,6 +203,16 @@ export function TvInfo({
               </div>
             )}
           </div>
+
+          {/* Watch Providers - Beautiful integration */}
+          {watchProviders?.providers && watchProviders.providers.length > 0 && (
+            <div className="mt-6 p-4 rounded-2xl bg-gradient-to-br from-zinc-900/80 to-zinc-900/40 backdrop-blur-sm border border-white/5">
+              <WatchProvidersSection 
+                providers={watchProviders.providers}
+                link={watchProviders.link}
+              />
+            </div>
+          )}
 
           {/* Action buttons - alineados al bottom en desktop */}
           <div className="border-t border-white/5 pt-4 md:mt-auto">
