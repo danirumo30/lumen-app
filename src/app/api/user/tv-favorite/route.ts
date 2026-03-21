@@ -22,7 +22,7 @@ function createAdminClient() {
   });
 }
 
-// Get user's watched status for a movie
+// Get user's favorite status for a TV show
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -37,46 +37,46 @@ export async function GET(request: Request) {
     const token = authHeader?.replace("Bearer ", "");
     
     if (!token) {
-      return NextResponse.json({ watched: false, watchedAt: null });
+      return NextResponse.json({ favorite: false, favoritedAt: null });
     }
 
     const supabase = createUserClient(token);
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {
-      return NextResponse.json({ watched: false, watchedAt: null });
+      return NextResponse.json({ favorite: false, favoritedAt: null });
     }
     
-    // Check user_media_tracking for watched status
+    // Check user_media_tracking for favorite status
     const { data, error } = await supabase
       .from("user_media_tracking")
-      .select("is_watched, updated_at")
+      .select("is_favorite, updated_at")
       .eq("user_id", user.id)
-      .eq("media_id", `movie_${tmdbId}`)
+      .eq("media_id", `tv_${tmdbId}`)
       .single();
 
     if (error && error.code !== "PGRST116") {
-      console.error("[movie-status GET] Error:", error);
+      console.error("[tv-favorite GET] Error:", error);
     }
 
     return NextResponse.json({
-      watched: data?.is_watched ?? false,
-      watchedAt: data?.updated_at || null,
+      favorite: data?.is_favorite ?? false,
+      favoritedAt: data?.updated_at || null,
     });
   } catch (error) {
-    console.error("[movie-status GET] Error:", error);
+    console.error("[tv-favorite GET] Error:", error);
     return NextResponse.json(
-      { error: "Failed to fetch movie status" },
+      { error: "Failed to fetch TV show favorite status" },
       { status: 500 }
     );
   }
 }
 
-// Mark movie as watched
+// Mark TV show as favorite
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { tmdbId, watched, movieData } = body;
+    const { tmdbId, favorite } = body;
 
     if (!tmdbId) {
       return NextResponse.json({ error: "tmdbId required" }, { status: 400 });
@@ -98,39 +98,11 @@ export async function POST(request: Request) {
     const { data: { user }, error: userError } = await userClient.auth.getUser();
     
     if (!user || userError) {
-      console.error("[movie-status POST] User error:", userError);
+      console.error("[tv-favorite POST] User error:", userError);
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const mediaId = `movie_${tmdbId}`;
-    const movieMinutes = (movieData?.runtime || 90);
-
-    // First, ensure the movie exists in media table (admin to bypass RLS)
-    if (watched && movieData) {
-      // Extract poster path from full URL if present
-      const posterPath = movieData.posterPath 
-        ? movieData.posterPath.replace("https://image.tmdb.org/t/p/w500", "")
-        : null;
-
-      const { error: mediaError } = await adminClient
-        .from("media")
-        .upsert({
-          id: mediaId,
-          type: "movie",
-          title: movieData.title,
-          original_title: movieData.originalTitle,
-          release_year: movieData.releaseYear,
-          release_date: movieData.releaseDate,
-          runtime_minutes: movieData.runtime,
-          poster_path: posterPath,
-        }, {
-          onConflict: "id",
-        });
-
-      if (mediaError) {
-        console.error("[movie-status POST] Media upsert error:", mediaError);
-      }
-    }
+    const mediaId = `tv_${tmdbId}`;
 
     // Get current state
     const { data: existing } = await userClient
@@ -140,53 +112,48 @@ export async function POST(request: Request) {
       .eq("media_id", mediaId)
       .single();
 
-    const wasWatched = existing?.is_watched ?? false;
-
-    if (watched) {
+    if (favorite) {
       if (existing) {
-        // Update existing record - set is_watched=true and progress_minutes
+        // Update existing record - set is_favorite=true
         const { error } = await adminClient
           .from("user_media_tracking")
           .update({ 
-            is_watched: true,
-            progress_minutes: movieMinutes, // Save runtime for stats calculation
+            is_favorite: true,
             updated_at: new Date().toISOString(),
           })
           .eq("user_id", user.id)
           .eq("media_id", mediaId);
 
         if (error) {
-          console.error("[movie-status POST] Update tracking error:", error);
+          console.error("[tv-favorite POST] Update tracking error:", error);
           throw error;
         }
       } else {
-        // Create new record with progress_minutes
+        // Create new record
         const { error } = await adminClient
           .from("user_media_tracking")
           .insert({
             user_id: user.id,
             media_id: mediaId,
-            media_type: "movie",
-            is_watched: true,
-            is_favorite: false,
+            media_type: "tv",
+            is_watched: false,
+            is_favorite: true,
             is_planned: false,
-            progress_minutes: movieMinutes, // Save runtime for stats calculation
           });
 
         if (error) {
-          console.error("[movie-status POST] Insert tracking error:", error);
+          console.error("[tv-favorite POST] Insert tracking error:", error);
           throw error;
         }
       }
     } else {
-      // Remove watched status
-      if (existing && (existing.is_favorite || existing.is_planned || existing.rating)) {
-        // Keep record but remove watched and clear progress
+      // Remove favorite status
+      if (existing && (existing.is_watched || existing.is_planned || existing.rating)) {
+        // Keep record but remove favorite
         const { error } = await adminClient
           .from("user_media_tracking")
           .update({ 
-            is_watched: false,
-            progress_minutes: 0, // Clear progress
+            is_favorite: false,
             updated_at: new Date().toISOString(),
           })
           .eq("user_id", user.id)
@@ -205,11 +172,11 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.json({ success: true, watched });
+    return NextResponse.json({ success: true, favorite });
   } catch (error) {
-    console.error("[movie-status POST] Error:", error);
+    console.error("[tv-favorite POST] Error:", error);
     return NextResponse.json(
-      { error: "Failed to update movie status" },
+      { error: "Failed to update TV show favorite status" },
       { status: 500 }
     );
   }

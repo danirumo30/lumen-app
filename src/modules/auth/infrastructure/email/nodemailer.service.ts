@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import { getBaseUrl } from '@/lib/get-base-url';
 
 // Configurar transporter de Nodemailer
 const transporter = nodemailer.createTransport({
@@ -200,7 +201,7 @@ export function generateVerificationEmailHtml({
   <div class="container">
     <div class="header">
       <div class="logo">
-        <span class="logo-text">L</span>
+        <img src="${getBaseUrl()}/images/lumen-logo.png" alt="Lumen Logo" style="width: 100%; height: 100%; object-fit: cover;" />
       </div>
       <h1>Verifica tu cuenta</h1>
       <p>Media Tracker para tus películas, series y videojuegos</p>
@@ -404,7 +405,7 @@ export function generatePasswordResetEmailHtml({
   <div class="container">
     <div class="header">
       <div class="logo">
-        <span class="logo-text">L</span>
+        <img src="${getBaseUrl()}/images/lumen-logo.png" alt="Lumen Logo" style="width: 100%; height: 100%; object-fit: cover;" />
       </div>
       <h1>Restablecer contraseña</h1>
       <p>Media Tracker para tus películas, series y videojuegos</p>

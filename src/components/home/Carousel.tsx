@@ -150,12 +150,16 @@ export function Carousel({ title, subtitle, items, variant = "movies", isLoading
         {/* Left padding for fade effect */}
         <div className="flex-shrink-0 w-1" />
 
-        {items.map((item, index) => (
-          <a
-            key={item.id}
-            href={`/movie/${item.id}`}
-            className="flex-shrink-0 w-40 snap-start group/item"
-          >
+        {items.map((item, index) => {
+          // Determine the correct base path based on variant
+          const basePath = variant === "tv" ? "/tv" : variant === "games" ? "/game" : "/movie";
+          
+          return (
+            <a
+              key={item.id}
+              href={`${basePath}/${item.id}`}
+              className="flex-shrink-0 w-40 snap-start group/item"
+            >
             {/* Poster Card - Ultra Premium */}
             <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-zinc-900/50 border border-white/[0.03] transition-all duration-500 ease-out group-hover/item:scale-[1.02] group-hover/item:border-white/[0.08]">
                
@@ -208,7 +212,8 @@ export function Carousel({ title, subtitle, items, variant = "movies", isLoading
               </div>
             </div>
           </a>
-        ))}
+          );
+        })}
 
         {/* Right padding for fade effect */}
         <div className="flex-shrink-0 w-1" />
