@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/danirumo30/lumen-app/compare/lumen-app-v1.0.0...lumen-app-v1.1.0) (2026-03-21)
+
+
+### Features
+
+* web design fixes and watch providers ([#20](https://github.com/danirumo30/lumen-app/issues/20)) ([b3a99f5](https://github.com/danirumo30/lumen-app/commit/b3a99f551b2f74a9c9b53bab17af5693a4cb8fb9))
+
 ## 1.0.0 (2026-03-21)
 
 
