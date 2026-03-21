@@ -170,32 +170,32 @@ export function TvInfo({
             <p className="text-zinc-300 leading-relaxed">{tv.overview}</p>
           )}
 
-          {/* Estreno y Final - Dos columnas */}
+          {/* Estreno y Final - Dos columnas con icono alineado */}
           <div className="grid grid-cols-2 gap-4 text-sm">
-            <div className="flex items-center gap-2">
-              <svg className="w-4 h-4 text-zinc-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="flex items-start gap-2">
+              <svg className="w-4 h-4 text-zinc-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
               <div className="min-w-0">
-                <span className="text-zinc-500 text-xs">Estreno</span>
+                <span className="text-zinc-500 text-xs block">Estreno</span>
                 <p className="text-white">{formatDate(tv.firstAirDate)}</p>
               </div>
             </div>
             {tv.lastAirDate && tv.lastAirDate !== tv.firstAirDate && (
-              <div className="flex items-center gap-2">
-                <svg className="w-4 h-4 text-zinc-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex items-start gap-2">
+                <svg className="w-4 h-4 text-zinc-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
                 <div className="min-w-0">
-                  <span className="text-zinc-500 text-xs">Final</span>
+                  <span className="text-zinc-500 text-xs block">Final</span>
                   <p className="text-white">{formatDate(tv.lastAirDate)}</p>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Action buttons */}
-          <div className="border-t border-white/5 pt-4">
+          {/* Action buttons - alineados al bottom en desktop */}
+          <div className="border-t border-white/5 pt-4 md:mt-auto">
             <div className="flex gap-3">
               {/* Mark series button */}
               <button
