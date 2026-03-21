@@ -13,9 +13,10 @@ interface CastMember {
 
 interface CastCarouselProps {
   cast: CastMember[];
+  accentColor?: string;
 }
 
-export function CastCarousel({ cast }: CastCarouselProps) {
+export function CastCarousel({ cast, accentColor = "violet" }: CastCarouselProps) {
   const { containerRef, handlers } = useDragScroll({ snap: true });
   const [isHovered, setIsHovered] = useState(false);
 
@@ -48,12 +49,12 @@ export function CastCarousel({ cast }: CastCarouselProps) {
             className="flex-shrink-0 w-28 group/cast"
           >
             {/* Profile image */}
-            <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-zinc-800 border border-white/[0.03] mb-2">
+            <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-zinc-800 border border-white/[0.03] mb-2 transition-transform duration-500 group-hover/cast:scale-105">
               {person.profileUrl ? (
                 <img
                   src={person.profileUrl}
                   alt={person.name}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover/cast:scale-105"
+                  className="w-full h-full object-cover"
                   loading="lazy"
                 />
               ) : (

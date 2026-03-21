@@ -28,6 +28,9 @@ export interface Media {
   readonly originalTitle?: MediaTitle;
   readonly releaseYear?: ReleaseYear;
   readonly runtimeMinutes?: MediaRuntimeMinutes;
+  readonly posterUrl?: string;
+  readonly rating?: number;
+  readonly releaseDate?: string;
 }
 
 export type UserMediaStatusFlag = "favorite" | "watched" | "planned";

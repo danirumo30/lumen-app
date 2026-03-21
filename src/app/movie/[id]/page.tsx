@@ -4,6 +4,7 @@ import { useState, useEffect, use } from "react";
 import { MovieInfo } from "@/components/movie/MovieInfo";
 import { CastCarousel } from "@/components/movie/CastCarousel";
 import { SimilarMoviesCarousel } from "@/components/movie/SimilarMoviesCarousel";
+import { supabase } from "@/lib/supabase";
 
 interface Movie {
   id: string;
@@ -48,6 +49,11 @@ interface WatchedStatus {
   watchedAt: string | null;
 }
 
+interface FavoriteStatus {
+  favorite: boolean;
+  favoritedAt: string | null;
+}
+
 export default function MovieDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   
@@ -55,18 +61,35 @@ export default function MovieDetailPage({ params }: { params: Promise<{ id: stri
   const [cast, setCast] = useState<CastMember[]>([]);
   const [similar, setSimilar] = useState<SimilarMovie[]>([]);
   const [watchedStatus, setWatchedStatus] = useState<WatchedStatus>({ watched: false, watchedAt: null });
+  const [favoriteStatus, setFavoriteStatus] = useState<FavoriteStatus>({ favorite: false, favoritedAt: null });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Helper to extract TMDB ID from media ID (e.g., "movie_1159559" -> "1159559")
+  const extractTmdbId = (mediaId: string): string | null => {
+    const match = mediaId.match(/^(movie_|tmdb_)(\d+)$/);
+    return match ? match[2] : null;
+  };
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch movie details, credits, and similar in parallel
-        const [movieRes, creditsRes, similarRes, watchedRes] = await Promise.all([
+        // Get session for auth headers
+        const { data: { session } } = await supabase.auth.getSession();
+        const authHeaders = {
+          "Authorization": `Bearer ${session?.access_token || ""}`,
+        };
+
+        // Extract TMDB ID for API calls
+        const tmdbId = extractTmdbId(id) || id;
+        
+        // Fetch movie details, credits, similar, watched status, and favorite status in parallel
+        const [movieRes, creditsRes, similarRes, watchedRes, favoriteRes] = await Promise.all([
           fetch(`/api/movie/${id}`),
           fetch(`/api/movie/${id}/credits`),
           fetch(`/api/movie/${id}/similar`),
-          fetch(`/api/user/movie-status?tmdbId=${id.replace('tmdb_', '')}`),
+          fetch(`/api/user/movie-status?tmdbId=${tmdbId}`, { headers: authHeaders }),
+          fetch(`/api/user/movie-favorite?tmdbId=${tmdbId}`, { headers: authHeaders }),
         ]);
 
         if (!movieRes.ok) {
@@ -77,11 +100,13 @@ export default function MovieDetailPage({ params }: { params: Promise<{ id: stri
         const creditsData = await creditsRes.json();
         const similarData = await similarRes.json();
         const watchedData = await watchedRes.json();
+        const favoriteData = await favoriteRes.json();
 
         setMovie(movieData);
         setCast(creditsData.cast || []);
         setSimilar(similarData.results || []);
         setWatchedStatus(watchedData);
+        setFavoriteStatus(favoriteData);
       } catch (err) {
         console.error("Error fetching movie data:", err);
         setError("Failed to load movie details");
@@ -147,10 +172,17 @@ export default function MovieDetailPage({ params }: { params: Promise<{ id: stri
         <MovieInfo
           movie={movie}
           watchedStatus={watchedStatus}
+          favoriteStatus={favoriteStatus}
           onWatchedChange={(watched) => {
             setWatchedStatus({
               watched,
               watchedAt: watched ? new Date().toISOString() : null,
+            });
+          }}
+          onFavoriteChange={(favorite) => {
+            setFavoriteStatus({
+              favorite,
+              favoritedAt: favorite ? new Date().toISOString() : null,
             });
           }}
         />

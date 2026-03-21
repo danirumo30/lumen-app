@@ -11,8 +11,8 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    // Remove 'tmdb_' prefix if present
-    const tmdbId = id.replace('tmdb_', '');
+    // Remove 'movie_' or 'tmdb_' prefix if present
+    const tmdbId = id.replace(/^(movie_|tmdb_)/, '');
 
     const response = await fetch(
       `${TMDB_BASE_URL}/movie/${tmdbId}?api_key=${TMDB_API_KEY}&language=es-ES&append_to_response=release_dates`,

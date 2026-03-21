@@ -1,0 +1,100 @@
+import { NextResponse } from "next/server";
+
+const TMDB_API_KEY = process.env.TMDB_API_KEY!;
+const TMDB_BASE_URL = "https://api.themoviedb.org/3";
+
+export const runtime = "nodejs";
+
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    // Remove 'tv_' or 'tmdb_' prefix if present
+    const tmdbId = id.replace(/^(tv_|tmdb_)/, '');
+
+    const response = await fetch(
+      `${TMDB_BASE_URL}/tv/${tmdbId}?api_key=${TMDB_API_KEY}&language=es-ES&append_to_response=content_ratings,aggregate_credits`,
+      { 
+        headers: { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400" }
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`TMDB API error: ${response.status}`);
+    }
+
+    const tv = await response.json();
+
+    // Get certification from content_ratings
+    let certification = null;
+    if (tv.content_ratings?.results) {
+      const usRating = tv.content_ratings.results.find((r: any) => r.iso_3166_1 === "US");
+      if (usRating?.rating) {
+        certification = usRating.rating;
+      }
+    }
+
+    // Get seasons overview (without episodes to reduce payload)
+    const seasons = tv.seasons?.map((season: any) => ({
+      seasonNumber: season.season_number,
+      name: season.name,
+      episodeCount: season.episode_count,
+      airDate: season.air_date,
+      overview: season.overview,
+      posterPath: season.poster_path
+        ? `https://image.tmdb.org/t/p/w500${season.poster_path}`
+        : null,
+    })) || [];
+
+    // Get top cast (first 20)
+    const cast = tv.aggregate_credits?.cast?.slice(0, 20).map((person: any) => ({
+      id: person.id,
+      name: person.name,
+      character: person.roles?.[0]?.character || person.roles?.[0]?.character_name || "",
+      profileUrl: person.profile_path
+        ? `https://image.tmdb.org/t/p/w185${person.profile_path}`
+        : null,
+      order: person.order,
+    })) || [];
+
+    const result = {
+      id: `tmdb_${tv.id}`,
+      tmdbId: tv.id,
+      title: tv.name,
+      originalTitle: tv.original_name,
+      overview: tv.overview,
+      posterUrl: tv.poster_path
+        ? `https://image.tmdb.org/t/p/w500${tv.poster_path}`
+        : null,
+      backdropUrl: tv.backdrop_path
+        ? `https://image.tmdb.org/t/p/original${tv.backdrop_path}`
+        : null,
+      firstAirDate: tv.first_air_date,
+      lastAirDate: tv.last_air_date,
+      releaseYear: tv.first_air_date ? new Date(tv.first_air_date).getFullYear() : null,
+      genres: tv.genres?.map((g: any) => ({ id: g.id, name: g.name })) || [],
+      rating: tv.vote_average ? Math.round(tv.vote_average * 10) / 10 : null,
+      voteCount: tv.vote_count,
+      certification,
+      status: tv.status,
+      tagline: tv.tagline,
+      numberOfSeasons: tv.number_of_seasons,
+      numberOfEpisodes: tv.number_of_episodes,
+      seasons,
+      cast,
+      inProduction: tv.in_production,
+      networks: tv.networks?.map((n: any) => ({ id: n.id, name: n.name, logoPath: n.logo_path ? `https://image.tmdb.org/t/p/w500${n.logo_path}` : null })) || [],
+      createdBy: tv.created_by?.map((c: any) => ({ id: c.id, name: c.name, profilePath: c.profile_path ? `https://image.tmdb.org/t/p/w185${c.profile_path}` : null })) || [],
+    };
+
+    return NextResponse.json(result);
+  } catch (error) {
+    console.error("Error fetching TV show details:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch TV show details" },
+      { status: 500 }
+    );
+  }
+}

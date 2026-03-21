@@ -65,7 +65,7 @@ describe('Auth API Integration', () => {
       expect([200, 400, 404]).toContain(response.status);
     });
 
-    it('should reject invalid email format', async () => {
+    it('should return 200 even for invalid email (security: dont reveal if email exists)', async () => {
       const response = await fetch(`${BASE_URL}/api/auth/request-password-reset`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -74,7 +74,8 @@ describe('Auth API Integration', () => {
         }),
       });
 
-      expect(response.status).not.toBe(200);
+      // Security by design: always return 200 to not reveal if email exists
+      expect(response.status).toBe(200);
     });
   });
 });

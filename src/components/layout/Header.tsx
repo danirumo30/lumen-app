@@ -51,8 +51,8 @@ export default function Header() {
         <div className="h-full px-4 md:px-6 flex items-center justify-between max-w-7xl mx-auto">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2 md:space-x-3 group" onClick={closeMobileMenu}>
-            <div className="w-8 h-8 md:w-9 md:h-9 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg md:rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/25 transform group-hover:scale-105 transition-transform duration-200">
-              <span className="text-white font-bold text-sm tracking-wider">L</span>
+            <div className="w-8 h-8 md:w-9 md:h-9 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg md:rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/25 transform group-hover:scale-105 transition-transform duration-200 overflow-hidden">
+              <img src="/images/lumen-logo.png" alt="Lumen Logo" className="w-full h-full object-cover" />
             </div>
             <span className="text-lg md:text-xl font-semibold tracking-tight text-zinc-100 group-hover:text-white transition-colors hidden sm:inline">
               Lumen
