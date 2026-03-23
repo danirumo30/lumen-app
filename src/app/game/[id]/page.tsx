@@ -20,7 +20,8 @@ interface Game {
 }
 
 interface GameStatus {
-  status: "favorite" | "playing" | "completed" | "dropped" | "planned" | null;
+  isFavorite: boolean;
+  playStatus: "playing" | "completed" | "dropped" | "planned" | null;
   playtimeMinutes: number;
   startedAt: string | null;
   completedAt: string | null;
@@ -31,7 +32,8 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
   
   const [game, setGame] = useState<Game | null>(null);
   const [gameStatus, setGameStatus] = useState<GameStatus>({
-    status: null,
+    isFavorite: false,
+    playStatus: null,
     playtimeMinutes: 0,
     startedAt: null,
     completedAt: null,
@@ -62,7 +64,7 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
           fetch(`/api/games/${igdbId}`),
           session?.access_token 
             ? fetch(`/api/user/game-status?igdbId=${igdbId}`, { headers: authHeaders })
-            : Promise.resolve({ ok: true, json: () => Promise.resolve({ status: null, playtimeMinutes: 0 }) }),
+            : Promise.resolve({ ok: true, json: () => Promise.resolve({ isFavorite: false, playStatus: null, playtimeMinutes: 0 }) }),
         ]);
 
         if (!gameRes.ok) {
@@ -140,10 +142,32 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
           game={game}
           gameStatus={gameStatus}
           onStatusChange={(status) => {
-            setGameStatus({
-              ...gameStatus,
-              status: status as GameStatus["status"],
-            });
+            // Handle different status change types
+            if (status === "favorite") {
+              // Adding favorite
+              setGameStatus(prev => ({
+                ...prev,
+                isFavorite: true,
+              }));
+            } else if (status === "remove-favorite") {
+              // Removing favorite only - don't touch play status
+              setGameStatus(prev => ({
+                ...prev,
+                isFavorite: false,
+              }));
+            } else if (status === null) {
+              // Removing play status - don't touch favorite
+              setGameStatus(prev => ({
+                ...prev,
+                playStatus: null,
+              }));
+            } else {
+              // It's a play status
+              setGameStatus(prev => ({
+                ...prev,
+                playStatus: status as GameStatus["playStatus"],
+              }));
+            }
           }}
           onPlaytimeChange={(minutes) => {
             setGameStatus({

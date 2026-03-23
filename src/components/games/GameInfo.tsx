@@ -20,7 +20,8 @@ interface Game {
 }
 
 interface GameStatus {
-  status: "favorite" | "playing" | "completed" | "dropped" | "planned" | null;
+  isFavorite: boolean;
+  playStatus: "playing" | "completed" | "dropped" | "planned" | null;
   playtimeMinutes: number;
   startedAt: string | null;
   completedAt: string | null;
@@ -116,7 +117,95 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange }:
     return `${hours}h ${mins}m`;
   };
 
-    const handleStatusClick = async (status: string | null) => {
+  const [playtimeUnit, setPlaytimeUnit] = useState<"hours" | "minutes">("hours");
+
+  // Handle play status (playing, completed, dropped, planned) - mutually exclusive
+  const handlePlayStatusClick = async (status: string | null) => {
+    if (!user) {
+      setShowLoginPrompt(true);
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const igdbId = typeof game.igdbId === 'number' ? game.igdbId : parseInt(game.igdbId);
+      
+      const response = await fetch("/api/user/game-status", {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session?.access_token || ""}`,
+        },
+        body: JSON.stringify({
+          igdbId: igdbId,
+          status,
+          gameData: {
+            title: game.name,
+            coverUrl: game.coverUrl,
+            releaseYear: game.releaseYear,
+          },
+        }),
+      });
+
+      if (response.status === 401) {
+        setShowLoginPrompt(true);
+        return;
+      }
+
+      if (response.ok) {
+        const data = await response.json();
+        onStatusChange(status); // This will refresh the page
+      }
+    } catch (error) {
+      console.error("Error updating play status:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle favorite - independent of play status
+  const handleFavoriteClick = async () => {
+    if (!user) {
+      setShowLoginPrompt(true);
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const igdbId = typeof game.igdbId === 'number' ? game.igdbId : parseInt(game.igdbId);
+      
+      const newFavorite = !gameStatus.isFavorite;
+      const response = await fetch("/api/user/game-status", {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session?.access_token || ""}`,
+        },
+        body: JSON.stringify({
+          igdbId: igdbId,
+          isFavorite: newFavorite,
+          gameData: {
+            title: game.name,
+            coverUrl: game.coverUrl,
+            releaseYear: game.releaseYear,
+          },
+        }),
+      });
+
+      if (response.ok) {
+        // Use "remove-favorite" to distinguish from play status removal
+        onStatusChange(newFavorite ? "favorite" : "remove-favorite");
+      }
+    } catch (error) {
+      console.error("Error updating favorite:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleStatusClick = async (status: string | null) => {
     if (!user) {
       setShowLoginPrompt(true);
       return;
@@ -191,7 +280,7 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange }:
         },
         body: JSON.stringify({
           igdbId: game.igdbId,
-          status: gameStatus.status || "playing",
+          status: gameStatus.playStatus || "playing",
           playtimeMinutes: minutes,
         }),
       });
@@ -207,7 +296,8 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange }:
     }
   };
 
-  const currentStatus = gameStatus.status;
+  const currentPlayStatus = gameStatus.playStatus;
+  const currentFavorite = gameStatus.isFavorite;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-8">
@@ -302,13 +392,16 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange }:
 
         {/* Status selector */}
         <div className="border-t border-white/5 pt-6">
-          <div className="flex flex-wrap gap-2 mb-4">
-            {Object.entries(statusConfig).map(([key, config]) => {
-              const isActive = currentStatus === key;
+          {/* Play Status buttons (mutually exclusive) */}
+          <div className="flex flex-wrap gap-2 mb-3">
+            <span className="text-xs text-zinc-500 w-full mb-1">Estado de juego</span>
+            {["playing", "completed", "dropped", "planned"].map((key) => {
+              const config = statusConfig[key as keyof typeof statusConfig];
+              const isActive = currentPlayStatus === key;
               return (
                 <button
                   key={key}
-                  onClick={() => handleStatusClick(isActive ? null : key)}
+                  onClick={() => handlePlayStatusClick(isActive ? null : key)}
                   disabled={isLoading}
                   className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all ${
                     isActive
@@ -323,30 +416,59 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange }:
             })}
           </div>
 
-          {/* Playtime tracker */}
-          {user && (
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-zinc-900/50 border border-white/5">
+          {/* Favorite button (independent) */}
+          <div className="flex flex-wrap gap-2">
+            <span className="text-xs text-zinc-500 w-full mb-1">Favorito</span>
+            <button
+              onClick={() => handleFavoriteClick()}
+              disabled={isLoading}
+              className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all ${
+                currentFavorite
+                  ? `${statusConfig.favorite.bg} ${statusConfig.favorite.text} border ${statusConfig.favorite.border}`
+                  : "bg-zinc-800/80 text-zinc-300 border border-zinc-700/50 hover:bg-zinc-700/80"
+              }`}
+            >
+              {statusConfig.favorite.icon}
+              {statusConfig.favorite.label}
+            </button>
+          </div>
+        </div>
+
+        {/* Playtime tracker - Edit mode instead of add */}
+        {user && (
+          <div className="mt-4 p-3 rounded-xl bg-zinc-900/50 border border-white/5">
+            <div className="flex items-center gap-3">
               <span className="text-sm text-zinc-400">Horas jugadas:</span>
               <span className="text-white font-medium">{formatPlaytime(gameStatus.playtimeMinutes)}</span>
               <div className="flex-1" />
+              {/* Toggle between hours and minutes */}
+              <select
+                value={playtimeUnit}
+                onChange={(e) => setPlaytimeUnit(e.target.value as "hours" | "minutes")}
+                className="px-2 py-1 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-xs"
+              >
+                <option value="hours">Horas</option>
+                <option value="minutes">Minutos</option>
+              </select>
               <input
                 type="number"
                 value={playtimeInput}
                 onChange={(e) => setPlaytimeInput(e.target.value)}
-                placeholder="Minutos"
-                className="w-20 px-2 py-1 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-sm"
+                placeholder={playtimeUnit === "hours" ? "Horas" : "Minutos"}
+                className="w-20 px-2 py-1 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-sm [-moz-appearance:textfield]"
                 min="0"
+                style={{ WebkitAppearance: 'none', appearance: 'textfield' }}
               />
               <button
                 onClick={handlePlaytimeSubmit}
                 disabled={isLoading}
                 className="px-3 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-sm hover:bg-emerald-500/30"
               >
-                +
+                Guardar
               </button>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Login Modal */}
