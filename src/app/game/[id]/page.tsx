@@ -26,6 +26,7 @@ interface Game {
 
 interface GameStatus {
   isFavorite: boolean;
+  hasPlatinum: boolean;
   playStatus: "playing" | "completed" | "dropped" | "planned" | null;
   playtimeMinutes: number;
   startedAt: string | null;
@@ -91,6 +92,7 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
   const [game, setGame] = useState<Game | null>(null);
   const [gameStatus, setGameStatus] = useState<GameStatus>({
     isFavorite: false,
+    hasPlatinum: false,
     playStatus: null,
     playtimeMinutes: 0,
     startedAt: null,
@@ -126,7 +128,7 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
           fetch(`/api/games/${igdbId}`),
           session?.access_token 
             ? fetch(`/api/user/game-status?igdbId=${igdbId}`, { headers: authHeaders })
-            : Promise.resolve({ ok: true, json: () => Promise.resolve({ isFavorite: false, playStatus: null, playtimeMinutes: 0 }) }),
+            : Promise.resolve({ ok: true, json: () => Promise.resolve({ isFavorite: false, hasPlatinum: false, playStatus: null, playtimeMinutes: 0 }) }),
           fetch(`/api/games/${igdbId}/media`),
           fetch(`/api/games/${igdbId}/videos`),
           fetch(`/api/games/${igdbId}/similar`),
@@ -246,13 +248,19 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
               playtimeMinutes: minutes,
             }));
           }}
+          onPlatinumChange={(hasPlatinum) => {
+            setGameStatus(prev => ({
+              ...prev,
+              hasPlatinum,
+            }));
+          }}
         />
 
         {/* Carousels */}
         <GameMediaCarousel images={media.images} videos={media.videos} />
         <FranchiseCarousel franchise={franchise.franchise} games={franchise.games} currentGameId={game.igdbId.toString()} />
-        <DLCsCarousel dlcs={dlcs} />
         <SimilarGamesCarousel games={similarGames} />
+        <DLCsCarousel dlcs={dlcs} />
       </div>
     </div>
   );

@@ -1,10 +1,18 @@
-// Translation utility using MyMemory API (free, no API key required)
+// Translation utility using LibreTranslate API (free, no API key required)
 // Handles long texts by splitting into chunks
 
+// Try multiple LibreTranslate public instances
+const LIBRE_TRANSLATE_APIS = [
+  "https://libretranslate.com/translate",
+  "https://translate.argosopentech.com/translate",
+  "https://translate.terraprint.co/translate",
+];
+
+// Fallback to MyMemory
 const MYMEMORY_API = "https://api.mymemory.translated.net/get";
 
-// Maximum characters per request for MyMemory
-const MAX_CHUNK_SIZE = 450;
+// Maximum characters per request
+const MAX_CHUNK_SIZE = 500;
 
 // Helper to split text into chunks while preserving sentence boundaries
 function splitIntoChunks(text: string, maxSize: number): string[] {
@@ -65,46 +73,90 @@ export async function translateText(text: string, targetLang: string = "es"): Pr
   const chunks = splitIntoChunks(text, MAX_CHUNK_SIZE);
   console.log(`[translate] Splitting long text (${text.length} chars) into ${chunks.length} chunks`);
   
-  const translatedChunks = await Promise.all(
-    chunks.map(chunk => translateSingle(chunk, targetLang))
-  );
+  // Translate chunks with a small delay between each to avoid rate limiting
+  const translatedChunks: string[] = [];
+  for (const chunk of chunks) {
+    const translated = await translateSingle(chunk, targetLang);
+    translatedChunks.push(translated);
+    // Small delay between chunks
+    if (chunks.indexOf(chunk) < chunks.length - 1) {
+      await sleep(300);
+    }
+  }
   
   // Reconstruct the text preserving original structure
   return translatedChunks.join(" ");
 }
 
 async function translateSingle(text: string, targetLang: string): Promise<string> {
+  // Try LibreTranslate first (try each instance)
+  for (const api of LIBRE_TRANSLATE_APIS) {
+    try {
+      const response = await fetch(api, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          q: text,
+          source: "en",
+          target: targetLang,
+          format: "text",
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.translatedText) {
+          return data.translatedText;
+        }
+      }
+    } catch (error) {
+      // Try next instance
+      continue;
+    }
+  }
+
+  // Fallback to MyMemory
+  return translateWithMyMemory(text, targetLang);
+}
+
+async function translateWithMyMemory(text: string, targetLang: string): Promise<string> {
   const maxRetries = 2;
-  
+  const baseDelay = 2000; // Longer delay for MyMemory
+
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       const url = `${MYMEMORY_API}?q=${encodeURIComponent(text)}&langpair=en|${targetLang}`;
       const response = await fetch(url);
-      
+
       if (!response.ok) {
-        console.log(`[translate] API error (attempt ${attempt + 1}): ${response.status}`);
+        console.log(`[translate/mymemory] API error (attempt ${attempt + 1}): ${response.status}`);
         if (attempt === maxRetries) return text;
-        await sleep(500 * (attempt + 1)); // Exponential backoff
+        await sleep(baseDelay * Math.pow(2, attempt));
         continue;
       }
-      
+
       const data = await response.json();
-      
+
+      // Check for quota exceeded
+      if (data.responseStatus === 429 || data.responseDetails?.includes("QUOTA")) {
+        console.log(`[translate/mymemory] Quota exceeded`);
+        return text; // Just return original text instead of failing
+      }
+
       if (data.responseStatus === 200 && data.responseData?.translatedText) {
         return data.responseData.translatedText;
       }
-      
-      console.log(`[translate] Unexpected response format:`, data);
+
       if (attempt === maxRetries) return text;
-      await sleep(500);
-      
+      await sleep(baseDelay);
+
     } catch (error) {
-      console.error(`[translate] Error (attempt ${attempt + 1}):`, error);
+      console.error(`[translate/mymemory] Error (attempt ${attempt + 1}):`, error);
       if (attempt === maxRetries) return text;
-      await sleep(500 * (attempt + 1));
+      await sleep(baseDelay * Math.pow(2, attempt));
     }
   }
-  
+
   return text;
 }
 
@@ -117,10 +169,15 @@ export async function translateArray(items: string[], targetLang: string = "es")
   if (!items || items.length === 0) return items;
   if (targetLang === "en") return items;
   
-  // Translate each item in parallel
-  const translated = await Promise.all(
-    items.map(item => translateText(item, targetLang))
-  );
+  // Translate each item sequentially with small delay
+  const translated: string[] = [];
+  for (const item of items) {
+    const t = await translateText(item, targetLang);
+    translated.push(t);
+    if (items.indexOf(item) < items.length - 1) {
+      await sleep(200);
+    }
+  }
   
   return translated;
 }
@@ -190,4 +247,36 @@ export function mapGenreToSpanish(genre: string): string {
 // Map multiple genres to Spanish
 export function mapGenresToSpanish(genres: string[]): string[] {
   return genres.map(g => mapGenreToSpanish(g));
+}
+
+// Game mode translations
+const gameModeMap: Record<string, string> = {
+  "Single player": "Un jugador",
+  "Multiplayer": "Multijugador",
+  "Co-operative": "Cooperativo",
+  "Online Co-op": "Cooperativo en línea",
+  "Split-screen": "Pantalla dividida",
+  "Massively Multiplayer Online": "Multijugador en línea masivo",
+  "MMO": "MMO",
+  "Battle Royale": "Battle Royale",
+  "Cross-platform multiplayer": "Multijugador multiplataforma",
+  "Local Co-op": "Cooperativo local",
+  "LAN Co-op": "Cooperativo LAN",
+  "Downloadable Content": "Contenido descargable",
+  "Steam Achievements": "Logros de Steam",
+  "Steam Cloud": "Steam Cloud",
+  "Partial Controller Support": "Soporte parcial de controlador",
+  "Full controller support": "Soporte completo de controlador",
+  "Remote Play on Phone": "Juego remoto en teléfono",
+  "Remote Play on Tablet": "Juego remoto en tablet",
+  "Remote Play on TV": "Juego remoto en TV",
+  "Remote Play Together": "Juego remoto juntos",
+};
+
+export function mapGameModeToSpanish(mode: string): string {
+  return gameModeMap[mode] || mode;
+}
+
+export function mapGameModesToSpanish(modes: string[]): string[] {
+  return modes.map(m => mapGameModeToSpanish(m));
 }

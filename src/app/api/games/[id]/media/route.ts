@@ -5,6 +5,10 @@ const IGDB_CLIENT_ID = process.env.TWITCH_CLIENT_ID || "";
 
 export const runtime = "nodejs";
 
+// Cache for media
+const mediaCache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_TTL = 1000 * 60 * 30; // 30 minutes
+
 async function getFreshAccessToken(): Promise<string> {
   const tokenResponse = await fetch(
     "https://id.twitch.tv/oauth2/token",
@@ -89,6 +93,13 @@ export async function GET(
       return NextResponse.json({ error: "Invalid IGDB ID" }, { status: 400 });
     }
 
+    // Check cache
+    const cacheKey = `media_${igdbId}`;
+    const cached = mediaCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      return NextResponse.json(cached.data);
+    }
+
     // Fetch screenshots and artworks in parallel
     const [screenshotsRes, artworksRes] = await Promise.all([
       fetchGameMedia(IGDB_ACCESS_TOKEN, igdbId),
@@ -118,7 +129,10 @@ export async function GET(
       })),
     ];
 
-    return NextResponse.json({ images });
+    const result = { images };
+    mediaCache.set(cacheKey, { data: result, timestamp: Date.now() });
+
+    return NextResponse.json(result);
   } catch (error) {
     console.error("Error fetching game media:", error);
     return NextResponse.json(

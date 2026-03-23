@@ -77,6 +77,11 @@ interface UserGlobalStatsRow {
   total_tv_minutes: number;
   total_game_minutes: number;
   total_minutes: number;
+  // Counts
+  total_episodes_watched: number;
+  total_movies_watched: number;
+  total_games_played: number;
+  total_games_platinum: number;
 }
 
 interface MediaRow {
@@ -522,6 +527,11 @@ export class SupabaseUserProfileRepository implements UserProfileRepository {
       totalTvMinutes: statsRow?.total_tv_minutes ?? 0,
       totalGameMinutes: statsRow?.total_game_minutes ?? 0,
       totalMinutes: statsRow?.total_minutes ?? 0,
+      // Counts
+      totalEpisodesWatched: statsRow?.total_episodes_watched ?? 0,
+      totalMoviesWatched: statsRow?.total_movies_watched ?? 0,
+      totalGamesPlayed: statsRow?.total_games_played ?? 0,
+      totalGamesPlatinum: statsRow?.total_games_platinum ?? 0,
     };
   }
 }

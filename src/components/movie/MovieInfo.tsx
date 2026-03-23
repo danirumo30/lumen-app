@@ -343,7 +343,7 @@ export function MovieInfo({ movie, watchedStatus, favoriteStatus, onWatchedChang
           {/* Icon */}
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-amber-500/20 flex items-center justify-center">
             <svg className="w-8 h-8 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
             </svg>
           </div>
 
@@ -372,14 +372,6 @@ export function MovieInfo({ movie, watchedStatus, favoriteStatus, onWatchedChang
               Crear una cuenta
             </a>
           </div>
-
-          {/* Later option */}
-          <button
-            onClick={() => setShowLoginPrompt(false)}
-            className="w-full mt-4 text-zinc-500 text-sm hover:text-zinc-300 transition-colors"
-          >
-            Quizás más tarde
-          </button>
         </div>
       </Modal>
     </div>

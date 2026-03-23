@@ -42,7 +42,7 @@ export function GameMediaCarousel({ images, videos }: GameMediaCarouselProps) {
 
   return (
     <>
-      <BaseCarousel title="Galería">
+      <BaseCarousel title="Galería" className="mt-4">
         {/* Videos */}
         {hasVideos &&
           videos.map((video) => (

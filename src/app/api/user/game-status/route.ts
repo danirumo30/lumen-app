@@ -66,7 +66,7 @@ export async function GET(request: Request) {
     // Check user_media_tracking for game status
     const { data, error } = await supabase
       .from("user_media_tracking")
-      .select("is_watched, is_favorite, is_planned, progress_minutes, updated_at, created_at")
+      .select("is_watched, is_favorite, is_planned, progress_minutes, has_platinum, updated_at, created_at")
       .eq("user_id", user.id)
       .eq("media_id", mediaId)
       .single();
@@ -97,6 +97,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       isFavorite,
+      hasPlatinum: data?.has_platinum ?? false,
       playStatus,
       playtimeMinutes: data?.progress_minutes ?? 0,
       startedAt: data?.created_at || null,
@@ -115,9 +116,9 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { igdbId, status, isFavorite, playtimeMinutes, gameData } = body;
+    const { igdbId, status, isFavorite, playtimeMinutes, hasPlatinum, gameData } = body;
 
-    console.log("[game-status POST] Received:", { igdbId, status, isFavorite, playtimeMinutes, gameData });
+    console.log("[game-status POST] Received:", { igdbId, status, isFavorite, playtimeMinutes, hasPlatinum, gameData });
 
     if (!igdbId) {
       console.log("[game-status POST] Missing igdbId");
@@ -150,7 +151,7 @@ export async function POST(request: Request) {
     // Get existing record
     const { data: existing } = await userClient
       .from("user_media_tracking")
-      .select("is_favorite, is_watched, is_planned, progress_minutes")
+      .select("is_favorite, is_watched, is_planned, progress_minutes, has_platinum")
       .eq("user_id", user.id)
       .eq("media_id", mediaId)
       .single();
@@ -220,6 +221,11 @@ export async function POST(request: Request) {
       }
     }
 
+    // Handle platinum trophy update
+    if (hasPlatinum !== undefined) {
+      updateFields.has_platinum = hasPlatinum;
+    }
+
     console.log("[game-status POST] Update fields:", updateFields);
 
     // Check if we need to upsert media first
@@ -260,6 +266,7 @@ export async function POST(request: Request) {
         is_watched: updateFields.is_watched ?? false,
         is_planned: updateFields.is_planned ?? false,
         progress_minutes: updateFields.progress_minutes ?? 0,
+        has_platinum: updateFields.has_platinum ?? false,
       };
       
       console.log("[game-status POST] Inserting new record:", newRecord);
@@ -285,6 +292,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ 
       success: true, 
       isFavorite: newIsFavorite,
+      hasPlatinum: updateFields.has_platinum ?? existing?.has_platinum ?? false,
       playStatus: newPlayStatus,
       playtimeMinutes: updateFields.progress_minutes ?? existing?.progress_minutes ?? 0,
     });

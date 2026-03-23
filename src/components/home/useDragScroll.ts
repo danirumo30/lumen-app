@@ -19,8 +19,9 @@ interface UseDragScrollReturn {
   handlers: {
     onMouseDown: (e: React.MouseEvent) => void;
     onMouseMove: (e: React.MouseEvent) => void;
-    onMouseUp: () => void;
+    onMouseUp: (e: React.MouseEvent) => void;
     onMouseLeave: () => void;
+    onClick: (e: React.MouseEvent) => void;
   };
   /** CSS classes para aplicar al contenedor */
   containerProps?: {
@@ -43,10 +44,8 @@ export function useDragScroll(options: UseDragScrollOptions = {}): UseDragScroll
   const isDragging = useRef(false);
   const startX = useRef(0);
   const startScrollLeft = useRef(0);
-  const hasDragged = useRef(false);
-  const lastDragTime = useRef(0);
+  const draggedDistance = useRef(0);
   const DRAG_THRESHOLD = 5;
-  const CLICK_CANCEL_THRESHOLD = 200;
 
   // Detectar si es dispositivo táctil
   const isTouchDevice = useRef(
@@ -76,7 +75,7 @@ export function useDragScroll(options: UseDragScrollOptions = {}): UseDragScroll
     e.preventDefault();
 
     isDragging.current = true;
-    hasDragged.current = false;
+    draggedDistance.current = 0;
     startX.current = e.clientX;
     startScrollLeft.current = container.scrollLeft;
 
@@ -89,14 +88,13 @@ export function useDragScroll(options: UseDragScrollOptions = {}): UseDragScroll
     if (!isDragging.current || !containerRef.current) return;
 
     const deltaX = e.clientX - startX.current;
+    draggedDistance.current = deltaX;
 
     if (Math.abs(deltaX) > DRAG_THRESHOLD) {
-      hasDragged.current = true;
-      lastDragTime.current = Date.now();
-    }
-
-    if (hasDragged.current) {
-      containerRef.current.scrollLeft = startScrollLeft.current - deltaX * speed;
+      // Clamp to prevent over-scrolling
+      const newScrollLeft = startScrollLeft.current - deltaX * speed;
+      const maxScroll = containerRef.current.scrollWidth - containerRef.current.clientWidth;
+      containerRef.current.scrollLeft = Math.max(0, Math.min(newScrollLeft, maxScroll));
     }
   }, [speed]);
 
@@ -104,7 +102,6 @@ export function useDragScroll(options: UseDragScrollOptions = {}): UseDragScroll
     if (!containerRef.current) return;
 
     isDragging.current = false;
-    hasDragged.current = false;
     containerRef.current.style.cursor = "";
     containerRef.current.style.userSelect = "";
     
@@ -116,24 +113,21 @@ export function useDragScroll(options: UseDragScrollOptions = {}): UseDragScroll
 
   const handleMouseLeave = useCallback(() => {
     if (isDragging.current) {
-      handleMouseUp();
-    }
-  }, [handleMouseUp]);
-
-  // Cancelar clicks fantasma después de drag en desktop
-  useEffect(() => {
-    const handleGlobalClick = (e: MouseEvent) => {
-      const timeSinceDrag = Date.now() - lastDragTime.current;
-      if (timeSinceDrag < CLICK_CANCEL_THRESHOLD) {
-        e.preventDefault();
-        e.stopPropagation();
+      isDragging.current = false;
+      if (containerRef.current) {
+        containerRef.current.style.cursor = "";
+        containerRef.current.style.userSelect = "";
       }
-    };
+    }
+  }, []);
 
-    document.addEventListener("click", handleGlobalClick, true);
-    return () => {
-      document.removeEventListener("click", handleGlobalClick, true);
-    };
+  const handleClick = useCallback((e: React.MouseEvent) => {
+    // Si arrastraste más del threshold, cancelá el click
+    if (Math.abs(draggedDistance.current) > DRAG_THRESHOLD) {
+      e.preventDefault();
+      e.stopPropagation();
+      draggedDistance.current = 0;
+    }
   }, []);
 
   // Cleanup al desmontar
@@ -153,7 +147,7 @@ export function useDragScroll(options: UseDragScrollOptions = {}): UseDragScroll
     style: {
       overflowX: "auto",
       overflowY: "hidden",
-      WebkitOverflowScrolling: "touch", // Momentum scrolling en iOS
+      WebkitOverflowScrolling: "touch",
     } as React.CSSProperties,
   };
 
@@ -165,24 +159,46 @@ export function useDragScroll(options: UseDragScrollOptions = {}): UseDragScroll
       onMouseMove: handleMouseMove,
       onMouseUp: handleMouseUp,
       onMouseLeave: handleMouseLeave,
+      onClick: handleClick,
     },
     containerProps,
   };
 }
 
 /**
- * Snap al elemento más cercano
+ * Snap al elemento más cercano - versión mejorada
  */
 function snapToNearest(container: HTMLDivElement) {
   const items = Array.from(container.children) as HTMLElement[];
-  const containerCenter = container.scrollLeft + container.clientWidth / 2;
+  if (items.length === 0) return;
+
+  const maxScroll = container.scrollWidth - container.clientWidth;
+  const currentScroll = container.scrollLeft;
+  const containerWidth = container.clientWidth;
+
+  // Si ya estás pegado a un borde, dejalo ahí
+  if (currentScroll <= 1 || currentScroll >= maxScroll - 1) {
+    return;
+  }
+
+  // Si estás cerca del borde, déjalo ahí
+  const EDGE_THRESHOLD = 50;
+  if (currentScroll < EDGE_THRESHOLD || currentScroll > maxScroll - EDGE_THRESHOLD) {
+    container.scrollTo({
+      left: currentScroll < maxScroll / 2 ? 0 : maxScroll,
+      behavior: "smooth",
+    });
+    return;
+  }
 
   let closestIndex = 0;
   let closestDistance = Infinity;
 
   items.forEach((item, index) => {
-    const itemCenter = item.offsetLeft + item.offsetWidth / 2;
-    const distance = Math.abs(containerCenter - itemCenter);
+    const itemLeft = item.offsetLeft;
+    const itemWidth = item.offsetWidth;
+    const snapPoint = itemLeft - (containerWidth - itemWidth) / 2;
+    const distance = Math.abs(currentScroll - snapPoint);
 
     if (distance < closestDistance) {
       closestDistance = distance;
@@ -192,8 +208,12 @@ function snapToNearest(container: HTMLDivElement) {
 
   const target = items[closestIndex];
   if (target) {
+    const itemWidth = target.offsetWidth;
+    const targetScrollLeft = target.offsetLeft - (containerWidth - itemWidth) / 2;
+    const clampedScrollLeft = Math.max(0, Math.min(targetScrollLeft, maxScroll));
+    
     container.scrollTo({
-      left: target.offsetLeft - container.clientWidth / 2 + target.offsetWidth / 2,
+      left: clampedScrollLeft,
       behavior: "smooth",
     });
   }

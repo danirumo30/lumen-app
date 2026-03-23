@@ -53,6 +53,7 @@ export interface UserMediaState {
   readonly isPlanned: boolean;
   readonly rating?: UserMediaRating;
   readonly progressMinutes?: MediaProgressMinutes;
+  readonly hasPlatinum?: boolean;
   readonly statusFlags?: readonly UserMediaStatusFlag[];
 }
 
@@ -64,5 +65,10 @@ export interface UserGlobalStats {
   readonly totalTvMinutes: MediaProgressMinutes;
   readonly totalGameMinutes: MediaProgressMinutes;
   readonly totalMinutes: MediaProgressMinutes;
+  // Counts
+  readonly totalEpisodesWatched: number;
+  readonly totalMoviesWatched: number;
+  readonly totalGamesPlayed: number;
+  readonly totalGamesPlatinum: number;
 }
 

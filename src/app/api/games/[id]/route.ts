@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { mapGenresToSpanish, translateText } from "@/lib/translate";
+import { mapGenresToSpanish, mapGameModesToSpanish } from "@/lib/translate";
 
 const IGDB_ACCESS_TOKEN = process.env.IGDB_ACCESS_TOKEN || "";
 const IGDB_CLIENT_ID = process.env.TWITCH_CLIENT_ID || "";
@@ -9,6 +9,10 @@ console.log("[games/[id]] IGDB_ACCESS_TOKEN present:", !!IGDB_ACCESS_TOKEN);
 console.log("[games/[id]] IGDB_CLIENT_ID present:", !!IGDB_CLIENT_ID);
 
 export const runtime = "nodejs";
+
+// Simple in-memory cache for game data
+const gameCache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_TTL = 1000 * 60 * 15; // 15 minutes
 
 async function getFreshAccessToken(): Promise<string> {
   const tokenResponse = await fetch(
@@ -74,6 +78,14 @@ export async function GET(
       );
     }
 
+    // Check cache first
+    const cacheKey = `game_${igdbId}`;
+    const cached = gameCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      console.log(`[games/[id]] Cache hit for game ${igdbId}`);
+      return NextResponse.json(cached.data);
+    }
+
     const igdbResponse = await fetchGameById(IGDB_ACCESS_TOKEN, igdbId);
 
     console.log("[games/[id]] IGDB response status:", igdbResponse.status);
@@ -99,11 +111,8 @@ export async function GET(
     const englishGenres = game.genres?.map((g: { name: string }) => g.name) || [];
     const genres = mapGenresToSpanish(englishGenres);
 
-    // Translate summary to Spanish (await inside async context)
-    let summary: string | null = game.summary || null;
-    if (game.summary) {
-      summary = await translateText(game.summary, "es");
-    }
+    // Don't translate summary anymore - too slow and error-prone
+    const summary: string | null = game.summary || null;
 
     const result = {
       id: `igdb_${game.id}`,
@@ -114,7 +123,7 @@ export async function GET(
         : null,
       summary,
       genres,
-      gameModes: game.game_modes?.map((m: { name: string }) => m.name) || [],
+      gameModes: mapGameModesToSpanish(game.game_modes?.map((m: { name: string }) => m.name) || []),
       platforms: game.platforms?.map((p: { name: string }) => p.name) || [],
       releaseDate: game.first_release_date
         ? new Date(game.first_release_date * 1000).toISOString().split("T")[0]
@@ -125,6 +134,9 @@ export async function GET(
       rating: game.rating ? Math.round(game.rating / 10) : null,
       involvedCompanies: game.involved_companies?.map((c: { company: { name: string } }) => c.company.name) || [],
     };
+
+    // Cache the result
+    gameCache.set(cacheKey, { data: result, timestamp: Date.now() });
 
     return NextResponse.json(result);
   } catch (error) {

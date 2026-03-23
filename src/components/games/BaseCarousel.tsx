@@ -16,7 +16,7 @@ export function BaseCarousel({ title, children, className = "" }: BaseCarouselPr
   return (
     <section className={`mb-10 ${className}`}>
       {title && (
-        <h2 className="text-lg font-semibold text-white/90 tracking-tight mb-4">
+        <h2 className="text-lg font-semibold text-white/90 tracking-tight mb-4 px-1">
           {title}
         </h2>
       )}
@@ -35,8 +35,11 @@ export function BaseCarousel({ title, children, className = "" }: BaseCarouselPr
           scrollBehavior: "smooth",
           WebkitOverflowScrolling: "touch",
           paddingBottom: "16px",
+          paddingLeft: "4px",
+          paddingRight: "4px",
           touchAction: "pan-x",
         }}
+        onClickCapture={handlers.onClick}
       >
         {children}
       </div>

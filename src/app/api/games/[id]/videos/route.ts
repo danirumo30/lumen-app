@@ -5,6 +5,10 @@ const IGDB_CLIENT_ID = process.env.TWITCH_CLIENT_ID || "";
 
 export const runtime = "nodejs";
 
+// Cache for videos
+const videosCache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_TTL = 1000 * 60 * 30; // 30 minutes
+
 async function getFreshAccessToken(): Promise<string> {
   const tokenResponse = await fetch(
     "https://id.twitch.tv/oauth2/token",
@@ -63,6 +67,13 @@ export async function GET(
       return NextResponse.json({ error: "Invalid IGDB ID" }, { status: 400 });
     }
 
+    // Check cache
+    const cacheKey = `videos_${igdbId}`;
+    const cached = videosCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      return NextResponse.json(cached.data);
+    }
+
     const videosRes = await fetchGameVideos(IGDB_ACCESS_TOKEN, igdbId);
 
     if (!videosRes.ok) {
@@ -81,7 +92,9 @@ export async function GET(
       videoUrl: `https://www.youtube.com/embed/${v.video_id}?autoplay=1`,
     }));
 
-    return NextResponse.json({ videos: formattedVideos });
+    const result = { videos: formattedVideos };
+    videosCache.set(cacheKey, { data: result, timestamp: Date.now() });
+    return NextResponse.json(result);
   } catch (error) {
     console.error("Error fetching game videos:", error);
     return NextResponse.json(
