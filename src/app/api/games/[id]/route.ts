@@ -41,7 +41,7 @@ async function fetchGameById(accessToken: string, igdbId: number, retry = false)
       "Content-Type": "text/plain",
     },
     body: `
-      fields id, name, cover.url, rating, summary, genres.name, platforms.name, first_release_date, involved_companies.company.name;
+      fields id, name, cover.url, rating, summary, genres.name, game_modes.name, platforms.name, first_release_date, involved_companies.company.name;
       where id = ${igdbId};
       limit 1;
     `,
@@ -114,6 +114,7 @@ export async function GET(
         : null,
       summary,
       genres,
+      gameModes: game.game_modes?.map((m: { name: string }) => m.name) || [],
       platforms: game.platforms?.map((p: { name: string }) => p.name) || [],
       releaseDate: game.first_release_date
         ? new Date(game.first_release_date * 1000).toISOString().split("T")[0]

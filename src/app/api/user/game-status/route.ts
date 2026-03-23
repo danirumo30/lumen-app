@@ -187,6 +187,7 @@ export async function POST(request: Request) {
         case "completed":
           updateFields.is_watched = true;
           updateFields.progress_minutes = existing?.progress_minutes || 60;
+          updateFields.updated_at = new Date().toISOString(); // Set completed date via updated_at
           break;
         case "playing":
           updateFields.is_planned = true;

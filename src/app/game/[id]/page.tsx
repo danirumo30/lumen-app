@@ -3,6 +3,10 @@
 import { useState, useEffect } from "react";
 import { use } from "react";
 import { GameInfo } from "@/components/games/GameInfo";
+import { GameMediaCarousel } from "@/components/games/GameMediaCarousel";
+import { SimilarGamesCarousel } from "@/components/games/SimilarGamesCarousel";
+import { FranchiseCarousel } from "@/components/games/FranchiseCarousel";
+import { DLCsCarousel } from "@/components/games/DLCsCarousel";
 import { supabase } from "@/lib/supabase";
 
 interface Game {
@@ -12,6 +16,7 @@ interface Game {
   coverUrl: string | null;
   summary: string | null;
   genres: string[];
+  gameModes: string[];
   platforms: string[];
   releaseDate: string | null;
   releaseYear: number | null;
@@ -27,6 +32,59 @@ interface GameStatus {
   completedAt: string | null;
 }
 
+interface GameMedia {
+  id?: number;
+  url: string;
+  type: "screenshot" | "artwork";
+  width: number;
+  height: number;
+}
+
+interface GameVideo {
+  id: string;
+  name: string;
+  thumbnailUrl: string;
+  watchUrl: string;
+}
+
+interface SimilarGame {
+  id: string;
+  igdbId: number;
+  name: string;
+  posterUrl: string | null;
+  releaseDate: string | null;
+  releaseYear: number | null;
+  rating: number | null;
+  genres: string[];
+}
+
+interface FranchiseGame {
+  id: string;
+  igdbId: number;
+  name: string;
+  posterUrl: string | null;
+  releaseDate: string | null;
+  releaseYear: number | null;
+  rating: number | null;
+  genres: string[];
+}
+
+interface FranchiseInfo {
+  id: number;
+  name: string;
+}
+
+interface DLCGame {
+  id: string;
+  igdbId: number;
+  name: string;
+  posterUrl: string | null;
+  releaseDate: string | null;
+  releaseYear: number | null;
+  rating: number | null;
+  genres: string[];
+}
+
 export default function GameDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   
@@ -38,6 +96,10 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
     startedAt: null,
     completedAt: null,
   });
+  const [media, setMedia] = useState<{ images: GameMedia[]; videos: GameVideo[] }>({ images: [], videos: [] });
+  const [similarGames, setSimilarGames] = useState<SimilarGame[]>([]);
+  const [franchise, setFranchise] = useState<{ franchise: FranchiseInfo | null; games: FranchiseGame[] }>({ franchise: null, games: [] });
+  const [dlcs, setDlcs] = useState<DLCGame[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,12 +121,17 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
         // Extract IGDB ID for API calls
         const igdbId = extractIgdbId(id) || id;
         
-        // Fetch game details and user status in parallel
-        const [gameRes, statusRes] = await Promise.all([
+        // Fetch all data in parallel
+        const [gameRes, statusRes, mediaRes, videosRes, similarRes, franchiseRes, dlcsRes] = await Promise.all([
           fetch(`/api/games/${igdbId}`),
           session?.access_token 
             ? fetch(`/api/user/game-status?igdbId=${igdbId}`, { headers: authHeaders })
             : Promise.resolve({ ok: true, json: () => Promise.resolve({ isFavorite: false, playStatus: null, playtimeMinutes: 0 }) }),
+          fetch(`/api/games/${igdbId}/media`),
+          fetch(`/api/games/${igdbId}/videos`),
+          fetch(`/api/games/${igdbId}/similar`),
+          fetch(`/api/games/${igdbId}/franchise`),
+          fetch(`/api/games/${igdbId}/dlcs`),
         ]);
 
         if (!gameRes.ok) {
@@ -73,9 +140,18 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
 
         const gameData = await gameRes.json();
         const statusData = await statusRes.json();
+        const mediaData = await mediaRes.json();
+        const videosData = await videosRes.json();
+        const similarData = await similarRes.json();
+        const franchiseData = await franchiseRes.json();
+        const dlcsData = await dlcsRes.json();
 
         setGame(gameData);
         setGameStatus(statusData);
+        setMedia({ images: mediaData.images || [], videos: videosData.videos || [] });
+        setSimilarGames(similarData.games || []);
+        setFranchise({ franchise: franchiseData.franchise, games: franchiseData.games || [] });
+        setDlcs(dlcsData.dlcs || []);
       } catch (err) {
         console.error("Error fetching game data:", err);
         setError("Failed to load game details");
@@ -142,27 +218,22 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
           game={game}
           gameStatus={gameStatus}
           onStatusChange={(status) => {
-            // Handle different status change types
             if (status === "favorite") {
-              // Adding favorite
               setGameStatus(prev => ({
                 ...prev,
                 isFavorite: true,
               }));
             } else if (status === "remove-favorite") {
-              // Removing favorite only - don't touch play status
               setGameStatus(prev => ({
                 ...prev,
                 isFavorite: false,
               }));
             } else if (status === null) {
-              // Removing play status - don't touch favorite
               setGameStatus(prev => ({
                 ...prev,
                 playStatus: null,
               }));
             } else {
-              // It's a play status
               setGameStatus(prev => ({
                 ...prev,
                 playStatus: status as GameStatus["playStatus"],
@@ -170,12 +241,18 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
             }
           }}
           onPlaytimeChange={(minutes) => {
-            setGameStatus({
-              ...gameStatus,
+            setGameStatus(prev => ({
+              ...prev,
               playtimeMinutes: minutes,
-            });
+            }));
           }}
         />
+
+        {/* Carousels */}
+        <GameMediaCarousel images={media.images} videos={media.videos} />
+        <FranchiseCarousel franchise={franchise.franchise} games={franchise.games} currentGameId={game.igdbId.toString()} />
+        <DLCsCarousel dlcs={dlcs} />
+        <SimilarGamesCarousel games={similarGames} />
       </div>
     </div>
   );
