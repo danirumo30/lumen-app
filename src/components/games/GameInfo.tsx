@@ -75,9 +75,9 @@ const statusConfig = {
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
       </svg>
     ),
-    bg: "bg-zinc-500/20",
-    border: "border-zinc-500/30",
-    text: "text-zinc-400",
+    bg: "bg-orange-500/20",
+    border: "border-orange-500/30",
+    text: "text-orange-400",
   },
   planned: {
     label: "Pendiente",

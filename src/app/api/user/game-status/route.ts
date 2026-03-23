@@ -74,12 +74,27 @@ export async function GET(request: Request) {
     }
 
     // Determine status based on flags
+    // favorite is independent, others based on progress and flags
     let status: GameStatus = null;
     if (data) {
-      if (data.is_favorite) status = "favorite";
-      else if (data.is_watched) status = "completed";
-      else if (data.is_planned) status = "planned";
-      else if (data.progress_minutes > 0) status = "playing";
+      // Always check favorite first (it's independent)
+      if (data.is_favorite) {
+        status = "favorite";
+      }
+      // Then check playing/completed/planned/dropped based on progress
+      else if (data.progress_minutes > 0 && data.is_planned) {
+        status = "playing";
+      }
+      else if (data.is_watched) {
+        status = "completed";
+      }
+      else if (!data.is_planned && !data.is_watched && data.progress_minutes === 0) {
+        // Has record but no progress - might be dropped or planned
+        status = "planned";
+      }
+      else if (data.is_planned) {
+        status = "planned";
+      }
     }
 
     return NextResponse.json({
@@ -153,24 +168,35 @@ export async function POST(request: Request) {
     console.log("[game-status POST] Existing record:", existing, "Error:", existingError);
 
     // Determine flags based on status
+    // favorite is independent, others are mutually exclusive in different columns
     const isFavorite = status === "favorite";
-    const isPlanned = status === "planned" || status === "playing"; // playing counts as planned for profile
     const isCompleted = status === "completed";
+    const isPlanned = status === "planned" || status === "playing";
     const isDropped = status === "dropped";
     const isPlaying = status === "playing";
 
     // Calculate progress minutes
     // If adding playtime, add to existing; otherwise use provided value
     let newProgressMinutes = gameMinutes;
+    
     if (playtimeMinutes && playtimeMinutes > 0 && existing?.progress_minutes) {
+      // Adding more playtime - always set playing
       newProgressMinutes = existing.progress_minutes + playtimeMinutes;
-    } else if (isCompleted && !isDropped) {
-      // If marking as completed, use provided minutes or default
-      newProgressMinutes = gameMinutes || 60; // Default 1 hour
+    } else if (isCompleted) {
+      // If marking as completed, set some default minutes
+      newProgressMinutes = gameMinutes || 60;
+    } else if (isPlaying && !existing?.progress_minutes) {
+      // Starting to play, set minimum
+      newProgressMinutes = 1;
     } else if (isDropped) {
       // If dropped, keep existing minutes
       newProgressMinutes = existing?.progress_minutes || 0;
+    } else if (isPlanned && !existing?.progress_minutes) {
+      // Planned without playing, no minutes
+      newProgressMinutes = 0;
     }
+
+    console.log("[game-status POST] Final flags:", { isFavorite, isCompleted, isPlanned, isPlaying, newProgressMinutes });
 
     // Handle "remove" status - delete the record
     if (status === "remove" || status === null) {
@@ -195,9 +221,9 @@ export async function POST(request: Request) {
       const { error } = await adminClient
         .from("user_media_tracking")
         .update({ 
-          is_favorite: isFavorite,
-          is_watched: isCompleted,
-          is_planned: isPlanned,
+          is_favorite: isFavorite,  // Keep independent
+          is_watched: isCompleted,  // Only for completed
+          is_planned: isPlanned || isPlaying,  // For planned OR playing (when has progress)
           progress_minutes: newProgressMinutes,
           updated_at: new Date().toISOString(),
         })
@@ -221,7 +247,18 @@ export async function POST(request: Request) {
 
     // First, ensure the game exists in media table (admin to bypass RLS)
     if (gameData || isFavorite || isPlaying) {
-      console.log("[game-status POST] Upserting game in media table");
+      console.log("[game-status POST] Upserting game in media table", gameData);
+      
+      // For games, store the full IGDB cover URL (or relative path starting with /)
+      let posterPath: string | null = null;
+      if (gameData?.coverUrl) {
+        // Extract just the IGDB path portion
+        // e.g., "https://images.igdb.com/igdb/image/upload/t_cover_big/co8j4n.jpg" -> "/igdb/image/upload/t_cover_big/co8j4n.jpg"
+        posterPath = gameData.coverUrl.replace("https://images.igdb.com", "");
+      }
+      
+      console.log("[game-status POST] posterPath:", posterPath);
+      
       const { error: mediaError } = await adminClient
         .from("media")
         .upsert({
@@ -229,7 +266,7 @@ export async function POST(request: Request) {
           type: "game",
           title: gameData?.title || "Game",
           release_year: gameData?.releaseYear,
-          poster_path: gameData?.coverUrl ? gameData.coverUrl.replace("https://images.igdb.com/", "").replace("t_cover_big/", "") : null,
+          poster_path: posterPath,
         }, {
           onConflict: "id",
         });

@@ -160,7 +160,7 @@ export class SupabaseUserProfileRepository implements UserProfileRepository {
     // Only fetch series, movies, and games - NOT episode-level records
     let mediaQuery = this.client
       .from("user_media_tracking")
-      .select("media_id, media_type, is_favorite, is_watched")
+      .select("media_id, media_type, is_favorite, is_watched, is_planned, progress_minutes")
       .eq("user_id", query.userId)
       .not("media_id", "like", "%_s%_e%")  // Exclude episodes like tv_123_s1_e5
       .limit(10000);
@@ -236,14 +236,31 @@ export class SupabaseUserProfileRepository implements UserProfileRepository {
           );
 
           mediaData.forEach((mediaRow: MediaRow) => {
-            const posterUrl = mediaRow.poster_path
-              ? `https://image.tmdb.org/t/p/w500${mediaRow.poster_path}`
-              : undefined;
-            console.log("[getProfileContent] mediaRow:", { id: mediaRow.id, poster_path: mediaRow.poster_path, posterUrl });
+            let posterUrl: string | undefined;
+            
+            if (mediaRow.type === "game") {
+              // Games use IGDB cover URLs stored in poster_path
+              // We stored the full IGDB URL during game-status save
+              // Or we stored the relative path, need to construct full URL
+              if (mediaRow.poster_path) {
+                if (mediaRow.poster_path.startsWith("http")) {
+                  posterUrl = mediaRow.poster_path;
+                } else {
+                  posterUrl = `https://images.igdb.com${mediaRow.poster_path.replace("t_thumb", "t_cover_big")}`;
+                }
+              }
+            } else {
+              // Movies/TV use TMDB
+              posterUrl = mediaRow.poster_path
+                ? `https://image.tmdb.org/t/p/w500${mediaRow.poster_path}`
+                : undefined;
+            }
+            
+            console.log("[getProfileContent] mediaRow:", { id: mediaRow.id, poster_path: mediaRow.poster_path, posterUrl, type: mediaRow.type });
             
             mediaMap.set(mediaRow.id, {
               id: mediaRow.id as Media["id"],
-              type: mediaRow.type as "movie" | "tv",
+              type: mediaRow.type as "movie" | "tv" | "game",
               title: mediaRow.title,
               originalTitle: mediaRow.original_title,
               releaseYear: mediaRow.release_year,
@@ -271,6 +288,10 @@ export class SupabaseUserProfileRepository implements UserProfileRepository {
 
           const isFavorite = query.includeFavorites && row.is_favorite;
           const isWatched = query.includeWatched && row.is_watched;
+          // Include games with progress (playing) or planned
+          const isPlayedOrPlanned = row.media_type === "game" && (
+            row.progress_minutes > 0 || row.is_planned
+          );
 
           if (isFavorite) {
             switch (row.media_type) {
@@ -286,16 +307,18 @@ export class SupabaseUserProfileRepository implements UserProfileRepository {
             }
           }
 
-          if (isWatched) {
+          // For games, include playing (progress), planned, completed
+          if (row.media_type === "game") {
+            if (row.is_watched || isPlayedOrPlanned) {
+              watchedGames.push(media);
+            }
+          } else if (isWatched) {
             switch (row.media_type) {
               case "movie":
                 watchedMovies.push(media);
                 break;
               case "tv":
                 watchedTvShows.push(media);
-                break;
-              case "game":
-                watchedGames.push(media);
                 break;
             }
           }
