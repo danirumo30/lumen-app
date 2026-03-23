@@ -191,6 +191,7 @@ export async function POST(request: Request) {
 
     // Upsert the tracking record
     if (existing) {
+      console.log("[game-status POST] Updating existing record");
       const { error } = await adminClient
         .from("user_media_tracking")
         .update({ 
@@ -208,6 +209,15 @@ export async function POST(request: Request) {
         throw error;
       }
     } else {
+      console.log("[game-status POST] Creating new record with:", {
+        user_id: user.id,
+        media_id: mediaId,
+        media_type: "game",
+        is_favorite: isFavorite,
+        is_watched: isCompleted,
+        is_planned: isPlanned,
+        progress_minutes: newProgressMinutes,
+      });
       // Create new record
       const { error } = await adminClient
         .from("user_media_tracking")
@@ -225,6 +235,7 @@ export async function POST(request: Request) {
         console.error("[game-status POST] Insert tracking error:", error);
         throw error;
       }
+      console.log("[game-status POST] Insert successful!");
     }
 
     return NextResponse.json({ 

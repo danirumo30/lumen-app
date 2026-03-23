@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
 
-const IGDB_ACCESS_TOKEN = process.env.IGDB_ACCESS_TOKEN!;
-const IGDB_CLIENT_ID = process.env.TWITCH_CLIENT_ID!;
-const IGDB_CLIENT_SECRET = process.env.TWITCH_CLIENT_SECRET!;
+const IGDB_ACCESS_TOKEN = process.env.IGDB_ACCESS_TOKEN || "";
+const IGDB_CLIENT_ID = process.env.TWITCH_CLIENT_ID || "";
+const IGDB_CLIENT_SECRET = process.env.TWITCH_CLIENT_SECRET || "";
+
+console.log("[games/[id]] IGDB_ACCESS_TOKEN present:", !!IGDB_ACCESS_TOKEN);
+console.log("[games/[id]] IGDB_CLIENT_ID present:", !!IGDB_CLIENT_ID);
 
 export const runtime = "nodejs";
 
@@ -72,8 +75,12 @@ export async function GET(
 
     const igdbResponse = await fetchGameById(IGDB_ACCESS_TOKEN, igdbId);
 
+    console.log("[games/[id]] IGDB response status:", igdbResponse.status);
+    
     if (!igdbResponse.ok) {
-      throw new Error(`IGDB API error: ${igdbResponse.status}`);
+      const errorText = await igdbResponse.text();
+      console.log("[games/[id]] IGDB error response:", errorText);
+      throw new Error(`IGDB API error: ${igdbResponse.status} - ${errorText}`);
     }
 
     const games = await igdbResponse.json();
