@@ -101,9 +101,9 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { igdbId, status, playtimeMinutes } = body;
+    const { igdbId, status, playtimeMinutes, gameData } = body;
 
-    console.log("[game-status POST] Received:", { igdbId, status, playtimeMinutes });
+    console.log("[game-status POST] Received:", { igdbId, status, playtimeMinutes, gameData });
 
     if (!igdbId) {
       console.log("[game-status POST] Missing igdbId");
@@ -209,17 +209,40 @@ export async function POST(request: Request) {
         throw error;
       }
     } else {
-      console.log("[game-status POST] Creating new record with:", {
-        user_id: user.id,
-        media_id: mediaId,
-        media_type: "game",
-        is_favorite: isFavorite,
-        is_watched: isCompleted,
-        is_planned: isPlanned,
-        progress_minutes: newProgressMinutes,
-      });
-      // Create new record
-      const { error } = await adminClient
+    console.log("[game-status POST] Creating new record with:", {
+      user_id: user.id,
+      media_id: mediaId,
+      media_type: "game",
+      is_favorite: isFavorite,
+      is_watched: isCompleted,
+      is_planned: isPlanned,
+      progress_minutes: newProgressMinutes,
+    });
+
+    // First, ensure the game exists in media table (admin to bypass RLS)
+    if (gameData || isFavorite || isPlaying) {
+      console.log("[game-status POST] Upserting game in media table");
+      const { error: mediaError } = await adminClient
+        .from("media")
+        .upsert({
+          id: mediaId,
+          type: "game",
+          title: gameData?.title || "Game",
+          release_year: gameData?.releaseYear,
+          poster_path: gameData?.coverUrl ? gameData.coverUrl.replace("https://images.igdb.com/", "").replace("t_cover_big/", "") : null,
+        }, {
+          onConflict: "id",
+        });
+
+      if (mediaError) {
+        console.log("[game-status POST] Media upsert error:", mediaError);
+      } else {
+        console.log("[game-status POST] Media upsert successful!");
+      }
+    }
+
+    // Create new record
+    const { error } = await adminClient
         .from("user_media_tracking")
         .insert({
           user_id: user.id,

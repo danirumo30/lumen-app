@@ -141,6 +141,11 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange }:
         body: JSON.stringify({
           igdbId: igdbId,
           status,
+          gameData: {
+            title: game.name,
+            coverUrl: game.coverUrl,
+            releaseYear: game.releaseYear,
+          },
         }),
       });
 

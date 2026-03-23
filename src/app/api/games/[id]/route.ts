@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { mapGenresToSpanish, translateText } from "@/lib/translate";
 
 const IGDB_ACCESS_TOKEN = process.env.IGDB_ACCESS_TOKEN || "";
 const IGDB_CLIENT_ID = process.env.TWITCH_CLIENT_ID || "";
@@ -94,6 +95,16 @@ export async function GET(
 
     const game = games[0];
 
+    // Get English genres and translate to Spanish
+    const englishGenres = game.genres?.map((g: { name: string }) => g.name) || [];
+    const genres = mapGenresToSpanish(englishGenres);
+
+    // Translate summary to Spanish (await inside async context)
+    let summary: string | null = game.summary || null;
+    if (game.summary) {
+      summary = await translateText(game.summary, "es");
+    }
+
     const result = {
       id: `igdb_${game.id}`,
       igdbId: game.id,
@@ -101,8 +112,8 @@ export async function GET(
       coverUrl: game.cover?.url
         ? `https:${game.cover.url.replace("t_thumb", "t_cover_big")}`
         : null,
-      summary: game.summary || null,
-      genres: game.genres?.map((g: { name: string }) => g.name) || [],
+      summary,
+      genres,
       platforms: game.platforms?.map((p: { name: string }) => p.name) || [],
       releaseDate: game.first_release_date
         ? new Date(game.first_release_date * 1000).toISOString().split("T")[0]
