@@ -258,23 +258,47 @@ export function TvInfo({
       {/* Login Modal */}
       <Modal isOpen={showLoginPrompt} onClose={() => setShowLoginPrompt(false)}>
         <div className="p-6">
-          <h2 className="text-xl font-bold text-white mb-2">Bienvenido a Lumen</h2>
-          <p className="text-zinc-400 mb-4">
-            Iniciá sesión para marcar series como vistas y agregar favoritos.
+          {/* Close button */}
+          <button
+            onClick={() => setShowLoginPrompt(false)}
+            className="absolute top-4 right-4 text-zinc-400 hover:text-white transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+
+          {/* Icon */}
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-cyan-500/20 flex items-center justify-center">
+            <svg className="w-8 h-8 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+          </div>
+
+          {/* Title */}
+          <h3 className="text-xl font-semibold text-white text-center mb-2">
+            Inicia sesión para continuar
+          </h3>
+
+          {/* Description */}
+          <p className="text-zinc-400 text-sm text-center mb-6">
+            Guarda tu progreso, marca series como vistas y crea tu lista de favoritos.
           </p>
-          <div className="flex gap-3">
+
+          {/* Actions */}
+          <div className="space-y-3">
             <a
               href="/login"
-              className="flex-1 bg-white text-zinc-900 py-2 px-4 rounded-lg font-semibold text-center hover:bg-zinc-200 transition-colors"
+              className="block w-full py-3 rounded-xl bg-white text-zinc-900 text-sm font-semibold text-center hover:bg-zinc-200 transition-colors"
             >
               Iniciar sesión
             </a>
-            <button
-              onClick={() => setShowLoginPrompt(false)}
-              className="px-4 py-2 text-zinc-400 hover:text-white transition-colors"
+            <a
+              href="/login?tab=register"
+              className="block w-full py-3 rounded-xl bg-zinc-800 text-white text-sm font-medium text-center hover:bg-zinc-700 transition-colors border border-zinc-700"
             >
-              Cerrar
-            </button>
+              Crear una cuenta
+            </a>
           </div>
         </div>
       </Modal>

@@ -52,12 +52,20 @@ describe("UserProfile Domain", () => {
         totalTvMinutes: 3600,
         totalGameMinutes: 1800,
         totalMinutes: 6600,
+        totalEpisodesWatched: 50,
+        totalMoviesWatched: 20,
+        totalGamesPlayed: 10,
+        totalGamesPlatinum: 3,
       };
 
       expect(profile.totalMovieMinutes).toBe(1200);
       expect(profile.totalTvMinutes).toBe(3600);
       expect(profile.totalGameMinutes).toBe(1800);
       expect(profile.totalMinutes).toBe(6600);
+      expect(profile.totalEpisodesWatched).toBe(50);
+      expect(profile.totalMoviesWatched).toBe(20);
+      expect(profile.totalGamesPlayed).toBe(10);
+      expect(profile.totalGamesPlatinum).toBe(3);
     });
   });
 
@@ -110,6 +118,10 @@ describe("UserProfile Domain", () => {
         totalTvMinutes: 3600,
         totalGameMinutes: 1800,
         totalMinutes: 6600,
+        totalEpisodesWatched: 50,
+        totalMoviesWatched: 20,
+        totalGamesPlayed: 10,
+        totalGamesPlatinum: 3,
         favoriteMovies: [movie],
         watchedMovies: [movie],
         favoriteTvShows: [tvShow],
@@ -140,6 +152,10 @@ describe("UserProfile Domain", () => {
         totalTvMinutes: 0,
         totalGameMinutes: 0,
         totalMinutes: 0,
+        totalEpisodesWatched: 0,
+        totalMoviesWatched: 0,
+        totalGamesPlayed: 0,
+        totalGamesPlatinum: 0,
         favoriteMovies: [],
         watchedMovies: [],
         favoriteTvShows: [],

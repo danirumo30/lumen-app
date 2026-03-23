@@ -18,6 +18,7 @@ interface UserMediaTrackingRow {
   is_planned: boolean;
   rating: number | null;
   progress_minutes: number | null;
+  has_platinum: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -84,6 +85,10 @@ export class SupabaseUserMediaRepository implements UserMediaRepository {
       totalTvMinutes: data?.total_tv_minutes ?? 0,
       totalGameMinutes: data?.total_game_minutes ?? 0,
       totalMinutes: data?.total_minutes ?? 0,
+      totalEpisodesWatched: data?.total_episodes_watched ?? 0,
+      totalMoviesWatched: data?.total_movies_watched ?? 0,
+      totalGamesPlayed: data?.total_games_played ?? 0,
+      totalGamesPlatinum: data?.total_games_platinum ?? 0,
     };
   }
 
@@ -97,6 +102,7 @@ export class SupabaseUserMediaRepository implements UserMediaRepository {
       is_planned: state.isPlanned,
       rating: state.rating ?? null,
       progress_minutes: state.progressMinutes ?? null,
+      has_platinum: state.hasPlatinum ?? false,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -112,6 +118,7 @@ export class SupabaseUserMediaRepository implements UserMediaRepository {
       isPlanned: row.is_planned,
       rating: row.rating ?? undefined,
       progressMinutes: row.progress_minutes ?? undefined,
+      hasPlatinum: row.has_platinum,
       statusFlags: this.buildStatusFlags(row),
     };
   }
