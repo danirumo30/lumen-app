@@ -140,7 +140,7 @@ export async function POST(request: Request) {
 
     // Determine flags based on status
     const isFavorite = status === "favorite";
-    const isPlanned = status === "planned";
+    const isPlanned = status === "planned" || status === "playing"; // playing counts as planned for profile
     const isCompleted = status === "completed";
     const isDropped = status === "dropped";
     const isPlaying = status === "playing";
