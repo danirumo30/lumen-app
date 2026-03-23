@@ -89,7 +89,7 @@ export async function GET(
 
     const result = {
       id: `igdb_${game.id}`,
-      tmdbId: game.id, // Using IGDB ID as tmdbId for consistency
+      igdbId: game.id,
       name: game.name,
       coverUrl: game.cover?.url
         ? `https:${game.cover.url.replace("t_thumb", "t_cover_big")}`

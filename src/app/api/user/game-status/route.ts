@@ -101,9 +101,12 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { igdbId, status, playtimeMinutes, gameData } = body;
+    const { igdbId, status, playtimeMinutes } = body;
+
+    console.log("[game-status POST] Received:", { igdbId, status, playtimeMinutes });
 
     if (!igdbId) {
+      console.log("[game-status POST] Missing igdbId");
       return NextResponse.json({ error: "igdbId required" }, { status: 400 });
     }
 
@@ -111,7 +114,10 @@ export async function POST(request: Request) {
     const authHeader = request.headers.get("Authorization");
     const token = authHeader?.replace("Bearer ", "");
     
+    console.log("[game-status POST] Token present:", !!token);
+    
     if (!token) {
+      console.log("[game-status POST] No token, returning 401");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -122,21 +128,29 @@ export async function POST(request: Request) {
 
     const { data: { user }, error: userError } = await userClient.auth.getUser();
     
+    console.log("[game-status POST] User:", user?.id, "Error:", userError);
+    
     if (!user || userError) {
       console.error("[game-status POST] User error:", userError);
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const mediaId = `igdb_${igdbId}`;
+    // Ensure igdbId is a number
+    const numericIgdbId = typeof igdbId === 'number' ? igdbId : parseInt(igdbId);
+    const mediaId = `igdb_${numericIgdbId}`;
+    console.log("[game-status POST] mediaId:", mediaId);
     const gameMinutes = playtimeMinutes || 0;
 
     // Get current state
-    const { data: existing } = await userClient
+    console.log("[game-status POST] Checking existing record for mediaId:", mediaId);
+    const { data: existing, error: existingError } = await userClient
       .from("user_media_tracking")
       .select("is_watched, is_favorite, is_planned, progress_minutes")
       .eq("user_id", user.id)
       .eq("media_id", mediaId)
       .single();
+
+    console.log("[game-status POST] Existing record:", existing, "Error:", existingError);
 
     // Determine flags based on status
     const isFavorite = status === "favorite";

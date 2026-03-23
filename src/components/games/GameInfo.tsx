@@ -116,15 +116,22 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange }:
     return `${hours}h ${mins}m`;
   };
 
-  const handleStatusClick = async (status: string | null) => {
+    const handleStatusClick = async (status: string | null) => {
     if (!user) {
       setShowLoginPrompt(true);
       return;
     }
 
+    console.log("[GameInfo] handleStatusClick called with status:", status, "igdbId:", game.igdbId);
+
     setIsLoading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
+      
+      // Ensure igdbId is a number
+      const igdbId = typeof game.igdbId === 'number' ? game.igdbId : parseInt(game.igdbId);
+      console.log("[GameInfo] Sending request with igdbId:", igdbId);
+      
       const response = await fetch("/api/user/game-status", {
         method: "POST",
         headers: { 
@@ -132,18 +139,21 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange }:
           "Authorization": `Bearer ${session?.access_token || ""}`,
         },
         body: JSON.stringify({
-          igdbId: game.igdbId,
+          igdbId: igdbId,
           status,
-          gameData: {
-            title: game.name,
-            coverUrl: game.coverUrl,
-          },
         }),
       });
+
+      console.log("[GameInfo] Response status:", response.status);
 
       if (response.status === 401) {
         setShowLoginPrompt(true);
         return;
+      }
+
+      if (!response.ok) {
+        const error = await response.json();
+        console.error("[GameInfo] Error:", error);
       }
 
       if (response.ok) {
