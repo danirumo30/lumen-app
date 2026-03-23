@@ -33,7 +33,6 @@ Extender la plataforma Lumen para soportar el tracking de videojuegos de forma c
 
 [Supabase]
 ├── user_media_tracking (estado de juego + horas)
-├── games_cache (metadatos de IGDB)
 └── Trigger: update_game_progress_trigger
 ```
 
@@ -97,20 +96,6 @@ src/components/games/
 ### Database Schema
 
 ```sql
--- Tabla de cache para metadata de juegos
-CREATE TABLE games_cache (
-  igdb_id INTEGER PRIMARY KEY,
-  name TEXT NOT NULL,
-  cover_url TEXT,
-  summary TEXT,
-  genres TEXT[],
-  platforms TEXT[],
-  release_date DATE,
-  rating NUMERIC(5,2),
-  involved_companies TEXT[],
-  cached_at TIMESTAMPTZ DEFAULT NOW()
-);
-
 -- Trigger para actualizar stats de games
 CREATE OR REPLACE FUNCTION update_game_stats()
 RETURNS TRIGGER AS $$
