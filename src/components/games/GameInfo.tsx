@@ -97,7 +97,12 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange }:
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
-  const [playtimeInput, setPlaytimeInput] = useState(gameStatus.playtimeMinutes.toString());
+  // Split playtime into hours and minutes for two inputs
+  const totalMinutes = gameStatus.playtimeMinutes;
+  const currentHours = Math.floor(totalMinutes / 60);
+  const currentMins = totalMinutes % 60;
+  const [hoursInput, setHoursInput] = useState(currentHours.toString());
+  const [minsInput, setMinsInput] = useState(currentMins.toString());
 
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return null;
@@ -116,8 +121,6 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange }:
     if (mins === 0) return `${hours}h`;
     return `${hours}h ${mins}m`;
   };
-
-  const [playtimeUnit, setPlaytimeUnit] = useState<"hours" | "minutes">("hours");
 
   // Handle play status (playing, completed, dropped, planned) - mutually exclusive
   const handlePlayStatusClick = async (status: string | null) => {
@@ -266,8 +269,12 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange }:
       return;
     }
 
-    const minutes = parseInt(playtimeInput) || 0;
-    if (minutes <= 0) return;
+    // Calculate total minutes from both inputs
+    const hours = parseInt(hoursInput) || 0;
+    const mins = parseInt(minsInput) || 0;
+    const totalMinutes = (hours * 60) + mins;
+    
+    if (totalMinutes <= 0) return;
 
     setIsLoading(true);
     try {
@@ -281,7 +288,7 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange }:
         body: JSON.stringify({
           igdbId: game.igdbId,
           status: gameStatus.playStatus || "playing",
-          playtimeMinutes: minutes,
+          playtimeMinutes: totalMinutes,
         }),
       });
 
@@ -392,9 +399,25 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange }:
 
         {/* Status selector */}
         <div className="border-t border-white/5 pt-6">
-          {/* Play Status buttons (mutually exclusive) */}
-          <div className="flex flex-wrap gap-2 mb-3">
-            <span className="text-xs text-zinc-500 w-full mb-1">Estado de juego</span>
+          {/* All status buttons in one row - Favorite FIRST */}
+          <div className="flex flex-wrap gap-2">
+            <span className="text-xs text-zinc-500 w-full mb-1">Estado</span>
+            
+            {/* Favorite button - independent, first position */}
+            <button
+              onClick={() => handleFavoriteClick()}
+              disabled={isLoading}
+              className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all ${
+                currentFavorite
+                  ? `${statusConfig.favorite.bg} ${statusConfig.favorite.text} border ${statusConfig.favorite.border}`
+                  : "bg-zinc-800/80 text-zinc-300 border border-zinc-700/50 hover:bg-zinc-700/80"
+              }`}
+            >
+              {statusConfig.favorite.icon}
+              {statusConfig.favorite.label}
+            </button>
+
+            {/* Play Status buttons - mutually exclusive */}
             {["playing", "completed", "dropped", "planned"].map((key) => {
               const config = statusConfig[key as keyof typeof statusConfig];
               const isActive = currentPlayStatus === key;
@@ -415,50 +438,45 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange }:
               );
             })}
           </div>
-
-          {/* Favorite button (independent) */}
-          <div className="flex flex-wrap gap-2">
-            <span className="text-xs text-zinc-500 w-full mb-1">Favorito</span>
-            <button
-              onClick={() => handleFavoriteClick()}
-              disabled={isLoading}
-              className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all ${
-                currentFavorite
-                  ? `${statusConfig.favorite.bg} ${statusConfig.favorite.text} border ${statusConfig.favorite.border}`
-                  : "bg-zinc-800/80 text-zinc-300 border border-zinc-700/50 hover:bg-zinc-700/80"
-              }`}
-            >
-              {statusConfig.favorite.icon}
-              {statusConfig.favorite.label}
-            </button>
-          </div>
         </div>
 
-        {/* Playtime tracker - Edit mode instead of add */}
+        {/* Playtime tracker - Two separate inputs for hours and minutes */}
         {user && (
           <div className="mt-4 p-3 rounded-xl bg-zinc-900/50 border border-white/5">
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-zinc-400">Horas jugadas:</span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-zinc-400">Tiempo de juego:</span>
               <span className="text-white font-medium">{formatPlaytime(gameStatus.playtimeMinutes)}</span>
               <div className="flex-1" />
-              {/* Toggle between hours and minutes */}
-              <select
-                value={playtimeUnit}
-                onChange={(e) => setPlaytimeUnit(e.target.value as "hours" | "minutes")}
-                className="px-2 py-1 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-xs"
-              >
-                <option value="hours">Horas</option>
-                <option value="minutes">Minutos</option>
-              </select>
+              
+              {/* Hours input */}
               <input
                 type="number"
-                value={playtimeInput}
-                onChange={(e) => setPlaytimeInput(e.target.value)}
-                placeholder={playtimeUnit === "hours" ? "Horas" : "Minutos"}
-                className="w-20 px-2 py-1 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-sm [-moz-appearance:textfield]"
+                value={hoursInput}
+                onChange={(e) => setHoursInput(e.target.value)}
+                placeholder="0"
+                className="w-14 px-2 py-1 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-sm text-center [-moz-appearance:textfield]"
                 min="0"
                 style={{ WebkitAppearance: 'none', appearance: 'textfield' }}
               />
+              <span className="text-xs text-zinc-500">Horas</span>
+              
+              {/* Minutes input */}
+              <input
+                type="number"
+                value={minsInput}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value) || 0;
+                  // Cap at 59
+                  setMinsInput(val > 59 ? "59" : val.toString());
+                }}
+                placeholder="0"
+                className="w-14 px-2 py-1 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-sm text-center [-moz-appearance:textfield]"
+                min="0"
+                max="59"
+                style={{ WebkitAppearance: 'none', appearance: 'textfield' }}
+              />
+              <span className="text-xs text-zinc-500">Min</span>
+              
               <button
                 onClick={handlePlaytimeSubmit}
                 disabled={isLoading}

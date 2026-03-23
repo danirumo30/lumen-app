@@ -40,7 +40,8 @@ export async function GET(request: Request) {
     
     if (!token) {
       return NextResponse.json({ 
-        status: null, 
+        isFavorite: false, 
+        playStatus: null, 
         playtimeMinutes: 0, 
         startedAt: null, 
         completedAt: null 
@@ -52,7 +53,8 @@ export async function GET(request: Request) {
     
     if (!user) {
       return NextResponse.json({ 
-        status: null, 
+        isFavorite: false, 
+        playStatus: null, 
         playtimeMinutes: 0, 
         startedAt: null, 
         completedAt: null 
@@ -73,27 +75,25 @@ export async function GET(request: Request) {
       console.error("[game-status GET] Error:", error);
     }
 
-    // Return status separately - favorite is independent
-    // Determine playing/completed/planned based on progress and flags
-    let playStatus: GameStatus = null;
-    if (data) {
-      if (data.progress_minutes > 0 && data.is_planned) {
-        playStatus = "playing";
-      }
-      else if (data.is_watched) {
-        playStatus = "completed";
-      }
-      else if (data.is_planned) {
-        playStatus = "planned";
-      }
-      // If has record with no progress and not planned/watched, it's like dropped
-      else if (data.progress_minutes === 0 && data.is_planned === false && data.is_watched === false) {
-        playStatus = "dropped";
-      }
-    }
-
     // Favorite is always independent - check separately
     const isFavorite = data?.is_favorite ?? false;
+    
+    // Determine play status based on flags
+    let playStatus: GameStatus = null;
+    if (data) {
+      // Priority: watched > planned > dropped
+      if (data.is_watched) {
+        playStatus = "completed";
+      } else if (data.is_planned && data.progress_minutes > 0) {
+        playStatus = "playing";
+      } else if (data.is_planned) {
+        playStatus = "planned";
+      } else if (data.progress_minutes > 0) {
+        // Has progress but not planned/watched = dropped
+        playStatus = "dropped";
+      }
+      // If progress_minutes === 0 and not planned/watched, no status (null)
+    }
 
     return NextResponse.json({
       isFavorite,
@@ -128,10 +128,7 @@ export async function POST(request: Request) {
     const authHeader = request.headers.get("Authorization");
     const token = authHeader?.replace("Bearer ", "");
     
-    console.log("[game-status POST] Token present:", !!token);
-    
     if (!token) {
-      console.log("[game-status POST] No token, returning 401");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -142,126 +139,97 @@ export async function POST(request: Request) {
 
     const { data: { user }, error: userError } = await userClient.auth.getUser();
     
-    console.log("[game-status POST] User:", user?.id, "Error:", userError);
-    
     if (!user || userError) {
-      console.error("[game-status POST] User error:", userError);
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Ensure igdbId is a number
     const numericIgdbId = typeof igdbId === 'number' ? igdbId : parseInt(igdbId);
     const mediaId = `igdb_${numericIgdbId}`;
-    console.log("[game-status POST] mediaId:", mediaId);
-    const gameMinutes = playtimeMinutes || 0;
 
-    // Get current state
-    console.log("[game-status POST] Checking existing record for mediaId:", mediaId);
-    const { data: existing, error: existingError } = await userClient
+    // Get existing record
+    const { data: existing } = await userClient
       .from("user_media_tracking")
-      .select("is_watched, is_favorite, is_planned, progress_minutes")
+      .select("is_favorite, is_watched, is_planned, progress_minutes")
       .eq("user_id", user.id)
       .eq("media_id", mediaId)
       .single();
 
-    console.log("[game-status POST] Existing record:", existing, "Error:", existingError);
-
-    // Determine flags based on status and isFavorite parameter
-    // isFavorite comes from request when doing favorite-only update
-    // status comes from request when doing play status update
-    const shouldToggleFavorite = isFavorite !== undefined;
-    const isFavoriteFinal = shouldToggleFavorite ? isFavorite : (status === "favorite");
-    
-    const isCompleted = status === "completed";
-    const isPlanned = status === "planned" || status === "playing";
-    const isDropped = status === "dropped";
-    const isPlaying = status === "playing";
-
-    // Calculate progress minutes
-    // If adding playtime, add to existing; otherwise use provided value
-    let newProgressMinutes = gameMinutes;
-    
-    if (playtimeMinutes && playtimeMinutes > 0 && existing?.progress_minutes) {
-      // Adding more playtime - always set playing
-      newProgressMinutes = existing.progress_minutes + playtimeMinutes;
-    } else if (isCompleted) {
-      // If marking as completed, set some default minutes
-      newProgressMinutes = gameMinutes || 60;
-    } else if (isPlaying && !existing?.progress_minutes) {
-      // Starting to play, set minimum
-      newProgressMinutes = 1;
-    } else if (isDropped) {
-      // If dropped, keep existing minutes
-      newProgressMinutes = existing?.progress_minutes || 0;
-    } else if (isPlanned && !existing?.progress_minutes) {
-      // Planned without playing, no minutes
-      newProgressMinutes = 0;
-    }
-
-    console.log("[game-status POST] Final flags:", { isFavorite: isFavoriteFinal, isCompleted, isPlanned, isPlaying, newProgressMinutes });
-
     // Handle "remove" status - delete the record
     if (status === "remove" || status === null) {
       if (existing) {
-        const { error: deleteError } = await adminClient
+        await adminClient
           .from("user_media_tracking")
           .delete()
           .eq("user_id", user.id)
           .eq("media_id", mediaId);
-
-        if (deleteError) {
-          console.error("[game-status POST] Delete error:", deleteError);
-          throw deleteError;
-        }
       }
-      return NextResponse.json({ success: true, status: null });
+      return NextResponse.json({ success: true, isFavorite: false, playStatus: null });
     }
 
-    // Upsert the tracking record
-    if (existing) {
-      console.log("[game-status POST] Updating existing record");
-      const { error } = await adminClient
-        .from("user_media_tracking")
-        .update({ 
-          is_favorite: isFavoriteFinal,  // Keep independent
-          is_watched: isCompleted,  // Only for completed
-          is_planned: isPlanned || isPlaying,  // For planned OR playing (when has progress)
-          progress_minutes: newProgressMinutes,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("user_id", user.id)
-        .eq("media_id", mediaId);
+    // Build update object - only update fields that are explicitly provided
+    const updateFields: Record<string, any> = {
+      updated_at: new Date().toISOString(),
+    };
 
-      if (error) {
-        console.error("[game-status POST] Update tracking error:", error);
-        throw error;
-      }
-    } else {
-    console.log("[game-status POST] Creating new record with:", {
-      user_id: user.id,
-      media_id: mediaId,
-      media_type: "game",
-      is_favorite: isFavoriteFinal,
-      is_watched: isCompleted,
-      is_planned: isPlanned,
-      progress_minutes: newProgressMinutes,
-    });
+    // Handle favorite update (independent of play status)
+    if (isFavorite !== undefined) {
+      updateFields.is_favorite = isFavorite;
+    }
 
-    // First, ensure the game exists in media table (admin to bypass RLS)
-    if (gameData || isFavoriteFinal || isPlaying) {
-      console.log("[game-status POST] Upserting game in media table", gameData);
+    // Handle play status update
+    if (status !== undefined && status !== null) {
+      // Clear any existing play status first
+      updateFields.is_watched = false;
+      updateFields.is_planned = false;
       
-      // For games, store the full IGDB cover URL (or relative path starting with /)
+      switch (status) {
+        case "completed":
+          updateFields.is_watched = true;
+          updateFields.progress_minutes = existing?.progress_minutes || 60;
+          break;
+        case "playing":
+          updateFields.is_planned = true;
+          updateFields.progress_minutes = existing?.progress_minutes || 1;
+          break;
+        case "planned":
+          updateFields.is_planned = true;
+          updateFields.progress_minutes = existing?.progress_minutes || 0;
+          break;
+        case "dropped":
+          // Keep existing progress
+          break;
+        case "favorite":
+          // Just favorite, don't touch play status
+          break;
+      }
+    }
+
+    // Handle playtime update
+    if (playtimeMinutes !== undefined && playtimeMinutes > 0) {
+      if (existing?.progress_minutes && playtimeMinutes > 0) {
+        // Add to existing
+        updateFields.progress_minutes = existing.progress_minutes + playtimeMinutes;
+      } else {
+        updateFields.progress_minutes = playtimeMinutes;
+      }
+      // Also set playing status if not already set
+      if (!existing?.is_planned && !existing?.is_watched) {
+        updateFields.is_planned = true;
+      }
+    }
+
+    console.log("[game-status POST] Update fields:", updateFields);
+
+    // Check if we need to upsert media first
+    if (gameData && (Object.keys(updateFields).length > 1 || !existing)) {
+      // Extract just the IGDB path portion
       let posterPath: string | null = null;
       if (gameData?.coverUrl) {
-        // Extract just the IGDB path portion
-        // e.g., "https://images.igdb.com/igdb/image/upload/t_cover_big/co8j4n.jpg" -> "/igdb/image/upload/t_cover_big/co8j4n.jpg"
         posterPath = gameData.coverUrl.replace("https://images.igdb.com", "");
       }
       
-      console.log("[game-status POST] posterPath:", posterPath);
-      
-      const { error: mediaError } = await adminClient
+      await adminClient
         .from("media")
         .upsert({
           id: mediaId,
@@ -272,38 +240,52 @@ export async function POST(request: Request) {
         }, {
           onConflict: "id",
         });
-
-      if (mediaError) {
-        console.log("[game-status POST] Media upsert error:", mediaError);
-      } else {
-        console.log("[game-status POST] Media upsert successful!");
-      }
     }
 
-    // Create new record
-    const { error } = await adminClient
+    if (existing) {
+      // Update existing record
+      await adminClient
         .from("user_media_tracking")
-        .insert({
-          user_id: user.id,
-          media_id: mediaId,
-          media_type: "game",
-          is_favorite: isFavoriteFinal,
-          is_watched: isCompleted,
-          is_planned: isPlanned,
-          progress_minutes: newProgressMinutes,
-        });
+        .update(updateFields)
+        .eq("user_id", user.id)
+        .eq("media_id", mediaId);
+    } else {
+      // Create new record with default values
+      const newRecord = {
+        user_id: user.id,
+        media_id: mediaId,
+        media_type: "game",
+        is_favorite: updateFields.is_favorite ?? false,
+        is_watched: updateFields.is_watched ?? false,
+        is_planned: updateFields.is_planned ?? false,
+        progress_minutes: updateFields.progress_minutes ?? 0,
+      };
+      
+      console.log("[game-status POST] Inserting new record:", newRecord);
+      
+      await adminClient
+        .from("user_media_tracking")
+        .insert(newRecord);
+    }
 
-      if (error) {
-        console.error("[game-status POST] Insert tracking error:", error);
-        throw error;
-      }
-      console.log("[game-status POST] Insert successful!");
+    // Return the new state
+    const newIsFavorite = updateFields.is_favorite ?? existing?.is_favorite ?? false;
+    let newPlayStatus: GameStatus = null;
+    if (updateFields.is_watched) {
+      newPlayStatus = "completed";
+    } else if (updateFields.is_planned) {
+      newPlayStatus = updateFields.progress_minutes > (existing?.progress_minutes || 0) ? "playing" : "planned";
+    } else if (updateFields.progress_minutes > 0 && existing?.progress_minutes === 0) {
+      newPlayStatus = "dropped";
+    } else if (existing?.is_planned) {
+      newPlayStatus = "playing";
     }
 
     return NextResponse.json({ 
       success: true, 
-      status,
-      playtimeMinutes: newProgressMinutes 
+      isFavorite: newIsFavorite,
+      playStatus: newPlayStatus,
+      playtimeMinutes: updateFields.progress_minutes ?? existing?.progress_minutes ?? 0,
     });
   } catch (error) {
     console.error("[game-status POST] Error:", error);
