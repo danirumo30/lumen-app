@@ -44,7 +44,7 @@ interface GameVideo {
   id: string;
   name: string;
   thumbnailUrl: string;
-  watchUrl: string;
+  videoUrl: string;
 }
 
 interface SimilarGame {

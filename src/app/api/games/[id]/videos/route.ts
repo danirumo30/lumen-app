@@ -77,8 +77,8 @@ export async function GET(
       name: v.name,
       // YouTube thumbnail URL
       thumbnailUrl: `https://img.youtube.com/vi/${v.video_id}/hqdefault.jpg`,
-      // YouTube watch URL
-      watchUrl: `https://www.youtube.com/watch?v=${v.video_id}`,
+      // YouTube embed URL for modal
+      videoUrl: `https://www.youtube.com/embed/${v.video_id}?autoplay=1`,
     }));
 
     return NextResponse.json({ videos: formattedVideos });
