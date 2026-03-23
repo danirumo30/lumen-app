@@ -79,9 +79,9 @@ export async function GET(request: Request) {
     const isFavorite = data?.is_favorite ?? false;
     
     // Determine play status based on flags
+    // Priority: completed > playing > planned > dropped
     let playStatus: GameStatus = null;
     if (data) {
-      // Priority: watched > planned > dropped
       if (data.is_watched) {
         playStatus = "completed";
       } else if (data.is_planned && data.progress_minutes > 0) {
@@ -194,7 +194,7 @@ export async function POST(request: Request) {
           break;
         case "planned":
           updateFields.is_planned = true;
-          updateFields.progress_minutes = existing?.progress_minutes || 0;
+          updateFields.progress_minutes = 0; // Reset progress for planned
           break;
         case "dropped":
           // Keep existing progress

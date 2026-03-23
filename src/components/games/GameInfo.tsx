@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { useAuth } from "@/modules/auth/infrastructure/contexts/AuthContext";
 import { Modal } from "@/components/ui/Modal";
 import { supabase } from "@/lib/supabase";
@@ -32,6 +32,139 @@ interface GameInfoProps {
   gameStatus: GameStatus;
   onStatusChange: (status: string | null) => void;
   onPlaytimeChange: (minutes: number) => void;
+}
+
+// Platform icons map
+const platformIcons: Record<string, React.ReactElement> = {
+  PC: (
+    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M20 18c1.1 0 1.99-.9 1.99-2L22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z"/>
+    </svg>
+  ),
+  "PlayStation 5": (
+    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M8.985 2.596v17.548l3.915 1.261V6.688c0-.69.304-1.151.794-.991.636.181.76.814.76 1.505v5.876c2.441 1.193 4.362-.002 4.362-3.153 0-3.237-1.126-4.676-4.363-5.485V2.596c0-.687-.215-.935-.788-.935H8.985zm.737 4.078c.958.06 1.803.467 2.248 1.449h.036V5.674c0-.653-.32-.914-.807-.914-.465 0-.794.261-.794.809v3.236c0 .295.035.537.093.752h1.094c-.557-1.658-1.615-2.232-1.87-2.883zm1.096 5.095l.415.133v4.318l-.415-.134V11.77zm3.901-.004l.415.134v4.318l-.415-.134V11.77z"/>
+    </svg>
+  ),
+  "PlayStation 4": (
+    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M8.985 2.596v17.548l3.915 1.261V6.688c0-.69.304-1.151.794-.991.636.181.76.814.76 1.505v5.876c2.441 1.193 4.362-.002 4.362-3.153 0-3.237-1.126-4.676-4.363-5.485V2.596c0-.687-.215-.935-.788-.935H8.985zm.737 4.078c.958.06 1.803.467 2.248 1.449h.036V5.674c0-.653-.32-.914-.807-.914-.465 0-.794.261-.794.809v3.236c0 .295.035.537.093.752h1.094c-.557-1.658-1.615-2.232-1.87-2.883zm1.096 5.095l.415.133v4.318l-.415-.134V11.77zm3.901-.004l.415.134v4.318l-.415-.134V11.77z"/>
+    </svg>
+  ),
+  Xbox: (
+    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+    </svg>
+  ),
+  "Xbox Series X": (
+    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+    </svg>
+  ),
+  "Xbox One": (
+    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+    </svg>
+  ),
+  "Nintendo Switch": (
+    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M4.5 9.5c-.83 0-1.5.67-1.5 1.5v2c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5v-2c0-.83-.67-1.5-1.5-1.5zm15 0c-.83 0-1.5.67-1.5 1.5v2c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5v-2c0-.83-.67-1.5-1.5-1.5zM12 4C7.58 4 4 7.58 4 12c0 4.42 3.58 8 8 8s8-3.58 8-8c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"/>
+    </svg>
+  ),
+  "Nintendo Switch 2": (
+    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M4.5 9.5c-.83 0-1.5.67-1.5 1.5v2c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5v-2c0-.83-.67-1.5-1.5-1.5zm15 0c-.83 0-1.5.67-1.5 1.5v2c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5v-2c0-.83-.67-1.5-1.5-1.5zM12 4C7.58 4 4 7.58 4 12c0 4.42 3.58 8 8 8s8-3.58 8-8c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"/>
+    </svg>
+  ),
+  "PlayStation 2": (
+    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M8.985 2.596v17.548l3.915 1.261V6.688c0-.69.304-1.151.794-.991.636.181.76.814.76 1.505v5.876c2.441 1.193 4.362-.002 4.362-3.153 0-3.237-1.126-4.676-4.363-5.485V2.596c0-.687-.215-.935-.788-.935H8.985zm.737 4.078c.958.06 1.803.467 2.248 1.449h.036V5.674c0-.653-.32-.914-.807-.914-.465 0-.794.261-.794.809v3.236c0 .295.035.537.093.752h1.094c-.557-1.658-1.615-2.232-1.87-2.883zm1.096 5.095l.415.133v4.318l-.415-.134V11.77zm3.901-.004l.415.134v4.318l-.415-.134V11.77z"/>
+    </svg>
+  ),
+  "PlayStation 3": (
+    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M8.985 2.596v17.548l3.915 1.261V6.688c0-.69.304-1.151.794-.991.636.181.76.814.76 1.505v5.876c2.441 1.193 4.362-.002 4.362-3.153 0-3.237-1.126-4.676-4.363-5.485V2.596c0-.687-.215-.935-.788-.935H8.985zm.737 4.078c.958.06 1.803.467 2.248 1.449h.036V5.674c0-.653-.32-.914-.807-.914-.465 0-.794.261-.794.809v3.236c0 .295.035.537.093.752h1.094c-.557-1.658-1.615-2.232-1.87-2.883zm1.096 5.095l.415.133v4.318l-.415-.134V11.77zm3.901-.004l.415.134v4.318l-.415-.134V11.77z"/>
+    </svg>
+  ),
+  "PlayStation Portable": (
+    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M8.985 2.596v17.548l3.915 1.261V6.688c0-.69.304-1.151.794-.991.636.181.76.814.76 1.505v5.876c2.441 1.193 4.362-.002 4.362-3.153 0-3.237-1.126-4.676-4.363-5.485V2.596c0-.687-.215-.935-.788-.935H8.985zm.737 4.078c.958.06 1.803.467 2.248 1.449h.036V5.674c0-.653-.32-.914-.807-.914-.465 0-.794.261-.794.809v3.236c0 .295.035.537.093.752h1.094c-.557-1.658-1.615-2.232-1.87-2.883zm1.096 5.095l.415.133v4.318l-.415-.134V11.77zm3.901-.004l.415.134v4.318l-.415-.134V11.77z"/>
+    </svg>
+  ),
+  "PlayStation Vita": (
+    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M8.985 2.596v17.548l3.915 1.261V6.688c0-.69.304-1.151.794-.991.636.181.76.814.76 1.505v5.876c2.441 1.193 4.362-.002 4.362-3.153 0-3.237-1.126-4.676-4.363-5.485V2.596c0-.687-.215-.935-.788-.935H8.985zm.737 4.078c.958.06 1.803.467 2.248 1.449h.036V5.674c0-.653-.32-.914-.807-.914-.465 0-.794.261-.794.809v3.236c0 .295.035.537.093.752h1.094c-.557-1.658-1.615-2.232-1.87-2.883zm1.096 5.095l.415.133v4.318l-.415-.134V11.77zm3.901-.004l.415.134v4.318l-.415-.134V11.77z"/>
+    </svg>
+  ),
+  iOS: (
+    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+    </svg>
+  ),
+  Android: (
+    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M9.5 4v7.5H5L7.5 14h2l2.5-2.5h2L12 18h2V11h-4.5V4H9.5zm3.5 7c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1z"/>
+    </svg>
+  ),
+  macOS: (
+    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+    </svg>
+  ),
+  Linux: (
+    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M12.504 0c-.155 0-.315.008-.48.021-4.226.333-3.105 4.807-3.17 6.298-.076 1.092-.3 1.953-1.05 3.02-.885 1.051-2.127 2.75-2.716 4.521-.278.832-.41 1.684-.287 2.489a.424.424 0 00-.11.135c-.26.268-.45.6-.663.839-.199.199-.485.267-.797.4-.313.136-.658.269-.864.682-.09.189-.136.394-.132.602 0 .199.027.4.055.536.058.399.116.728.04.97-.249.68-.28 1.145-.106 1.484.174.334.535.47.94.601.81.2 1.91.2 2.606.202.76.021 1.082.287 1.287.468.264.23.486.602.668 1.075.09.246.18.485.304.668.268.398.596.728 1.022.94.731.354 1.57.334 2.453.334.468 0 .864-.06 1.232-.172.386-.132.663-.267.963-.535.172-.148.399-.332.54-.535.076-.123.135-.269.22-.399.206-.315.28-.73.28-1.148 0-.535-.12-.863-.377-1.058-.219-.164-.48-.201-.82-.201-.267 0-.502.035-.72.106-.48.148-.93.53-1.232.962-.063.089-.12.186-.18.276-.173.267-.26.602-.26.935 0 .063.014.122.023.182.138.915.48 1.86 1.074 2.684.35.463.77.87 1.282 1.163.13.069.267.123.4.18.35.135.732.235 1.13.3.302.045.6.062.902.062.215 0 .43-.02.64-.063.428-.08.84-.21 1.234-.398.42-.185.812-.43 1.157-.726.38-.31.66-.668.91-1.058.105-.16.19-.326.285-.485.27-.45.486-.935.648-1.442.038-.115.072-.23.106-.345.08-.332.135-.668.18-1.003.095-.682.13-1.365.105-2.047-.02-.399-.06-.8-.13-1.19-.14-.736-.378-1.428-.71-2.105-.61-1.227-1.46-2.25-2.58-3.015-.826-.571-1.797-.963-2.83-1.08-.426-.053-.86-.062-1.293-.03-.336.024-.665.082-1 .138-.66.136-1.31.305-1.95.53-.33.116-.66.252-1.036.4.03-.334.03-.6.02-.668z"/>
+    </svg>
+  ),
+  Windows: (
+    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M3 5.5L3 18.5 11.5 18.5 11.5 12 21.5 12 21.5 5.5 11.5 5.5 11.5 3 3 3z M3 21L3 15.5 11.5 15.5 11.5 21z"/>
+    </svg>
+  ),
+  Web: (
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/>
+    </svg>
+  ),
+};
+
+// Generic fallback icon
+const defaultPlatformIcon = (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+  </svg>
+);
+
+// Helper to get icon for a platform
+function getPlatformIcon(platform: string): React.ReactElement {
+  // Try exact match first
+  if (platformIcons[platform]) {
+    return platformIcons[platform];
+  }
+  // Try partial matches
+  const lowerPlatform = platform.toLowerCase();
+  if (lowerPlatform.includes("playstation") || lowerPlatform.includes("ps")) {
+    return platformIcons["PlayStation 5"] || defaultPlatformIcon;
+  }
+  if (lowerPlatform.includes("xbox")) {
+    return platformIcons["Xbox"] || defaultPlatformIcon;
+  }
+  if (lowerPlatform.includes("nintendo") || lowerPlatform.includes("switch")) {
+    return platformIcons["Nintendo Switch"] || defaultPlatformIcon;
+  }
+  if (lowerPlatform.includes("pc") || lowerPlatform.includes("windows") || lowerPlatform.includes("mac") || lowerPlatform.includes("linux")) {
+    return platformIcons["PC"] || defaultPlatformIcon;
+  }
+  if (lowerPlatform.includes("ios") || lowerPlatform.includes("iphone") || lowerPlatform.includes("ipad")) {
+    return platformIcons["iOS"] || defaultPlatformIcon;
+  }
+  if (lowerPlatform.includes("android")) {
+    return platformIcons["Android"] || defaultPlatformIcon;
+  }
+  if (lowerPlatform.includes("web") || lowerPlatform.includes("browser")) {
+    return platformIcons["Web"] || defaultPlatformIcon;
+  }
+  return defaultPlatformIcon;
 }
 
 const statusConfig = {
@@ -366,14 +499,15 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange }:
           </div>
         )}
 
-        {/* Platforms */}
+        {/* Platforms with icons */}
         {game.platforms.length > 0 && (
           <div className="flex flex-wrap gap-2">
             {game.platforms.map((platform, i) => (
               <span
                 key={i}
-                className="px-2 py-0.5 rounded bg-zinc-800 border border-zinc-700 text-xs text-zinc-400"
+                className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-zinc-800 border border-zinc-700 text-xs text-zinc-400"
               >
+                <span className="text-zinc-500">{getPlatformIcon(platform)}</span>
                 {platform}
               </span>
             ))}
@@ -385,15 +519,54 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange }:
           <p className="text-zinc-300 leading-relaxed">{game.summary}</p>
         )}
 
-        {/* Release date */}
-        {game.releaseDate && (
-          <div className="flex items-center gap-2 text-sm">
-            <svg className="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            <span className="text-zinc-400">
-              Lanzamiento: <span className="text-white">{formatDate(game.releaseDate)}</span>
-            </span>
+        {/* Release date + Status date */}
+        {(game.releaseDate || gameStatus.playStatus) && (
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+            {/* Release date */}
+            {game.releaseDate && (
+              <div className="flex items-center gap-2">
+                <svg className="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span className="text-zinc-400">
+                  Lanzamiento: <span className="text-white">{formatDate(game.releaseDate)}</span>
+                </span>
+              </div>
+            )}
+            
+            {/* Status-specific dates */}
+            {gameStatus.playStatus === "playing" && gameStatus.startedAt && (
+              <div className="flex items-center gap-2">
+                <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                </svg>
+                <span className="text-zinc-400">
+                  Empezado: <span className="text-emerald-400">{formatDate(gameStatus.startedAt)}</span>
+                </span>
+              </div>
+            )}
+            
+            {gameStatus.playStatus === "completed" && gameStatus.completedAt && (
+              <div className="flex items-center gap-2">
+                <svg className="w-4 h-4 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span className="text-zinc-400">
+                  Completado: <span className="text-cyan-400">{formatDate(gameStatus.completedAt)}</span>
+                </span>
+              </div>
+            )}
+            
+            {gameStatus.playStatus === "dropped" && gameStatus.startedAt && (
+              <div className="flex items-center gap-2">
+                <svg className="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                <span className="text-zinc-400">
+                  Abandonado: <span className="text-orange-400">{formatDate(gameStatus.startedAt)}</span>
+                </span>
+              </div>
+            )}
           </div>
         )}
 
@@ -441,7 +614,8 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange }:
         </div>
 
         {/* Playtime tracker - Two separate inputs for hours and minutes */}
-        {user && (
+        {/* Only show when NOT in "planned" status */}
+        {user && currentPlayStatus !== "planned" && (
           <div className="mt-4 p-3 rounded-xl bg-zinc-900/50 border border-white/5">
             <div className="flex items-center gap-2">
               <span className="text-sm text-zinc-400">Tiempo de juego:</span>
