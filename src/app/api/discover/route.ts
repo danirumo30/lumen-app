@@ -318,18 +318,18 @@ async function getPopularGames(filters?: SearchFilters) {
     "Web": 16
   };
   
-  // Build where clause
+  // Build where clause - IGDB syntax without parentheses for single values
   const conditions: string[] = [];
   if (filters?.genre) {
     const genreId = genreIdMap[filters.genre];
     if (genreId) {
-      conditions.push(`genres = (${genreId})`);
+      conditions.push(`genres = ${genreId}`);
     }
   }
   if (filters?.platform) {
     const platformId = igdbPlatformIdMap[filters.platform];
     if (platformId) {
-      conditions.push(`platforms = (${platformId})`);
+      conditions.push(`platforms = ${platformId}`);
     }
   }
   if (filters?.yearFrom) {
@@ -346,7 +346,7 @@ async function getPopularGames(filters?: SearchFilters) {
     queryBody += " where " + conditions.join(" & ");
   }
   
-  // Sorting
+  // Sorting - add space before sort
   if (filters?.sortBy === "rating") {
     queryBody += " sort rating desc;";
   } else if (filters?.sortBy === "year") {
