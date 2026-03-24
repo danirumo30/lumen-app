@@ -485,11 +485,13 @@ async function getPopularGames(filters?: SearchFilters, page: number = 1) {
   if (filters?.platform) {
     const platformIds = igdbPlatformIdsMap[filters.platform];
     if (platformIds && platformIds.length > 0) {
-      // Use OR syntax for multiple platform IDs: platforms = (id1 | id2 | id3)
+      // Use OR syntax for multiple platform IDs: platforms = id1 | platforms = id2
       if (platformIds.length === 1) {
         conditions.push(`platforms = ${platformIds[0]}`);
       } else {
-        conditions.push(`platforms = (${platformIds.join(" | ")})`);
+        // IGDB syntax: platforms = 130 | platforms = 508 (no parentheses)
+        const platformConditions = platformIds.map(id => `platforms = ${id}`).join(" | ");
+        conditions.push(`(${platformConditions})`);
       }
     }
   }
