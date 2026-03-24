@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { DiscoverCard } from "./DiscoverCard";
 import { DiscoverSkeleton } from "./DiscoverSkeleton";
 import { MediaType } from "./DiscoverTypeChips";
@@ -28,91 +28,84 @@ interface DiscoverGridProps {
 
 export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
   const [results, setResults] = useState<SearchResult[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchResults = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
+  useEffect(() => {
+    let cancelled = false;
 
-    try {
-      // Build URL with params
-      const params = new URLSearchParams();
-      if (query) {
-        params.set("q", query);
+    async function doFetch() {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const params = new URLSearchParams();
+        params.set("type", type);
+
+        // Only add query if it has at least 2 characters
+        if (query && query.trim().length >= 2) {
+          params.set("q", query);
+        }
+
+        // Add filters
+        if (Object.keys(filters).length > 0) {
+          params.set("filters", JSON.stringify(filters));
+        }
+
+        // Use search API when query >= 2 chars, discover otherwise
+        const endpoint = query && query.trim().length >= 2 ? "/api/search" : "/api/discover";
+        const url = `${endpoint}?${params.toString()}`;
+
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (cancelled) return;
+
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to fetch");
+        }
+
+        // Combine results based on type
+        let combined: SearchResult[] = [];
+
+        if (type === "all") {
+          combined = [
+            ...(data.movies || []),
+            ...(data.tv || []),
+            ...(data.games || []),
+          ];
+        } else if (type === "movie") {
+          combined = data.movies || [];
+        } else if (type === "tv") {
+          combined = data.tv || [];
+        } else if (type === "game") {
+          combined = data.games || [];
+        } else if (type === "user") {
+          combined = data.users || [];
+        }
+
+        setResults(combined);
+      } catch (err) {
+        if (!cancelled) {
+          console.error("Fetch error:", err);
+          setError(err instanceof Error ? err.message : "Something went wrong");
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
       }
-      params.set("type", type);
-      
-      // Add filters as JSON
-      if (Object.keys(filters).length > 0) {
-        params.set("filters", JSON.stringify(filters));
-      }
-
-      const endpoint = query ? "/api/search" : "/api/discover";
-      const url = `${endpoint}?${params.toString()}`;
-
-      const response = await fetch(url);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to fetch");
-      }
-
-      // Combine results based on type
-      let combined: SearchResult[] = [];
-
-      if (type === "all") {
-        // Mix results evenly or show all categories
-        combined = [
-          ...(data.movies || []),
-          ...(data.tv || []),
-          ...(data.games || []),
-          ...(data.users || []),
-        ];
-      } else if (type === "movie") {
-        combined = data.movies || [];
-      } else if (type === "tv") {
-        combined = data.tv || [];
-      } else if (type === "game") {
-        combined = data.games || [];
-      } else if (type === "user") {
-        combined = data.users || [];
-      }
-
-      setResults(combined);
-    } catch (err) {
-      console.error("Search error:", err);
-      setError(err instanceof Error ? err.message : "Something went wrong");
-    } finally {
-      setIsLoading(false);
     }
+
+    doFetch();
+
+    return () => {
+      cancelled = true;
+    };
   }, [query, type, filters]);
 
-  useEffect(() => {
-    fetchResults();
-  }, [fetchResults]);
-
-  // Empty state - no query
-  if (!query && !isLoading) {
-    return (
-      <div className="text-center py-16">
-        <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-zinc-800/50 mb-6">
-          <svg className="w-10 h-10 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-        </div>
-        <h3 className="text-xl font-semibold text-white mb-2">
-          Descubre nuevo contenido
-        </h3>
-        <p className="text-zinc-500 max-w-md mx-auto">
-          Busca películas, series, juegos o usuarios específicos, o explora las tendencias populares
-        </p>
-      </div>
-    );
-  }
-
-  // Loading state
-  if (isLoading) {
+  // Loading state - show on initial load
+  if (isLoading && results.length === 0) {
     return <DiscoverSkeleton />;
   }
 

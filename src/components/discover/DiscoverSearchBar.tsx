@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 
 interface SearchBarProps {
   initialQuery?: string;
@@ -11,7 +10,6 @@ interface SearchBarProps {
 export function DiscoverSearchBar({ initialQuery = "", onSearch }: SearchBarProps) {
   const [query, setQuery] = useState(initialQuery);
   const [isFocused, setIsFocused] = useState(false);
-  const router = useRouter();
 
   // Debounced search
   useEffect(() => {
@@ -31,14 +29,16 @@ export function DiscoverSearchBar({ initialQuery = "", onSearch }: SearchBarProp
     }
   };
 
+  const handleSuggestionClick = (term: string) => {
+    setQuery(term);
+    setIsFocused(false);
+    if (onSearch) {
+      onSearch(term);
+    }
+  };
+
   return (
-    <div
-      className={`
-        relative w-full max-w-2xl mx-auto
-        transition-all duration-300 ease-out
-        ${isFocused ? "scale-100" : "scale-100"}
-      `}
-    >
+    <div className="relative w-full max-w-2xl mx-auto">
       <div
         className={`
           relative flex items-center bg-zinc-900/80 backdrop-blur-xl
@@ -73,7 +73,7 @@ export function DiscoverSearchBar({ initialQuery = "", onSearch }: SearchBarProp
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
+          onBlur={() => setTimeout(() => setIsFocused(false), 200)}
           placeholder="Buscar películas, series, juegos, usuarios..."
           className="flex-1 py-4 bg-transparent text-white placeholder-zinc-500 
             focus:outline-none text-lg"
@@ -100,13 +100,6 @@ export function DiscoverSearchBar({ initialQuery = "", onSearch }: SearchBarProp
             </svg>
           </button>
         )}
-
-        {/* Loading indicator */}
-        {query && (
-          <div className="pr-5">
-            <div className="w-5 h-5 border-2 border-amber-500/30 border-t-amber-500 rounded-full animate-spin" />
-          </div>
-        )}
       </div>
 
       {/* Quick suggestions */}
@@ -119,10 +112,7 @@ export function DiscoverSearchBar({ initialQuery = "", onSearch }: SearchBarProp
             {["Dune", "Breaking Bad", "The Last of Us", "Stranger Things"].map((term) => (
               <button
                 key={term}
-                onClick={() => {
-                  setQuery(term);
-                  if (onSearch) onSearch(term);
-                }}
+                onClick={() => handleSuggestionClick(term)}
                 className="px-3 py-1.5 text-sm text-zinc-400 bg-zinc-800/80 rounded-lg 
                   hover:bg-zinc-700 hover:text-white transition-all"
               >

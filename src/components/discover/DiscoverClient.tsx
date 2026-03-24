@@ -16,7 +16,7 @@ export function DiscoverClient() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-zinc-950 to-black">
+    <div className="min-h-screen bg-gradient-to-b from-zinc-950 to-black pt-16">
       {/* Hero Section */}
       <div className="relative overflow-hidden">
         {/* Background Pattern */}
