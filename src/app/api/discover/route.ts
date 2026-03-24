@@ -433,12 +433,17 @@ async function getPopularGames(filters?: SearchFilters, page: number = 1) {
   // Build where clause - IGDB syntax
   const conditions: string[] = [];
   
-  // Always filter out games without release date and without rating for better UX
+  // Always filter out games without release date for better UX
   conditions.push("first_release_date != null");
-  conditions.push("rating != null");
   
-  // Default: show games from the last year (like trending games) if no year filters specified
-  if (!filters?.yearFrom && !filters?.yearTo) {
+  // Only filter by rating when no specific filters are applied
+  // (to allow filtered searches to return more results)
+  if (!filters?.genre && !filters?.platform && !filters?.yearFrom && !filters?.yearTo) {
+    conditions.push("rating != null");
+  }
+  
+  // Default: show games from the last year only when no filters are applied
+  if (!filters?.genre && !filters?.platform && !filters?.yearFrom && !filters?.yearTo) {
     const oneYearAgo = new Date();
     oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
     const oneYearAgoTimestamp = Math.floor(oneYearAgo.getTime() / 1000);
