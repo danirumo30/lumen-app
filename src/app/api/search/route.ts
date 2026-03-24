@@ -162,36 +162,40 @@ async function searchTv(query: string, page = 1, filters?: SearchFilters) {
 async function searchGames(query: string, filters?: SearchFilters) {
   const token = await getIgdbToken();
 
-  // Build IGDB query
-  let queryBody = `search "${query}";`;
+  // Build IGDB query - fields first, then where, then sort
+  let whereClause = "";
+  const conditions: string[] = [];
   
-  // Add filters
   if (filters?.genre) {
-    queryBody += ` where genres.name = "${filters.genre}";`;
+    conditions.push(`genres.name = "${filters.genre}"`);
   }
   if (filters?.platform) {
-    queryBody += ` where platforms.name = "${filters.platform}";`;
+    conditions.push(`platforms.name = "${filters.platform}"`);
   }
   if (filters?.yearFrom) {
-    queryBody += ` where first_release_date >= ${filters.yearFrom * 10000};`;
+    conditions.push(`first_release_date >= ${filters.yearFrom * 10000}`);
   }
   if (filters?.yearTo) {
-    queryBody += ` where first_release_date <= ${filters.yearTo * 10000};`;
+    conditions.push(`first_release_date <= ${filters.yearTo * 10000}`);
   }
   if (filters?.minRating) {
-    queryBody += ` where rating >= ${filters.minRating * 10};`;
+    conditions.push(`rating >= ${filters.minRating * 10}`);
+  }
+  
+  if (conditions.length > 0) {
+    whereClause = " where " + conditions.join(" & ");
   }
   
   // Sorting
+  let sortClause = "";
   if (filters?.sortBy === "rating") {
-    queryBody += " sort rating desc;";
+    sortClause = " sort rating desc;";
   } else if (filters?.sortBy === "year") {
-    queryBody += " sort first_release_date desc;";
-  } else {
-    queryBody += " sort popularity desc;";
+    sortClause = " sort first_release_date desc;";
   }
   
-  queryBody += " fields id, name, cover.url, first_release_date, rating, genres.name, platforms.name; limit 20;";
+  // IGDB query format: search "term"; fields ...; where ...; sort ...; limit ...;
+  const queryBody = `search "${query}"; fields id, name, cover.url, first_release_date, rating, genres.name, platforms.name;${whereClause}${sortClause} limit 20;`;
 
   const response = await fetch("https://api.igdb.com/v4/games", {
     method: "POST",

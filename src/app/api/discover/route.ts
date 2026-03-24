@@ -9,6 +9,15 @@ export const runtime = "nodejs";
 
 type DiscoverType = "all" | "movie" | "tv" | "game";
 
+interface SearchFilters {
+  genre?: string;
+  yearFrom?: number;
+  yearTo?: number;
+  minRating?: number;
+  platform?: string;
+  sortBy?: "relevance" | "rating" | "year" | "popularity";
+}
+
 // Get IGDB access token
 async function getIgdbToken(): Promise<string> {
   if (!IGDB_ACCESS_TOKEN) {
@@ -32,11 +41,30 @@ async function getIgdbToken(): Promise<string> {
 }
 
 // Get popular movies
-async function getPopularMovies() {
-  const response = await fetch(
-    `${TMDB_BASE_URL}/movie/popular?api_key=${TMDB_API_KEY}&page=1&language=es-ES`,
-    { headers: { "Cache-Control": "public, s-maxage=3600" } }
-  );
+async function getPopularMovies(filters?: SearchFilters) {
+  let url = `${TMDB_BASE_URL}/movie/popular?api_key=${TMDB_API_KEY}&page=1&language=es-ES`;
+  
+  if (filters?.genre) {
+    const genreMap: Record<string, number> = {
+      "Acción": 28, "Comedia": 35, "Drama": 18, "Terror": 27, 
+      "Ciencia Ficción": 878, "Romance": 10749, "Thriller": 53, 
+      "Animación": 16, "Documental": 99, "Aventura": 12
+    };
+    if (genreMap[filters.genre]) {
+      url += `&with_genres=${genreMap[filters.genre]}`;
+    }
+  }
+  if (filters?.yearFrom) {
+    url += `&primary_release_date.gte=${filters.yearFrom}-01-01`;
+  }
+  if (filters?.yearTo) {
+    url += `&primary_release_date.lte=${filters.yearTo}-12-31`;
+  }
+  if (filters?.minRating) {
+    url += `&vote_average.gte=${filters.minRating}`;
+  }
+
+  const response = await fetch(url, { headers: { "Cache-Control": "public, s-maxage=3600" } });
 
   if (!response.ok) {
     throw new Error(`TMDB error: ${response.status}`);
@@ -64,11 +92,29 @@ async function getPopularMovies() {
 }
 
 // Get popular TV
-async function getPopularTv() {
-  const response = await fetch(
-    `${TMDB_BASE_URL}/tv/popular?api_key=${TMDB_API_KEY}&page=1&language=es-ES`,
-    { headers: { "Cache-Control": "public, s-maxage=3600" } }
-  );
+async function getPopularTv(filters?: SearchFilters) {
+  let url = `${TMDB_BASE_URL}/tv/popular?api_key=${TMDB_API_KEY}&page=1&language=es-ES`;
+  
+  if (filters?.genre) {
+    const genreMap: Record<string, number> = {
+      "Drama": 18, "Comedia": 35, "Ciencia Ficción": 10765, "Terror": 10770, 
+      "Acción": 10759, "Romance": 10749, "Thriller": 10768, "Documental": 99, "Animación": 16
+    };
+    if (genreMap[filters.genre]) {
+      url += `&with_genres=${genreMap[filters.genre]}`;
+    }
+  }
+  if (filters?.yearFrom) {
+    url += `&first_air_date.gte=${filters.yearFrom}-01-01`;
+  }
+  if (filters?.yearTo) {
+    url += `&first_air_date.lte=${filters.yearTo}-12-31`;
+  }
+  if (filters?.minRating) {
+    url += `&vote_average.gte=${filters.minRating}`;
+  }
+
+  const response = await fetch(url, { headers: { "Cache-Control": "public, s-maxage=3600" } });
 
   if (!response.ok) {
     throw new Error(`TMDB error: ${response.status}`);
@@ -96,10 +142,44 @@ async function getPopularTv() {
 }
 
 // Get popular games
-async function getPopularGames() {
+async function getPopularGames(filters?: SearchFilters) {
   const token = await getIgdbToken();
 
-  // Search for popular games - order by rating
+  let queryBody = "fields id, name, cover.url, first_release_date, rating, genres.name, platforms.name;";
+  
+  // Build where clause
+  const conditions: string[] = [];
+  if (filters?.genre) {
+    conditions.push(`genres.name = "${filters.genre}"`);
+  }
+  if (filters?.platform) {
+    conditions.push(`platforms.name = "${filters.platform}"`);
+  }
+  if (filters?.yearFrom) {
+    conditions.push(`first_release_date >= ${filters.yearFrom * 10000}`);
+  }
+  if (filters?.yearTo) {
+    conditions.push(`first_release_date <= ${filters.yearTo * 10000}`);
+  }
+  if (filters?.minRating) {
+    conditions.push(`rating >= ${filters.minRating * 10}`);
+  }
+  
+  if (conditions.length > 0) {
+    queryBody += " where " + conditions.join(" & ");
+  }
+  
+  // Sorting
+  if (filters?.sortBy === "rating") {
+    queryBody += " sort rating desc;";
+  } else if (filters?.sortBy === "year") {
+    queryBody += " sort first_release_date desc;";
+  } else {
+    queryBody += " sort popularity desc;";
+  }
+  
+  queryBody += " limit 20;";
+
   const response = await fetch("https://api.igdb.com/v4/games", {
     method: "POST",
     headers: {
@@ -107,7 +187,7 @@ async function getPopularGames() {
       "Authorization": `Bearer ${token}`,
       "Content-Type": "text/plain",
     },
-    body: `fields id, name, cover.url, first_release_date, rating, genres.name, platforms.name; where rating != null; sort rating desc; limit 20;`,
+    body: queryBody,
   });
 
   if (!response.ok) {
@@ -144,11 +224,24 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const type = (searchParams.get("type") || "all") as DiscoverType;
+    
+    let filters: SearchFilters = {};
+    const filtersStr = searchParams.get("filters");
+    if (filtersStr) {
+      try {
+        filters = JSON.parse(filtersStr);
+      } catch {}
+    }
+
+    // Only apply filters for the selected type
+    const movieFilters = (type === "all" || type === "movie") ? filters : undefined;
+    const tvFilters = (type === "all" || type === "tv") ? filters : undefined;
+    const gameFilters = (type === "all" || type === "game") ? filters : undefined;
 
     const results = await Promise.allSettled([
-      type === "all" || type === "movie" ? getPopularMovies() : Promise.resolve([]),
-      type === "all" || type === "tv" ? getPopularTv() : Promise.resolve([]),
-      type === "all" || type === "game" ? getPopularGames() : Promise.resolve([]),
+      type === "all" || type === "movie" ? getPopularMovies(movieFilters) : Promise.resolve([]),
+      type === "all" || type === "tv" ? getPopularTv(tvFilters) : Promise.resolve([]),
+      type === "all" || type === "game" ? getPopularGames(gameFilters) : Promise.resolve([]),
     ]);
 
     const movies = results[0].status === "fulfilled" ? results[0].value : [];

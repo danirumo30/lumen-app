@@ -47,14 +47,17 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
           params.set("q", query);
         }
 
-        // Add filters
-        if (Object.keys(filters).length > 0) {
+        // Add filters - ALWAYS add them
+        console.log("Filters being sent:", filters);
+        if (filters) {
           params.set("filters", JSON.stringify(filters));
         }
 
         // Use search API when query >= 2 chars, discover otherwise
         const endpoint = query && query.trim().length >= 2 ? "/api/search" : "/api/discover";
         const url = `${endpoint}?${params.toString()}`;
+        
+        console.log("Fetching:", url);
 
         const response = await fetch(url);
         const data = await response.json();
@@ -73,6 +76,7 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
             ...(data.movies || []),
             ...(data.tv || []),
             ...(data.games || []),
+            ...(data.users || []),
           ];
         } else if (type === "movie") {
           combined = data.movies || [];
@@ -84,6 +88,7 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
           combined = data.users || [];
         }
 
+        console.log("Search results:", { type, movies: data.movies?.length, tv: data.tv?.length, games: data.games?.length, users: data.users?.length, combined: combined.length });
         setResults(combined);
       } catch (err) {
         if (!cancelled) {

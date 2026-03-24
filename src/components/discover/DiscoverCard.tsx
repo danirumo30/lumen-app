@@ -31,29 +31,30 @@ const typeAccent = {
   user: "text-emerald-400",
 };
 
-// Platform icon mapping
+// Platform icon mapping - using PNG icons
 const platformIcons: Record<string, string> = {
-  "PlayStation": "🎮",
-  "PlayStation 5": "🎮",
-  "PlayStation 4": "🎮",
-  "PlayStation 3": "🎮",
-  "PlayStation 2": "🎮",
-  "Xbox": "❎",
-  "Xbox Series X": "❎",
-  "Xbox One": "❎",
-  "Xbox 360": "❎",
-  "Nintendo Switch": "🔴",
-  "Nintendo": "🔴",
-  "PC": "💻",
-  "Mobile": "📱",
-  "iOS": "📱",
-  "Android": "📱",
-  "Linux": "🐧",
-  "Web": "🌐",
+  "PlayStation": "/icons/platforms/playstation.png",
+  "PlayStation 5": "/icons/platforms/playstation.png",
+  "PlayStation 4": "/icons/platforms/playstation.png",
+  "PlayStation 3": "/icons/platforms/playstation.png",
+  "PlayStation 2": "/icons/platforms/playstation.png",
+  "Xbox": "/icons/platforms/xbox.png",
+  "Xbox Series X": "/icons/platforms/xbox.png",
+  "Xbox One": "/icons/platforms/xbox.png",
+  "Xbox 360": "/icons/platforms/xbox.png",
+  "Nintendo Switch": "/icons/platforms/nintendo-switch.png",
+  "Nintendo": "/icons/platforms/nintendo-switch.png",
+  "PC": "/icons/platforms/windows.png",
+  "Windows": "/icons/platforms/windows.png",
+  "Mobile": "/icons/platforms/android.png",
+  "iOS": "/icons/platforms/ios.png",
+  "Android": "/icons/platforms/android.png",
+  "Linux": "/icons/platforms/linux.png",
+  "Web": "/icons/platforms/web.png",
 };
 
 function getPlatformIcon(platform: string): string {
-  return platformIcons[platform] || "🎮";
+  return platformIcons[platform] || "/icons/platforms/windows.png";
 }
 
 export function DiscoverCard({
@@ -172,13 +173,17 @@ export function DiscoverCard({
         {type === "game" && platforms && platforms.length > 0 && (
           <div className="absolute bottom-2 left-2 right-2 flex gap-1">
             {platforms.slice(0, 4).map((platform) => (
-              <span 
+              <div 
                 key={platform}
-                className="text-lg drop-shadow-lg"
+                className="w-6 h-6 flex items-center justify-center"
                 title={platform}
               >
-                {getPlatformIcon(platform)}
-              </span>
+                <img 
+                  src={getPlatformIcon(platform)} 
+                  alt={platform}
+                  className="w-full h-full object-contain"
+                />
+              </div>
             ))}
           </div>
         )}
@@ -190,8 +195,8 @@ export function DiscoverCard({
           {type === "user" ? username : title}
         </h3>
         
-        {/* Only show year for movies/TV, not games */}
-        {type !== "user" && type !== "game" && (
+        {/* Show year for movies/TV and games */}
+        {type !== "user" && (
           <div className="mt-1 flex items-center gap-2 text-xs text-zinc-500">
             {year && <span>{year}</span>}
           </div>
