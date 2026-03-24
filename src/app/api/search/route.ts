@@ -88,11 +88,27 @@ async function searchMovies(query: string, page = 1, filters?: SearchFilters) {
   // Build TMDB query params
   let url = `${TMDB_BASE_URL}/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}&page=${page}&language=es-ES`;
   
-  // Add genre filter if specified
+  // Add genre filter if specified - complete mapping from DiscoverFilters.tsx
   const genreMap: Record<string, number> = {
-    "Acción": 28, "Comedia": 35, "Drama": 18, "Terror": 27, 
-    "Ciencia Ficción": 878, "Romance": 10749, "Thriller": 53, 
-    "Animación": 16, "Documental": 99, "Aventura": 12
+    "Acción": 28,
+    "Animación": 16,
+    "Aventura": 12,
+    "Bélica": 10752,
+    "Ciencia ficción": 878,
+    "Comedia": 35,
+    "Crimen": 80,
+    "Documental": 99,
+    "Drama": 18,
+    "Familia": 10751,
+    "Fantasía": 14,
+    "Historia": 36,
+    "Misterio": 9648,
+    "Música": 10402,
+    "Película de TV": 10770,
+    "Romance": 10749,
+    "Suspense": 53,
+    "Terror": 27,
+    "Western": 37
   };
   
   if (filters?.genre && genreMap[filters.genre]) {
@@ -190,10 +206,24 @@ async function getTvProviders(tvId: number): Promise<{ id: number; name: string;
 async function searchTv(query: string, page = 1, filters?: SearchFilters) {
   let url = `${TMDB_BASE_URL}/search/tv?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}&page=${page}&language=es-ES`;
   
-  // Genre map for TV
+  // Genre map for TV - synchronized with DiscoverFilters.tsx
   const genreMap: Record<string, number> = {
-    "Drama": 18, "Comedia": 35, "Ciencia Ficción": 10765, "Terror": 10770, 
-    "Acción": 10759, "Romance": 10749, "Thriller": 10768, "Documental": 99, "Animación": 16
+    "Acción": 10759,
+    "Animación": 16,
+    "Comedia": 35,
+    "Crimen": 80,
+    "Documental": 99,
+    "Drama": 18,
+    "Familia": 10751,
+    "Kids": 10762,
+    "Misterio & Terror": 9648, // Maps to Mystery which includes horror
+    "News": 10763,
+    "Reality": 10764,
+    "Sci-Fi & Fantasía": 10765,
+    "Soap": 10766,
+    "Talk": 10767,
+    "Guerra y política": 10768,
+    "Western": 37
   };
   
   if (filters?.genre && genreMap[filters.genre]) {

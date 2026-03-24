@@ -71,9 +71,59 @@ async function getMovieProviders(movieId: number): Promise<{ id: number; name: s
   }
 }
 
-// Get popular movies
+// Get popular movies - uses trending endpoint when no filters (like home)
 async function getPopularMovies(filters?: SearchFilters) {
-  // Use discover/movie instead of popular to allow filtering
+  // If no filters, use trending endpoint (same as home page)
+  const hasFilters = filters?.genre || filters?.yearFrom || filters?.yearTo || filters?.minRating || filters?.sortBy;
+  
+  if (!hasFilters) {
+    // Use trending movies (same as home page)
+    const trendingUrl = `${TMDB_BASE_URL}/trending/movie/week?api_key=${TMDB_API_KEY}&language=es-ES`;
+    
+    const response = await fetch(trendingUrl, { 
+      headers: { "Cache-Control": "public, s-maxage=3600" }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`TMDB error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    const movies = data.results?.slice(0, 20).map((movie: {
+      id: number;
+      title: string;
+      poster_path: string | null;
+      vote_average: number;
+      release_date: string;
+      overview: string;
+    }) => ({
+      id: `tmdb_${movie.id}`,
+      type: "movie" as const,
+      title: movie.title,
+      posterUrl: movie.poster_path
+        ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+        : null,
+      voteAverage: Math.round(movie.vote_average * 10) / 10,
+      releaseDate: movie.release_date,
+      overview: movie.overview,
+    })) || [];
+    
+    // Fetch providers for first 10 movies
+    const moviesWithProviders = await Promise.all(
+      movies.slice(0, 10).map(async (movie: any, index: number) => {
+        if (index < 10) {
+          const tmdbId = movie.id.replace("tmdb_", "");
+          const providers = await getMovieProviders(parseInt(tmdbId));
+          return { ...movie, providers };
+        }
+        return movie;
+      })
+    );
+    
+    return moviesWithProviders;
+  }
+  
+  // Use discover/movie for filtered queries
   let url = `${TMDB_BASE_URL}/discover/movie?api_key=${TMDB_API_KEY}&page=1&language=es-ES`;
   
   if (filters?.genre) {
@@ -198,9 +248,59 @@ async function getTvProviders(tvId: number): Promise<{ id: number; name: string;
   }
 }
 
-// Get popular TV
+// Get popular TV - uses trending endpoint when no filters (like home)
 async function getPopularTv(filters?: SearchFilters) {
-  // Use discover/tv instead of popular to allow filtering
+  // If no filters, use trending endpoint (same as home page)
+  const hasFilters = filters?.genre || filters?.yearFrom || filters?.yearTo || filters?.minRating || filters?.sortBy;
+  
+  if (!hasFilters) {
+    // Use trending TV (same as home page)
+    const trendingUrl = `${TMDB_BASE_URL}/trending/tv/week?api_key=${TMDB_API_KEY}&language=es-ES`;
+    
+    const response = await fetch(trendingUrl, { 
+      headers: { "Cache-Control": "public, s-maxage=3600" }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`TMDB error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    const shows = data.results?.slice(0, 20).map((show: {
+      id: number;
+      name: string;
+      poster_path: string | null;
+      vote_average: number;
+      first_air_date: string;
+      overview: string;
+    }) => ({
+      id: `tmdb_${show.id}`,
+      type: "tv" as const,
+      title: show.name,
+      posterUrl: show.poster_path
+        ? `https://image.tmdb.org/t/p/w500${show.poster_path}`
+        : null,
+      voteAverage: Math.round(show.vote_average * 10) / 10,
+      releaseDate: show.first_air_date,
+      overview: show.overview,
+    })) || [];
+    
+    // Fetch providers for first 10 TV shows
+    const showsWithProviders = await Promise.all(
+      shows.slice(0, 10).map(async (show: any, index: number) => {
+        if (index < 10) {
+          const tmdbId = show.id.replace("tmdb_", "");
+          const providers = await getTvProviders(parseInt(tmdbId));
+          return { ...show, providers };
+        }
+        return show;
+      })
+    );
+    
+    return showsWithProviders;
+  }
+  
+  // Use discover/tv for filtered queries
   let url = `${TMDB_BASE_URL}/discover/tv?api_key=${TMDB_API_KEY}&page=1&language=es-ES`;
   
   if (filters?.genre) {
@@ -298,7 +398,7 @@ async function getPopularGames(filters?: SearchFilters) {
 
   let queryBody = "fields id, name, cover.url, first_release_date, rating, genres.name, platforms.id, platforms.name, platforms.platform_logo.image_id;";
   
-  // Genre ID mapping for IGDB
+  // Genre ID mapping for IGDB - corrected
   const genreIdMap: Record<string, number> = {
     "Acción": 4,
     "Aventura": 3,
@@ -309,10 +409,10 @@ async function getPopularGames(filters?: SearchFilters) {
     "Puzzle": 7,
     "Horror": 13,
     "Supervivencia": 36,
-    "Lucha": 4
+    "Lucha": 24  // Fixed: Fighting genre ID is 24
   };
   
-  // Platform ID mapping for IGDB - simplified
+  // Platform ID mapping for IGDB - expanded
   const igdbPlatformIdMap: Record<string, number> = {
     "PlayStation": 48,
     "Xbox": 49,
@@ -320,11 +420,31 @@ async function getPopularGames(filters?: SearchFilters) {
     "PC": 6,
     "Mobile": 4,
     "Linux": 3,
-    "Web": 16
+    "Web": 16,
+    "PS4": 48,  // Additional mappings
+    "PS5": 167,
+    "Xbox One": 49,
+    "Xbox Series X|S": 169,
+    "Nintendo Switch": 130,
+    "iOS": 39,
+    "Android": 34
   };
   
-  // Build where clause - IGDB syntax without parentheses for single values
+  // Build where clause - IGDB syntax
   const conditions: string[] = [];
+  
+  // Always filter out games without release date and without rating for better UX
+  conditions.push("first_release_date != null");
+  conditions.push("rating != null");
+  
+  // Default: show games from the last year (like trending games) if no year filters specified
+  if (!filters?.yearFrom && !filters?.yearTo) {
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+    const oneYearAgoTimestamp = Math.floor(oneYearAgo.getTime() / 1000);
+    conditions.push(`first_release_date >= ${oneYearAgoTimestamp}`);
+  }
+  
   if (filters?.genre) {
     const genreId = genreIdMap[filters.genre];
     if (genreId) {
@@ -338,79 +458,98 @@ async function getPopularGames(filters?: SearchFilters) {
     }
   }
   if (filters?.yearFrom) {
-    conditions.push(`first_release_date >= ${filters.yearFrom * 10000}`);
+    // Convert year to Unix timestamp (start of year)
+    const fromTimestamp = Math.floor(new Date(`${filters.yearFrom}-01-01`).getTime() / 1000);
+    conditions.push(`first_release_date >= ${fromTimestamp}`);
   }
   if (filters?.yearTo) {
-    conditions.push(`first_release_date <= ${filters.yearTo * 10000}`);
+    // Convert year to Unix timestamp (end of year)
+    const toTimestamp = Math.floor(new Date(`${filters.yearTo}-12-31`).getTime() / 1000);
+    conditions.push(`first_release_date <= ${toTimestamp}`);
   }
   if (filters?.minRating) {
+    // IGDB rating is 0-100, filters.minRating is 0-10
     conditions.push(`rating >= ${filters.minRating * 10}`);
   }
   
   if (conditions.length > 0) {
-    queryBody += " where " + conditions.join(" & ");
+    queryBody += " where " + conditions.join(" & ") + ";";
   }
   
-  // Sorting - add space before sort keyword
+  // Sorting - default to rating for popularity/relevance
+  let sortValue = "first_release_date";
   if (filters?.sortBy === "rating") {
-    queryBody += " sort rating desc";
+    sortValue = "rating";
   } else if (filters?.sortBy === "year") {
-    queryBody += " sort first_release_date desc";
-  } else {
-    queryBody += " sort popularity desc";
+    sortValue = "first_release_date";
+  } else if (filters?.sortBy === "popularity" || filters?.sortBy === "relevance") {
+    // IGDB doesn't have a direct popularity field, use rating as proxy
+    sortValue = "rating";
   }
-  
+  queryBody += " sort " + sortValue + " desc;";
+
   queryBody += " limit 20;";
   
   console.log("IGDB query:", queryBody);
+  console.log("IGDB token exists:", !!token);
+  console.log("IGDB client ID exists:", !!IGDB_CLIENT_ID);
 
-  const response = await fetch("https://api.igdb.com/v4/games", {
-    method: "POST",
-    headers: {
-      "Client-ID": IGDB_CLIENT_ID,
-      "Authorization": `Bearer ${token}`,
-      "Content-Type": "text/plain",
-    },
-    body: queryBody,
-  });
+  try {
+    const response = await fetch("https://api.igdb.com/v4/games", {
+      method: "POST",
+      headers: {
+        "Client-ID": IGDB_CLIENT_ID,
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "text/plain",
+      },
+      body: queryBody,
+    });
 
-  if (!response.ok) {
-    console.error("IGDB error:", await response.text());
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("IGDB error:", response.status, errorText);
+      console.error("Failed query:", queryBody);
+      return [];
+    }
+
+    const data = await response.json();
+    console.log(`IGDB returned ${data.length} games`);
+    
+    return data.map((game: {
+      id: number;
+      name: string;
+      cover?: { url: string };
+      first_release_date?: number;
+      rating?: number;
+      genres?: { name: string }[];
+      platforms?: { id: number; name: string; platform_logo?: { image_id: string } }[];
+    }) => ({
+      id: `igdb_${game.id}`,
+      type: "game" as const,
+      title: game.name,
+      posterUrl: game.cover?.url
+        ? `https:${game.cover.url.replace("t_thumb", "t_cover_big")}`
+        : null,
+      releaseDate: game.first_release_date
+        ? new Date(game.first_release_date * 1000).toISOString().split("T")[0]
+        : null,
+      voteAverage: game.rating ? Math.round(game.rating) / 10 : null,
+      genres: game.genres?.map((g: { name: string }) => g.name) || [],
+      platforms: game.platforms?.map((p: { name: string }) => p.name) || [],
+      platformLogos: game.platforms?.map((p: { id: number; name: string; platform_logo?: { image_id: string } }) => ({
+        id: p.id,
+        name: p.name,
+        // Use platform name for icon mapping (more reliable than ID)
+        platformName: p.name,
+        logoUrl: p.platform_logo?.image_id 
+          ? `https://images.igdb.com/igdb/image/upload/t_micro/${p.platform_logo.image_id}.png`
+          : null,
+      })).filter((p: { logoUrl: string | null }) => p.logoUrl) || [],
+    }));
+  } catch (error) {
+    console.error("Error fetching games from IGDB:", error);
     return [];
   }
-
-  const data = await response.json();
-  return data.map((game: {
-    id: number;
-    name: string;
-    cover?: { url: string };
-    first_release_date?: number;
-    rating?: number;
-    genres?: { name: string }[];
-    platforms?: { id: number; name: string; platform_logo?: { image_id: string } }[];
-  }) => ({
-    id: `igdb_${game.id}`,
-    type: "game" as const,
-    title: game.name,
-    posterUrl: game.cover?.url
-      ? `https:${game.cover.url.replace("t_thumb", "t_cover_big")}`
-      : null,
-    releaseDate: game.first_release_date
-      ? new Date(game.first_release_date * 1000).toISOString().split("T")[0]
-      : null,
-    voteAverage: game.rating ? Math.round(game.rating) / 10 : null,
-    genres: game.genres?.map((g: { name: string }) => g.name) || [],
-    platforms: game.platforms?.map((p: { name: string }) => p.name) || [],
-    platformLogos: game.platforms?.map((p: { id: number; name: string; platform_logo?: { image_id: string } }) => ({
-      id: p.id,
-      name: p.name,
-      // Use platform name for icon mapping (more reliable than ID)
-      platformName: p.name,
-      logoUrl: p.platform_logo?.image_id 
-        ? `https://images.igdb.com/igdb/image/upload/t_micro/${p.platform_logo.image_id}.png`
-        : null,
-    })).filter((p: { logoUrl: string | null }) => p.logoUrl) || [],
-  }));
 }
 
 export async function GET(request: Request) {
