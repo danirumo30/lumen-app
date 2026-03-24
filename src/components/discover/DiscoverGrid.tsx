@@ -81,9 +81,10 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
           params.set("filters", JSON.stringify(filters));
         }
 
-        // Special handling for "all" tab: fetch from individual endpoints to get same results
+        // Special handling for "all" tab: fetch from same endpoints as individual tabs
         if (type === "all") {
-          console.log("Fetching 'all' tab with separate requests per type...");
+          const hasQuery = query && query.trim().length >= 2;
+          console.log(`Fetching 'all' tab ${hasQuery ? 'with search' : 'with discover endpoints'}...`);
           
           const filtersParams = new URLSearchParams();
           if (filters) {
@@ -91,16 +92,28 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
           }
           
           const searchParams = new URLSearchParams();
-          if (query && query.trim().length >= 2) {
+          if (hasQuery) {
             searchParams.set("q", query);
           }
           
-          // Fetch movies, TV, games, users from search endpoint with query
+          // When searching: use search endpoint for all types
+          // When not searching: use discover for movies/TV/games (same as individual tabs)
+          const moviesPromise = hasQuery
+            ? fetch(`/api/search?type=movie&${searchParams.toString()}&${filtersParams.toString()}`)
+            : fetch(`/api/discover?type=movie&${filtersParams.toString()}`);
+          
+          const tvPromise = hasQuery
+            ? fetch(`/api/search?type=tv&${searchParams.toString()}&${filtersParams.toString()}`)
+            : fetch(`/api/discover?type=tv&${filtersParams.toString()}`);
+          
+          const gamesPromise = hasQuery
+            ? fetch(`/api/search?type=game&${searchParams.toString()}&${filtersParams.toString()}`)
+            : fetch(`/api/discover?type=game&${filtersParams.toString()}`);
+          
+          const usersPromise = fetch(`/api/search?type=user&${searchParams.toString()}`);
+          
           const [moviesRes, tvRes, gamesRes, usersRes] = await Promise.all([
-            fetch(`/api/search?type=movie&${searchParams.toString()}&${filtersParams.toString()}`),
-            fetch(`/api/search?type=tv&${searchParams.toString()}&${filtersParams.toString()}`),
-            fetch(`/api/search?type=game&${searchParams.toString()}&${filtersParams.toString()}`),
-            fetch(`/api/search?type=user&${searchParams.toString()}`),
+            moviesPromise, tvPromise, gamesPromise, usersPromise
           ]);
           
           if (cancelled) return;
@@ -199,7 +212,7 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
     return () => {
       cancelled = true;
     };
-  }, [query, type, filters]);
+  }, [query, type, filters, page]);
 
   // Loading state - show on initial load
   if (isLoading && results.length === 0) {
