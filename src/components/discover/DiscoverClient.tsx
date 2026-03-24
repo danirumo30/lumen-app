@@ -15,7 +15,7 @@ export function DiscoverClient() {
     setQuery(newQuery);
     if (resetType) {
       setSelectedType("all");
-      setFilters({}); // Clear filters when resetting type
+      setFilters({}); // Clear all filters, including sortBy and sortDirection, when resetting type
     }
   }, []);
 

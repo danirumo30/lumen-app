@@ -9,6 +9,7 @@ export interface DiscoverFilters {
   yearTo?: number;
   platform?: string;
   sortBy?: "relevance" | "rating" | "year" | "popularity";
+  sortDirection?: "asc" | "desc"; // Added for bidirectional sorting
   minRating?: number;
 }
 
@@ -60,14 +61,18 @@ function FilterDropdown({
   value,
   onChange,
   icon,
-  scrollToValue
+  scrollToValue,
+  sortDirection, // New prop
+  onSortDirectionChange, // New prop
 }: {
   label: string;
   options: { value: string; label: string }[];
-  value: string;
-  onChange: (value: string) => void;
+  value: string | undefined; // Can be undefined for "Ordenar Por"
+  onChange: (value: string | undefined) => void; // Can accept undefined
   icon?: React.ReactNode;
   scrollToValue?: string;
+  sortDirection?: "asc" | "desc"; // New prop
+  onSortDirectionChange?: (direction: "asc" | "desc") => void; // New prop
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -96,7 +101,7 @@ function FilterDropdown({
 
   // Get display label
   const selectedOption = options.find(o => o.value === value);
-  const displayLabel = selectedOption ? selectedOption.label : label;
+  const displayLabel = selectedOption ? selectedOption.label : (label === "Ordenar" ? "Ordenar Por" : label); // "Ordenar Por" by default
 
   // Get accent color based on type
   const accentClass = label.includes("Género") 
@@ -104,6 +109,9 @@ function FilterDropdown({
     : label.includes("Plataforma")
     ? "bg-violet-600 text-white shadow-lg shadow-violet-600/25"
     : "bg-zinc-700 text-white shadow-lg shadow-zinc-700/25";
+
+  // Determine SVG rotation for sorting icon
+  const sortIconRotationClass = (icon && label === "Ordenar" && sortDirection === "desc") ? "rotate-180" : "";
 
   return (
     <div ref={dropdownRef} className="relative">
@@ -115,7 +123,7 @@ function FilterDropdown({
             : "bg-zinc-800/60 text-zinc-400 hover:bg-zinc-700 hover:text-white border border-zinc-700/50"
         }`}
       >
-        {icon && <span className="w-4 h-4">{icon}</span>}
+        {icon && <span className={`w-4 h-4 ${sortIconRotationClass}`}>{icon}</span>}
         <span>{displayLabel}</span>
         <svg 
           className={`w-4 h-4 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
@@ -240,7 +248,7 @@ export function DiscoverFiltersComponent({ type, filters, onChange }: DiscoverFi
           <FilterDropdown
             label="Género"
             options={genreOptions}
-            value={filters.genre || "all"}
+            value={filters.genre}
             onChange={(value) => updateFilter("genre", value === "all" ? undefined : value)}
             icon={
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -255,7 +263,7 @@ export function DiscoverFiltersComponent({ type, filters, onChange }: DiscoverFi
           <FilterDropdown
             label="Plataforma"
             options={platformOptions}
-            value={filters.platform || "all"}
+            value={filters.platform}
             onChange={(value) => updateFilter("platform", value === "all" ? undefined : value)}
             icon={
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -269,7 +277,7 @@ export function DiscoverFiltersComponent({ type, filters, onChange }: DiscoverFi
         <FilterDropdown
           label="Desde"
           options={yearFromOptions}
-          value={filters.yearFrom ? String(filters.yearFrom) : "all"}
+          value={filters.yearFrom ? String(filters.yearFrom) : undefined}
           onChange={(value) => updateFilter("yearFrom", value === "all" ? undefined : parseInt(value))}
           scrollToValue={String(currentYear)}
           icon={
@@ -283,7 +291,7 @@ export function DiscoverFiltersComponent({ type, filters, onChange }: DiscoverFi
         <FilterDropdown
           label="Hasta"
           options={yearToOptions}
-          value={filters.yearTo ? String(filters.yearTo) : "all"}
+          value={filters.yearTo ? String(filters.yearTo) : undefined}
           onChange={(value) => updateFilter("yearTo", value === "all" ? undefined : parseInt(value))}
           scrollToValue={String(currentYear)}
         />
@@ -292,8 +300,26 @@ export function DiscoverFiltersComponent({ type, filters, onChange }: DiscoverFi
         <FilterDropdown
           label="Ordenar"
           options={sortOptions}
-          value={filters.sortBy || "relevance"}
-          onChange={(value) => updateFilter("sortBy", value as DiscoverFilters["sortBy"])}
+          value={filters.sortBy}
+          onChange={(value) => {
+            // If selecting a new sort option (or toggling the same one)
+            if (value) {
+              if (filters.sortBy === value) {
+                // Same option selected -> toggle direction
+                updateFilter("sortDirection", filters.sortDirection === "asc" ? "desc" : "asc");
+              } else {
+                // New option selected -> set asc as default
+                updateFilter("sortBy", value as DiscoverFilters["sortBy"]);
+                updateFilter("sortDirection", "asc");
+              }
+            } else {
+              // Deselecting (setting to undefined) -> clear sort
+              updateFilter("sortBy", undefined);
+              updateFilter("sortDirection", undefined);
+            }
+          }}
+          sortDirection={filters.sortDirection}
+          onSortDirectionChange={(direction) => updateFilter("sortDirection", direction)}
           icon={
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
