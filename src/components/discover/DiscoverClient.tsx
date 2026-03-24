@@ -21,7 +21,7 @@ export function DiscoverClient() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-zinc-950 to-black pt-16">
       {/* Hero Section */}
-      <div className="relative overflow-hidden">
+      <div className="relative overflow-visible">
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-30">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-900/20 via-zinc-950 to-zinc-950" />

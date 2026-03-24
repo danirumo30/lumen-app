@@ -532,16 +532,16 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
         )}
 
         {/* Release date + Status date */}
-        {(game.releaseDate || gameStatus.playStatus) && (
+        {(game.releaseDate || game.releaseYear || gameStatus.playStatus) && (
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
             {/* Release date */}
-            {game.releaseDate && (
+            {(game.releaseDate || game.releaseYear) && (
               <div className="flex items-center gap-2">
                 <svg className="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
                 <span className="text-zinc-400">
-                  Lanzamiento: <span className="text-white">{formatDate(game.releaseDate)}</span>
+                  Lanzamiento: <span className="text-white">{game.releaseDate ? formatDate(game.releaseDate) : game.releaseYear ? game.releaseYear.toString() : "Desconocida"}</span>
                 </span>
               </div>
             )}
