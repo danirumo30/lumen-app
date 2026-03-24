@@ -156,7 +156,7 @@ function FilterDropdown({
                 value === option.value
                   ? "text-amber-400 bg-amber-600/10"
                   : scrollToValue && option.value === scrollToValue
-                  ? "text-white bg-zinc-700/50 ring-1 ring-zinc-600"
+                  ? "text-white bg-zinc-700/50 ring-1 ring-zinc-600 hover:bg-zinc-600 hover:ring-zinc-500"
                   : "text-zinc-300 hover:bg-zinc-800 hover:text-white"
               }`}
             >
