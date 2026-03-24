@@ -77,10 +77,26 @@ async function getPopularMovies(filters?: SearchFilters) {
   let url = `${TMDB_BASE_URL}/discover/movie?api_key=${TMDB_API_KEY}&page=1&language=es-ES`;
   
   if (filters?.genre) {
+    // TMDB movie genres - complete list with correct IDs
     const genreMap: Record<string, number> = {
-      "Acción": 28, "Comedia": 35, "Drama": 18, "Terror": 27, 
-      "Ciencia Ficción": 878, "Romance": 10749, "Thriller": 53, 
-      "Animación": 16, "Documental": 99, "Aventura": 12
+      "Acción": 28,
+      "Aventura": 12,
+      "Animación": 16,
+      "Ciencia Ficción": 878,
+      "Comedia": 35,
+      "Crimen": 80,
+      "Documental": 99,
+      "Drama": 18,
+      "Familia": 10751,
+      "Fantasía": 14,
+      "Historia": 36,
+      "Música": 10402,
+      "Misterio": 9648,
+      "Romance": 10749,
+      "Terror": 27,
+      "Thriller": 53,
+      "Guerra": 10752,
+      "Western": 37
     };
     if (genreMap[filters.genre]) {
       url += `&with_genres=${genreMap[filters.genre]}`;
@@ -187,17 +203,21 @@ async function getPopularTv(filters?: SearchFilters) {
   let url = `${TMDB_BASE_URL}/discover/tv?api_key=${TMDB_API_KEY}&page=1&language=es-ES`;
   
   if (filters?.genre) {
-    // TMDB TV genres - Terror includes Mystery (10770) + Sci-Fi (10765)
-    const genreMap: Record<string, string> = {
-      "Drama": "18",
-      "Comedia": "35",
-      "Ciencia Ficción": "10765",
-      "Terror": "10770,10765", // Include both Mystery and Sci-Fi for horror
-      "Acción": "10759",
-      "Romance": "10749",
-      "Thriller": "10768",
-      "Documental": "99",
-      "Animación": "16"
+    // TMDB TV genres - complete list with correct IDs
+    const genreMap: Record<string, number> = {
+      "Acción": 10759,
+      "Animación": 16,
+      "Ciencia Ficción": 10765,
+      "Comedia": 35,
+      "Crimen": 80,
+      "Documental": 99,
+      "Drama": 18,
+      "Familia": 10751,
+      "Fantasía": 14,
+      "Misterio": 9648,
+      "Romance": 10749,
+      "Terror": 9648, // TV doesn't have horror genre, use Mystery
+      "Thriller": 10768
     };
     if (genreMap[filters.genre]) {
       url += `&with_genres=${genreMap[filters.genre]}`;
@@ -336,6 +356,8 @@ async function getPopularGames(filters?: SearchFilters) {
   }
   
   queryBody += " limit 20;";
+  
+  console.log("IGDB query:", queryBody);
 
   const response = await fetch("https://api.igdb.com/v4/games", {
     method: "POST",
