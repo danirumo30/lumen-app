@@ -72,13 +72,13 @@ async function getMovieProviders(movieId: number): Promise<{ id: number; name: s
 }
 
 // Get popular movies - uses trending endpoint when no filters (like home)
-async function getPopularMovies(filters?: SearchFilters) {
+async function getPopularMovies(filters?: SearchFilters, page: number = 1) {
   // If no filters, use trending endpoint (same as home page)
   const hasFilters = filters?.genre || filters?.yearFrom || filters?.yearTo || filters?.minRating || filters?.sortBy;
   
   if (!hasFilters) {
     // Use trending movies (same as home page)
-    const trendingUrl = `${TMDB_BASE_URL}/trending/movie/week?api_key=${TMDB_API_KEY}&language=es-ES`;
+    const trendingUrl = `${TMDB_BASE_URL}/trending/movie/week?api_key=${TMDB_API_KEY}&language=es-ES&page=${page}`;
     
     const response = await fetch(trendingUrl, { 
       headers: { "Cache-Control": "public, s-maxage=3600" }
@@ -124,7 +124,7 @@ async function getPopularMovies(filters?: SearchFilters) {
   }
   
   // Use discover/movie for filtered queries
-  let url = `${TMDB_BASE_URL}/discover/movie?api_key=${TMDB_API_KEY}&page=1&language=es-ES`;
+  let url = `${TMDB_BASE_URL}/discover/movie?api_key=${TMDB_API_KEY}&page=${page}&language=es-ES`;
   
   if (filters?.genre) {
     // TMDB movie genres - complete list with correct IDs
@@ -249,13 +249,13 @@ async function getTvProviders(tvId: number): Promise<{ id: number; name: string;
 }
 
 // Get popular TV - uses trending endpoint when no filters (like home)
-async function getPopularTv(filters?: SearchFilters) {
+async function getPopularTv(filters?: SearchFilters, page: number = 1) {
   // If no filters, use trending endpoint (same as home page)
   const hasFilters = filters?.genre || filters?.yearFrom || filters?.yearTo || filters?.minRating || filters?.sortBy;
   
   if (!hasFilters) {
     // Use trending TV (same as home page)
-    const trendingUrl = `${TMDB_BASE_URL}/trending/tv/week?api_key=${TMDB_API_KEY}&language=es-ES`;
+    const trendingUrl = `${TMDB_BASE_URL}/trending/tv/week?api_key=${TMDB_API_KEY}&language=es-ES&page=${page}`;
     
     const response = await fetch(trendingUrl, { 
       headers: { "Cache-Control": "public, s-maxage=3600" }
@@ -301,7 +301,7 @@ async function getPopularTv(filters?: SearchFilters) {
   }
   
   // Use discover/tv for filtered queries
-  let url = `${TMDB_BASE_URL}/discover/tv?api_key=${TMDB_API_KEY}&page=1&language=es-ES`;
+  let url = `${TMDB_BASE_URL}/discover/tv?api_key=${TMDB_API_KEY}&page=${page}&language=es-ES`;
   
   if (filters?.genre) {
     // TMDB TV genres - correct IDs for TV shows
@@ -393,7 +393,7 @@ async function getPopularTv(filters?: SearchFilters) {
 }
 
 // Get popular games
-async function getPopularGames(filters?: SearchFilters) {
+async function getPopularGames(filters?: SearchFilters, page: number = 1) {
   const token = await getIgdbToken();
 
   let queryBody = "fields id, name, cover.url, first_release_date, rating, genres.name, platforms.id, platforms.name, platforms.platform_logo.image_id;";
@@ -487,6 +487,12 @@ async function getPopularGames(filters?: SearchFilters) {
     sortValue = "rating";
   }
   queryBody += " sort " + sortValue + " desc;";
+  
+  // Add offset for pagination (20 per page)
+  const offset = (page - 1) * 20;
+  if (offset > 0) {
+    queryBody += ` offset ${offset};`;
+  }
 
   queryBody += " limit 20;";
   
@@ -556,6 +562,7 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const type = (searchParams.get("type") || "all") as DiscoverType;
+    const page = parseInt(searchParams.get("page") || "1");
     
     let filters: SearchFilters = {};
     const filtersStr = searchParams.get("filters");
@@ -571,9 +578,9 @@ export async function GET(request: Request) {
     const gameFilters = (type === "all" || type === "game") ? filters : undefined;
 
     const results = await Promise.allSettled([
-      type === "all" || type === "movie" ? getPopularMovies(movieFilters) : Promise.resolve([]),
-      type === "all" || type === "tv" ? getPopularTv(tvFilters) : Promise.resolve([]),
-      type === "all" || type === "game" ? getPopularGames(gameFilters) : Promise.resolve([]),
+      type === "all" || type === "movie" ? getPopularMovies(movieFilters, page) : Promise.resolve([]),
+      type === "all" || type === "tv" ? getPopularTv(tvFilters, page) : Promise.resolve([]),
+      type === "all" || type === "game" ? getPopularGames(gameFilters, page) : Promise.resolve([]),
     ]);
 
     const movies = results[0].status === "fulfilled" ? results[0].value : [];

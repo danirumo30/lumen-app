@@ -283,7 +283,7 @@ async function searchTv(query: string, page = 1, filters?: SearchFilters) {
 }
 
 // Search games on IGDB with filters
-async function searchGames(query: string, filters?: SearchFilters) {
+async function searchGames(query: string, page: number = 1, filters?: SearchFilters) {
   const token = await getIgdbToken();
 
   // Build IGDB query - fields first, then where, then sort
@@ -297,10 +297,12 @@ async function searchGames(query: string, filters?: SearchFilters) {
     conditions.push(`platforms.name = "${filters.platform}"`);
   }
   if (filters?.yearFrom) {
-    conditions.push(`first_release_date >= ${filters.yearFrom * 10000}`);
+    const fromTimestamp = Math.floor(new Date(`${filters.yearFrom}-01-01`).getTime() / 1000);
+    conditions.push(`first_release_date >= ${fromTimestamp}`);
   }
   if (filters?.yearTo) {
-    conditions.push(`first_release_date <= ${filters.yearTo * 10000}`);
+    const toTimestamp = Math.floor(new Date(`${filters.yearTo}-12-31`).getTime() / 1000);
+    conditions.push(`first_release_date <= ${toTimestamp}`);
   }
   if (filters?.minRating) {
     conditions.push(`rating >= ${filters.minRating * 10}`);
@@ -318,9 +320,11 @@ async function searchGames(query: string, filters?: SearchFilters) {
     sortClause = " sort first_release_date desc;";
   }
   
-  // IGDB query format: search "term"; fields ...; where ...; sort ...; limit ...;
+  // IGDB query format: search "term"; fields ...; where ...; sort ...; offset ...; limit ...;
   // Request platforms with logo info
-  const queryBody = `search "${query}"; fields id, name, cover.url, first_release_date, rating, genres.name, platforms.id, platforms.name, platforms.platform_logo.image_id;${whereClause}${sortClause} limit 20;`;
+  const offset = (page - 1) * 20;
+  const offsetClause = offset > 0 ? ` offset ${offset};` : "";
+  const queryBody = `search "${query}"; fields id, name, cover.url, first_release_date, rating, genres.name, platforms.id, platforms.name, platforms.platform_logo.image_id;${whereClause}${sortClause}${offsetClause} limit 20;`;
 
   const response = await fetch("https://api.igdb.com/v4/games", {
     method: "POST",
@@ -615,7 +619,7 @@ export async function GET(request: Request) {
       const results = await Promise.allSettled([
         (type === "all" || type === "movie") ? searchMovies(query, page, movieFilters) : Promise.resolve([]),
         (type === "all" || type === "tv") ? searchTv(query, page, tvFilters) : Promise.resolve([]),
-        (type === "all" || type === "game") ? searchGames(query, gameFilters) : Promise.resolve([]),
+        (type === "all" || type === "game") ? searchGames(query, page, gameFilters) : Promise.resolve([]),
         (type === "all" || type === "user") ? searchUsers(query, supabaseUrl, supabaseKey) : Promise.resolve([]),
       ]);
 

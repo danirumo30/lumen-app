@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { DiscoverCard } from "./DiscoverCard";
 import { DiscoverSkeleton } from "./DiscoverSkeleton";
 import { MediaType } from "./DiscoverTypeChips";
@@ -45,6 +45,19 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+
+  // Reset page when query, type, or filters change
+  useEffect(() => {
+    setPage(1);
+    setResults([]);
+  }, [query, type, filters]);
+
+  // Load more handler
+  const loadMore = useCallback(() => {
+    setPage(prev => prev + 1);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -69,20 +82,25 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
         }
 
         // Special handling for "all" tab: fetch from individual endpoints to get same results
-        if (type === "all" && !query) {
-          console.log("Fetching 'all' tab from individual discover endpoints...");
+        if (type === "all") {
+          console.log("Fetching 'all' tab with separate requests per type...");
           
           const filtersParams = new URLSearchParams();
           if (filters) {
             filtersParams.set("filters", JSON.stringify(filters));
           }
           
-          // Fetch movies, TV, games from discover endpoint (same as individual tabs)
+          const searchParams = new URLSearchParams();
+          if (query && query.trim().length >= 2) {
+            searchParams.set("q", query);
+          }
+          
+          // Fetch movies, TV, games, users from search endpoint with query
           const [moviesRes, tvRes, gamesRes, usersRes] = await Promise.all([
-            fetch(`/api/discover?type=movie&${filtersParams.toString()}`),
-            fetch(`/api/discover?type=tv&${filtersParams.toString()}`),
-            fetch(`/api/discover?type=game&${filtersParams.toString()}`),
-            fetch(`/api/search?type=user`),
+            fetch(`/api/search?type=movie&${searchParams.toString()}&${filtersParams.toString()}`),
+            fetch(`/api/search?type=tv&${searchParams.toString()}&${filtersParams.toString()}`),
+            fetch(`/api/search?type=game&${searchParams.toString()}&${filtersParams.toString()}`),
+            fetch(`/api/search?type=user&${searchParams.toString()}`),
           ]);
           
           if (cancelled) return;
@@ -98,10 +116,11 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
             ...(moviesData.movies || []).slice(0, 10),
             ...(tvData.tv || []).slice(0, 10),
             ...(gamesData.games || []).slice(0, 10),
-            ...(usersData.users || []),
+            ...(usersData.users || []).slice(0, 10),
           ];
           
           console.log("All tab results:", { 
+            query: query || "(none)",
             movies: moviesData.movies?.length, 
             tv: tvData.tv?.length, 
             games: gamesData.games?.length, 
@@ -110,12 +129,18 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
           });
           
           setResults(combined);
+          setHasMore(false); // "All" tab doesn't have pagination
           return;
         }
         
-        // Regular flow for other tabs or when searching
+        // Regular flow for other tabs
         const hasQuery = query && query.trim().length >= 2;
         const isUserOnly = type === "user";
+        
+        // Add page parameter for pagination (except users)
+        if (type !== "user") {
+          params.set("page", page.toString());
+        }
         
         // Use search API for: has query, or user-only
         const useSearch = hasQuery || isUserOnly;
@@ -134,20 +159,29 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
         }
 
         // Combine results based on type
-        let combined: SearchResult[] = [];
+        let newResults: SearchResult[] = [];
 
         if (type === "movie") {
-          combined = data.movies || [];
+          newResults = data.movies || [];
         } else if (type === "tv") {
-          combined = data.tv || [];
+          newResults = data.tv || [];
         } else if (type === "game") {
-          combined = data.games || [];
+          newResults = data.games || [];
         } else if (type === "user") {
-          combined = data.users || [];
+          newResults = data.users || [];
         }
 
-        console.log("Search results:", { type, movies: data.movies?.length, tv: data.tv?.length, games: data.games?.length, users: data.users?.length, combined: combined.length });
-        setResults(combined);
+        // Append results for pagination (except page 1 which replaces)
+        if (page === 1) {
+          setResults(newResults);
+        } else {
+          setResults(prev => [...prev, ...newResults]);
+        }
+        
+        // Check if there are more results (has 20 means likely more)
+        setHasMore(newResults.length >= 20);
+        
+        console.log("Search results:", { type, page, newResults: newResults.length, hasMore: newResults.length >= 20 });
       } catch (err) {
         if (!cancelled) {
           console.error("Fetch error:", err);
@@ -210,29 +244,44 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
 
   // Results grid
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-      {results.map((result, index) => (
-        <div
-          key={result.id}
-          className="animate-in fade-in slide-in-from-bottom-2"
-          style={{ animationDelay: `${index * 30}ms` }}
-        >
-          <DiscoverCard
-            id={result.id}
-            type={result.type}
-            title={result.title}
-            posterUrl={result.posterUrl}
-            voteAverage={result.voteAverage}
-            releaseDate={result.releaseDate}
-            genres={result.genres}
-            platforms={result.platforms}
-            username={result.username}
-            avatarUrl={result.avatarUrl}
-            providers={result.providers}
-            platformLogos={result.platformLogos}
-          />
+    <div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+        {results.map((result, index) => (
+          <div
+            key={`${result.id}-${index}`}
+            className="animate-in fade-in slide-in-from-bottom-2"
+            style={{ animationDelay: `${(index % 20) * 30}ms` }}
+          >
+            <DiscoverCard
+              id={result.id}
+              type={result.type}
+              title={result.title}
+              posterUrl={result.posterUrl}
+              voteAverage={result.voteAverage}
+              releaseDate={result.releaseDate}
+              genres={result.genres}
+              platforms={result.platforms}
+              username={result.username}
+              avatarUrl={result.avatarUrl}
+              providers={result.providers}
+              platformLogos={result.platformLogos}
+            />
+          </div>
+        ))}
+      </div>
+      
+      {/* Load more button - only for non-"all" tabs */}
+      {hasMore && type !== "all" && (
+        <div className="mt-8 text-center">
+          <button
+            onClick={loadMore}
+            disabled={isLoading}
+            className="px-8 py-3 rounded-xl bg-zinc-800/80 text-zinc-300 border border-zinc-700/50 hover:bg-zinc-700/80 hover:text-white transition-all duration-200 disabled:opacity-50"
+          >
+            {isLoading ? "Cargando..." : "Cargar más"}
+          </button>
         </div>
-      ))}
+      )}
     </div>
   );
 }
