@@ -50,6 +50,39 @@ async function getIgdbToken(): Promise<string> {
   return IGDB_ACCESS_TOKEN;
 }
 
+// Get streaming providers for a movie
+async function getMovieProviders(movieId: number): Promise<{ id: number; name: string; logoUrl: string }[]> {
+  try {
+    const response = await fetch(
+      `${TMDB_BASE_URL}/movie/${movieId}/watch/providers?api_key=${TMDB_API_KEY}`,
+      { headers: { "Cache-Control": "public, s-maxage=86400" } }
+    );
+    if (!response.ok) return [];
+    
+    const data = await response.json();
+    const country = "ES"; // Spain - can be made dynamic
+    const providers = data.results?.[country];
+    
+    if (!providers) return [];
+    
+    // Get all provider types (flatrate, free, ads, rent, buy)
+    const allProviders = [
+      ...(providers.flatrate || []),
+      ...(providers.free || []),
+      ...(providers.ads || []),
+    ];
+    
+    // Return top 5 providers with logos
+    return allProviders.slice(0, 5).map((p: any) => ({
+      id: p.provider_id,
+      name: p.provider_name,
+      logoUrl: p.logo_path ? `https://image.tmdb.org/t/p/original${p.logo_path}` : null,
+    })).filter((p: { logoUrl: string | null }): p is { id: number; name: string; logoUrl: string } => Boolean(p.logoUrl));
+  } catch {
+    return [];
+  }
+}
+
 // Search movies on TMDB with filters
 async function searchMovies(query: string, page = 1, filters?: SearchFilters) {
   // Build TMDB query params
@@ -86,7 +119,7 @@ async function searchMovies(query: string, page = 1, filters?: SearchFilters) {
   }
 
   const data = await response.json();
-  return data.results?.map((movie: {
+  const movies = data.results?.map((movie: {
     id: number;
     title: string;
     poster_path: string | null;
@@ -104,6 +137,53 @@ async function searchMovies(query: string, page = 1, filters?: SearchFilters) {
     releaseDate: movie.release_date,
     overview: movie.overview,
   })) || [];
+
+  // Fetch providers for first 10 movies (to avoid too many API calls)
+  const moviesWithProviders = await Promise.all(
+    movies.slice(0, 10).map(async (movie: any, index: number) => {
+      if (index < 10) {
+        const tmdbId = movie.id.replace("tmdb_", "");
+        const providers = await getMovieProviders(parseInt(tmdbId));
+        return { ...movie, providers };
+      }
+      return movie;
+    })
+  );
+
+  return moviesWithProviders;
+}
+
+// Get streaming providers for a TV show
+async function getTvProviders(tvId: number): Promise<{ id: number; name: string; logoUrl: string }[]> {
+  try {
+    const response = await fetch(
+      `${TMDB_BASE_URL}/tv/${tvId}/watch/providers?api_key=${TMDB_API_KEY}`,
+      { headers: { "Cache-Control": "public, s-maxage=86400" } }
+    );
+    if (!response.ok) return [];
+    
+    const data = await response.json();
+    const country = "ES"; // Spain - can be made dynamic
+    const providers = data.results?.[country];
+    
+    if (!providers) return [];
+    
+    // Get all provider types (flatrate, free, ads, rent, buy)
+    const allProviders = [
+      ...(providers.flatrate || []),
+      ...(providers.free || []),
+      ...(providers.ads || []),
+    ];
+    
+    // Return top 5 providers with logos
+    return allProviders.slice(0, 5).map((p: any) => ({
+      id: p.provider_id,
+      name: p.provider_name,
+      logoUrl: p.logo_path ? `https://image.tmdb.org/t/p/original${p.logo_path}` : null,
+    })).filter((p: { logoUrl: string | null }): p is { id: number; name: string; logoUrl: string } => Boolean(p.logoUrl));
+  } catch {
+    return [];
+  }
 }
 
 // Search TV on TMDB with filters
@@ -138,7 +218,7 @@ async function searchTv(query: string, page = 1, filters?: SearchFilters) {
   }
 
   const data = await response.json();
-  return data.results?.map((show: {
+  const shows = data.results?.map((show: {
     id: number;
     name: string;
     poster_path: string | null;
@@ -156,6 +236,20 @@ async function searchTv(query: string, page = 1, filters?: SearchFilters) {
     releaseDate: show.first_air_date,
     overview: show.overview,
   })) || [];
+
+  // Fetch providers for first 10 TV shows (to avoid too many API calls)
+  const showsWithProviders = await Promise.all(
+    shows.slice(0, 10).map(async (show: any, index: number) => {
+      if (index < 10) {
+        const tmdbId = show.id.replace("tmdb_", "");
+        const providers = await getTvProviders(parseInt(tmdbId));
+        return { ...show, providers };
+      }
+      return show;
+    })
+  );
+
+  return showsWithProviders;
 }
 
 // Search games on IGDB with filters
@@ -195,7 +289,8 @@ async function searchGames(query: string, filters?: SearchFilters) {
   }
   
   // IGDB query format: search "term"; fields ...; where ...; sort ...; limit ...;
-  const queryBody = `search "${query}"; fields id, name, cover.url, first_release_date, rating, genres.name, platforms.name;${whereClause}${sortClause} limit 20;`;
+  // Request platforms with logo info
+  const queryBody = `search "${query}"; fields id, name, cover.url, first_release_date, rating, genres.name, platforms.id, platforms.name, platforms.platform_logo.image_id;${whereClause}${sortClause} limit 20;`;
 
   const response = await fetch("https://api.igdb.com/v4/games", {
     method: "POST",
@@ -220,7 +315,7 @@ async function searchGames(query: string, filters?: SearchFilters) {
     first_release_date?: number;
     rating?: number;
     genres?: { name: string }[];
-    platforms?: { name: string }[];
+    platforms?: { id: number; name: string; platform_logo?: { image_id: string } }[];
   }) => ({
     id: `igdb_${game.id}`,
     type: "game" as const,
@@ -234,6 +329,15 @@ async function searchGames(query: string, filters?: SearchFilters) {
     rating: game.rating ? Math.round(game.rating) / 10 : null,
     genres: game.genres?.map((g: { name: string }) => g.name) || [],
     platforms: game.platforms?.map((p: { name: string }) => p.name) || [],
+    platformLogos: game.platforms?.map((p: { id: number; name: string; platform_logo?: { image_id: string } }) => ({
+      id: p.id,
+      name: p.name,
+      // Use platform name for icon mapping (more reliable than ID)
+      platformName: p.name,
+      logoUrl: p.platform_logo?.image_id 
+        ? `https://images.igdb.com/igdb/image/upload/t_micro/${p.platform_logo.image_id}.png`
+        : null,
+    })).filter((p: { logoUrl: string | null }) => p.logoUrl) || [],
   }));
 }
 
@@ -241,17 +345,27 @@ async function searchGames(query: string, filters?: SearchFilters) {
 async function searchUsers(query: string, supabaseUrl: string, supabaseKey: string) {
   const supabase = createClient(supabaseUrl, supabaseKey);
   
+  console.log("[USER SEARCH] Searching for:", query);
+  
+  // If no query, return empty (use trending users instead)
+  if (!query || query.length === 0) {
+    console.log("[USER SEARCH] No query, returning empty (use trending)");
+    return [];
+  }
+  
   const { data, error } = await supabase
     .from("user_profiles")
     .select("id, username, avatar_url")
-    .ilike("username", `%${query}%`)
     .eq("is_public", true)
+    .ilike("username", `%${query}%`)
     .limit(20);
 
   if (error) {
-    console.error("User search error:", error);
+    console.error("[USER SEARCH] Error:", error);
     return [];
   }
+
+  console.log("[USER SEARCH] Found users:", data?.length || 0);
 
   return data?.map((user: {
     id: string;
@@ -263,6 +377,162 @@ async function searchUsers(query: string, supabaseUrl: string, supabaseKey: stri
     username: user.username,
     avatarUrl: user.avatar_url,
   })) || [];
+}
+
+// Get all users in random order
+async function getTrendingUsers(supabaseUrl: string, supabaseKey: string) {
+  const supabase = createClient(supabaseUrl, supabaseKey);
+  
+  // Get all public user profiles
+  const { data: profiles, error: profilesError } = await supabase
+    .from("user_profiles")
+    .select("id, username, avatar_url")
+    .eq("is_public", true)
+    .limit(50);
+
+  if (profilesError || !profiles) {
+    console.error("Error fetching profiles:", profilesError);
+    return [];
+  }
+
+  // Shuffle array for random order
+  const shuffled = [...profiles].sort(() => Math.random() - 0.5);
+
+  return shuffled.slice(0, 10).map((user: any) => ({
+    id: user.id,
+    type: "user" as const,
+    username: user.username,
+    avatarUrl: user.avatar_url,
+  }));
+}
+
+// Get trending movies (recent releases)
+async function getTrendingMovies(limit: number = 10) {
+  try {
+    // Get now playing (recent releases)
+    const response = await fetch(
+      `${TMDB_BASE_URL}/movie/now_playing?api_key=${TMDB_API_KEY}&language=es-ES&page=1`,
+      { headers: { "Cache-Control": "public, s-maxage=3600" } }
+    );
+
+    if (!response.ok) {
+      console.error("TMDB now playing error:", response.status);
+      return [];
+    }
+
+    const data = await response.json();
+    
+    return data.results?.slice(0, limit).map((movie: {
+      id: number;
+      title: string;
+      poster_path: string | null;
+      vote_average: number;
+      release_date: string;
+    }) => ({
+      id: `tmdb_${movie.id}`,
+      type: "movie" as const,
+      title: movie.title,
+      posterUrl: movie.poster_path
+        ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+        : null,
+      voteAverage: Math.round(movie.vote_average * 10) / 10,
+      releaseDate: movie.release_date,
+    })) || [];
+  } catch (error) {
+    console.error("Error fetching trending movies:", error);
+    return [];
+  }
+}
+
+// Get trending TV shows (airing now)
+async function getTrendingTv(limit: number = 10) {
+  try {
+    const response = await fetch(
+      `${TMDB_BASE_URL}/tv/on_the_air?api_key=${TMDB_API_KEY}&language=es-ES&page=1`,
+      { headers: { "Cache-Control": "public, s-maxage=3600" } }
+    );
+
+    if (!response.ok) {
+      console.error("TMDB TV airing error:", response.status);
+      return [];
+    }
+
+    const data = await response.json();
+    
+    return data.results?.slice(0, limit).map((show: {
+      id: number;
+      name: string;
+      poster_path: string | null;
+      vote_average: number;
+      first_air_date: string;
+    }) => ({
+      id: `tmdb_${show.id}`,
+      type: "tv" as const,
+      title: show.name,
+      posterUrl: show.poster_path
+        ? `https://image.tmdb.org/t/p/w500${show.poster_path}`
+        : null,
+      voteAverage: Math.round(show.vote_average * 10) / 10,
+      releaseDate: show.first_air_date,
+    })) || [];
+  } catch (error) {
+    console.error("Error fetching trending TV:", error);
+    return [];
+  }
+}
+
+// Get trending games (recent releases)
+async function getTrendingGames(limit: number = 10) {
+  try {
+    // Get recent games from IGDB
+    const token = IGDB_ACCESS_TOKEN || await getIgdbToken();
+    
+    const queryBody = `
+      fields id, name, cover.url, first_release_date, rating;
+      where first_release_date != null;
+      sort first_release_date desc;
+      limit ${limit};
+    `;
+
+    const response = await fetch("https://api.igdb.com/v4/games", {
+      method: "POST",
+      headers: {
+        "Client-ID": IGDB_CLIENT_ID,
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "text/plain",
+      },
+      body: queryBody,
+    });
+
+    if (!response.ok) {
+      console.error("IGDB trending error:", response.status);
+      return [];
+    }
+
+    const data = await response.json();
+    
+    return data.map((game: {
+      id: number;
+      name: string;
+      cover?: { url: string };
+      first_release_date?: number;
+      rating?: number;
+    }) => ({
+      id: `igdb_${game.id}`,
+      type: "game" as const,
+      title: game.name,
+      posterUrl: game.cover?.url
+        ? `https:${game.cover.url.replace("t_thumb", "t_cover_big")}`
+        : null,
+      releaseDate: game.first_release_date
+        ? new Date(game.first_release_date * 1000).toISOString().split("T")[0]
+        : null,
+      rating: game.rating ? Math.round(game.rating) / 10 : null,
+    }));
+  } catch (error) {
+    console.error("Error fetching trending games:", error);
+    return [];
+  }
 }
 
 export async function GET(request: Request) {
@@ -280,10 +550,6 @@ export async function GET(request: Request) {
       } catch {}
     }
 
-    if (!query || query.length < 2) {
-      return NextResponse.json({ movies: [], tv: [], games: [], users: [], totalResults: 0 });
-    }
-
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
@@ -292,17 +558,59 @@ export async function GET(request: Request) {
     const tvFilters = (type === "all" || type === "tv") ? filters : undefined;
     const gameFilters = (type === "all" || type === "game") ? filters : undefined;
 
-    const results = await Promise.allSettled([
-      type === "all" || type === "movie" ? searchMovies(query, page, movieFilters) : Promise.resolve([]),
-      type === "all" || type === "tv" ? searchTv(query, page, tvFilters) : Promise.resolve([]),
-      type === "all" || type === "game" ? searchGames(query, gameFilters) : Promise.resolve([]),
-      type === "all" || type === "user" ? searchUsers(query, supabaseUrl, supabaseKey) : Promise.resolve([]),
-    ]);
+    // Determine if we should search 
+    // - Movies/TV/Games: if has query, search. If no query and type=all, get trending. If no query and type=specific, get trending.
+    const hasQuery = query && query.length >= 2;
+    const isAll = type === "all";
+    
+    // For "all" without query: get trending content (10 each) + random users
+    // For "all" with query: search all types
+    // For specific types: search or get trending
+    
+    const shouldSearchMoviesTvGames = hasQuery;
+    const hasUserQuery = query && query.length >= 1;
+    const needsTrendingUsers = !query && (type === "user" || isAll);
+    const needsTrendingContent = !hasQuery && (type !== "user");
+    
+    console.log("[SEARCH] query:", query, "type:", type, "hasQuery:", hasQuery, "isAll:", isAll, "needsTrendingUsers:", needsTrendingUsers, "needsTrendingContent:", needsTrendingContent);
 
-    const movies = results[0].status === "fulfilled" ? results[0].value : [];
-    const tv = results[1].status === "fulfilled" ? results[1].value : [];
-    const games = results[2].status === "fulfilled" ? results[2].value : [];
-    const users = results[3].status === "fulfilled" ? results[3].value : [];
+    // Fetch data - search or trending depending on query
+    let movies: any[] = [];
+    let tv: any[] = [];
+    let games: any[] = [];
+    let users: any[] = [];
+    
+    if (hasQuery) {
+      // Search mode
+      const results = await Promise.allSettled([
+        (type === "all" || type === "movie") ? searchMovies(query, page, movieFilters) : Promise.resolve([]),
+        (type === "all" || type === "tv") ? searchTv(query, page, tvFilters) : Promise.resolve([]),
+        (type === "all" || type === "game") ? searchGames(query, gameFilters) : Promise.resolve([]),
+        (type === "all" || type === "user") ? searchUsers(query, supabaseUrl, supabaseKey) : Promise.resolve([]),
+      ]);
+
+      movies = results[0].status === "fulfilled" ? results[0].value : [];
+      tv = results[1].status === "fulfilled" ? results[1].value : [];
+      games = results[2].status === "fulfilled" ? results[2].value : [];
+      users = results[3].status === "fulfilled" ? results[3].value : [];
+    } else {
+      // Trending mode - get 10 of each type
+      console.log("[SEARCH] Fetching trending content...");
+      
+      const trendingResults = await Promise.all([
+        (type === "all" || type === "movie") ? getTrendingMovies(10) : Promise.resolve([]),
+        (type === "all" || type === "tv") ? getTrendingTv(10) : Promise.resolve([]),
+        (type === "all" || type === "game") ? getTrendingGames(10) : Promise.resolve([]),
+        (type === "all" || type === "user") ? getTrendingUsers(supabaseUrl, supabaseKey) : Promise.resolve([]),
+      ]);
+      
+      movies = trendingResults[0];
+      tv = trendingResults[1];
+      games = trendingResults[2];
+      users = trendingResults[3];
+      
+      console.log("[SEARCH] Trending - movies:", movies.length, "tv:", tv.length, "games:", games.length, "users:", users.length);
+    }
 
     const totalResults = movies.length + tv.length + games.length + users.length;
 

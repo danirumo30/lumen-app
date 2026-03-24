@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { MediaType } from "./DiscoverTypeChips";
 
 export interface DiscoverFilters {
@@ -9,6 +9,7 @@ export interface DiscoverFilters {
   yearTo?: number;
   platform?: string;
   sortBy?: "relevance" | "rating" | "year" | "popularity";
+  minRating?: number;
 }
 
 interface DiscoverFiltersProps {
@@ -28,8 +29,100 @@ const platforms = {
   tv: ["Netflix", "Amazon Prime", "Disney+", "HBO", "Hulu", "Apple TV+", "Paramount+"],
 };
 
+const sortOptions = [
+  { value: "relevance", label: "Relevancia" },
+  { value: "rating", label: "Puntuación" },
+  { value: "year", label: "Año" },
+  { value: "popularity", label: "Popularidad" },
+];
+
 const currentYear = new Date().getFullYear();
 const years = Array.from({ length: 50 }, (_, i) => currentYear - i);
+
+// Dropdown component with chip-style selection (from franchise page)
+function FilterDropdown({
+  label,
+  options,
+  value,
+  onChange,
+  icon
+}: {
+  label: string;
+  options: { value: string; label: string }[];
+  value: string;
+  onChange: (value: string) => void;
+  icon?: React.ReactNode;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const selectedOption = options.find(o => o.value === value);
+  const displayLabel = selectedOption?.value === "" || !selectedOption ? label : selectedOption.label;
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Get accent color based on type
+  const accentClass = label.includes("Género") 
+    ? "bg-amber-600 text-white shadow-lg shadow-amber-600/25" 
+    : label.includes("Plataforma")
+    ? "bg-violet-600 text-white shadow-lg shadow-violet-600/25"
+    : "bg-zinc-700 text-white shadow-lg shadow-zinc-700/25";
+
+  return (
+    <div ref={dropdownRef} className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+          value && value !== ""
+            ? accentClass
+            : "bg-zinc-800/60 text-zinc-400 hover:bg-zinc-700 hover:text-white border border-zinc-700/50"
+        }`}
+      >
+        {icon && <span className="w-4 h-4">{icon}</span>}
+        <span>{displayLabel}</span>
+        <svg 
+          className={`w-4 h-4 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+          fill="none" 
+          stroke="currentColor" 
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {isOpen && (
+        <div className="absolute top-full mt-2 left-0 min-w-[160px] bg-zinc-900/95 backdrop-blur-xl border border-zinc-700/50 rounded-xl shadow-2xl z-50 overflow-hidden animate-in slide-in-from-top-2">
+          <div className="p-1 max-h-[240px] overflow-y-auto">
+            {options.map((option) => (
+              <button
+                key={option.value}
+                onClick={() => {
+                  onChange(option.value);
+                  setIsOpen(false);
+                }}
+                className={`w-full text-left px-3 py-2 text-sm rounded-lg transition-colors ${
+                  value === option.value
+                    ? "bg-amber-600/20 text-amber-400"
+                    : "text-zinc-300 hover:bg-zinc-800 hover:text-white"
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function DiscoverFiltersComponent({ type, filters, onChange }: DiscoverFiltersProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -46,136 +139,124 @@ export function DiscoverFiltersComponent({ type, filters, onChange }: DiscoverFi
     onChange({ ...filters, [key]: value });
   };
 
+  const genreOptions = [
+    { value: "", label: "Todos" },
+    ...typeGenres.map(g => ({ value: g, label: g }))
+  ];
+
+  const platformOptions = [
+    { value: "", label: "Todas" },
+    ...typePlatforms.map(p => ({ value: p, label: p }))
+  ];
+
+  const yearFromOptions = [
+    { value: "", label: "Desde" },
+    ...years.map(y => ({ value: String(y), label: String(y) }))
+  ];
+
+  const yearToOptions = [
+    { value: "", label: "Hasta" },
+    ...years.map(y => ({ value: String(y), label: String(y) }))
+  ];
+
+  const hasActiveFilters = filters.genre || filters.yearFrom || filters.yearTo || filters.platform || filters.sortBy;
+
   return (
     <div className="w-full">
-      {/* Toggle Filters Button */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-4 py-2 text-sm text-zinc-400 bg-zinc-800/50 rounded-lg 
-          hover:bg-zinc-800 hover:text-white transition-all"
-      >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-        </svg>
-        <span>Filtros</span>
-        <svg 
-          className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : ""}`} 
-          fill="none" stroke="currentColor" viewBox="0 0 24 24"
+      {/* Filter Bar - Always visible like franchise page */}
+      <div className="flex flex-wrap items-center gap-2">
+        {/* Toggle Button */}
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+            isOpen || hasActiveFilters
+              ? "bg-amber-600 text-white shadow-lg shadow-amber-600/25"
+              : "bg-zinc-800/60 text-zinc-400 hover:bg-zinc-700 hover:text-white border border-zinc-700/50"
+          }`}
         >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+          </svg>
+          <span>Filtros</span>
+          {hasActiveFilters && (
+            <span className="w-2 h-2 bg-white rounded-full" />
+          )}
+        </button>
 
-      {/* Filters Panel */}
-      {isOpen && (
-        <div className="mt-3 p-4 bg-zinc-900/80 backdrop-blur-xl border border-zinc-800 rounded-xl animate-in slide-in-from-top-2">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {/* Genre Filter */}
-            {typeGenres.length > 0 && (
-              <div>
-                <label className="block text-xs text-zinc-500 uppercase tracking-wider mb-2">
-                  Género
-                </label>
-                <select
-                  value={filters.genre || ""}
-                  onChange={(e) => updateFilter("genre", e.target.value || undefined)}
-                  className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white text-sm
-                    focus:outline-none focus:border-amber-500/50"
-                >
-                  <option value="">Todos</option>
-                  {typeGenres.map((g) => (
-                    <option key={g} value={g}>{g}</option>
-                  ))}
-                </select>
-              </div>
-            )}
+        {/* Genre Dropdown */}
+        {typeGenres.length > 0 && (
+          <FilterDropdown
+            label="Género"
+            options={genreOptions}
+            value={filters.genre || ""}
+            onChange={(value) => updateFilter("genre", value || undefined)}
+            icon={
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+              </svg>
+            }
+          />
+        )}
 
-            {/* Year From */}
-            <div>
-              <label className="block text-xs text-zinc-500 uppercase tracking-wider mb-2">
-                Desde
-              </label>
-              <select
-                value={filters.yearFrom || ""}
-                onChange={(e) => updateFilter("yearFrom", e.target.value ? parseInt(e.target.value) : undefined)}
-                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white text-sm
-                  focus:outline-none focus:border-amber-500/50"
-              >
-                <option value="">Cualquiera</option>
-                {years.map((y) => (
-                  <option key={y} value={y}>{y}</option>
-                ))}
-              </select>
-            </div>
+        {/* Platform Dropdown (for games) */}
+        {type === "game" && typePlatforms.length > 0 && (
+          <FilterDropdown
+            label="Plataforma"
+            options={platformOptions}
+            value={filters.platform || ""}
+            onChange={(value) => updateFilter("platform", value || undefined)}
+            icon={
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+              </svg>
+            }
+          />
+        )}
 
-            {/* Year To */}
-            <div>
-              <label className="block text-xs text-zinc-500 uppercase tracking-wider mb-2">
-                Hasta
-              </label>
-              <select
-                value={filters.yearTo || ""}
-                onChange={(e) => updateFilter("yearTo", e.target.value ? parseInt(e.target.value) : undefined)}
-                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white text-sm
-                  focus:outline-none focus:border-amber-500/50"
-              >
-                <option value="">Cualquiera</option>
-                {years.map((y) => (
-                  <option key={y} value={y}>{y}</option>
-                ))}
-              </select>
-            </div>
+        {/* Year From */}
+        <FilterDropdown
+          label="Desde"
+          options={yearFromOptions}
+          value={filters.yearFrom ? String(filters.yearFrom) : ""}
+          onChange={(value) => updateFilter("yearFrom", value ? parseInt(value) : undefined)}
+          icon={
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          }
+        />
 
-            {/* Platform (for games) or Sort */}
-            {type === "game" && typePlatforms.length > 0 && (
-              <div>
-                <label className="block text-xs text-zinc-500 uppercase tracking-wider mb-2">
-                  Plataforma
-                </label>
-                <select
-                  value={filters.platform || ""}
-                  onChange={(e) => updateFilter("platform", e.target.value || undefined)}
-                  className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white text-sm
-                    focus:outline-none focus:border-amber-500/50"
-                >
-                  <option value="">Todas</option>
-                  {typePlatforms.map((p) => (
-                    <option key={p} value={p}>{p}</option>
-                  ))}
-                </select>
-              </div>
-            )}
+        {/* Year To */}
+        <FilterDropdown
+          label="Hasta"
+          options={yearToOptions}
+          value={filters.yearTo ? String(filters.yearTo) : ""}
+          onChange={(value) => updateFilter("yearTo", value ? parseInt(value) : undefined)}
+        />
 
-            {/* Sort By */}
-            <div className={type === "game" ? "" : "col-span-2"}>
-              <label className="block text-xs text-zinc-500 uppercase tracking-wider mb-2">
-                Ordenar por
-              </label>
-              <select
-                value={filters.sortBy || "relevance"}
-                onChange={(e) => updateFilter("sortBy", e.target.value as DiscoverFilters["sortBy"])}
-                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white text-sm
-                  focus:outline-none focus:border-amber-500/50"
-              >
-                <option value="relevance">Relevancia</option>
-                <option value="rating">Puntuación</option>
-                <option value="year">Año</option>
-                <option value="popularity">Popularidad</option>
-              </select>
-            </div>
-          </div>
+        {/* Sort By */}
+        <FilterDropdown
+          label="Ordenar"
+          options={sortOptions}
+          value={filters.sortBy || "relevance"}
+          onChange={(value) => updateFilter("sortBy", value as DiscoverFilters["sortBy"])}
+          icon={
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+            </svg>
+          }
+        />
 
-          {/* Clear Filters */}
-          <div className="mt-4 pt-4 border-t border-zinc-800 flex justify-end">
-            <button
-              onClick={() => onChange({})}
-              className="text-sm text-zinc-500 hover:text-white transition-colors"
-            >
-              Limpiar filtros
-            </button>
-          </div>
-        </div>
-      )}
+        {/* Clear Filters */}
+        {hasActiveFilters && (
+          <button
+            onClick={() => onChange({})}
+            className="text-sm text-zinc-500 hover:text-white transition-colors px-2"
+          >
+            Limpiar
+          </button>
+        )}
+      </div>
     </div>
   );
 }

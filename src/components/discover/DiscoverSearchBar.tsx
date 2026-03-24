@@ -8,8 +8,13 @@ interface SearchBarProps {
 }
 
 export function DiscoverSearchBar({ initialQuery = "", onSearch }: SearchBarProps) {
-  const [query, setQuery] = useState(initialQuery);
+  // Initialize with empty string to avoid hydration mismatch, then update
+  const [query, setQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
+
+  useEffect(() => {
+    setQuery(initialQuery || "");
+  }, [initialQuery]);
 
   // Debounced search
   useEffect(() => {
@@ -75,8 +80,7 @@ export function DiscoverSearchBar({ initialQuery = "", onSearch }: SearchBarProp
           onFocus={() => setIsFocused(true)}
           onBlur={() => setTimeout(() => setIsFocused(false), 200)}
           placeholder="Buscar películas, series, juegos, usuarios..."
-          className="flex-1 py-4 bg-transparent text-white placeholder-zinc-500 
-            focus:outline-none text-lg"
+          className="flex-1 py-4 bg-transparent text-white placeholder-zinc-500 focus:outline-none text-lg"
         />
 
         {/* Clear Button */}

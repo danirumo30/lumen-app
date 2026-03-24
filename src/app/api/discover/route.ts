@@ -40,6 +40,37 @@ async function getIgdbToken(): Promise<string> {
   return IGDB_ACCESS_TOKEN;
 }
 
+// Get streaming providers for a movie
+async function getMovieProviders(movieId: number): Promise<{ id: number; name: string; logoUrl: string }[]> {
+  try {
+    const response = await fetch(
+      `${TMDB_BASE_URL}/movie/${movieId}/watch/providers?api_key=${TMDB_API_KEY}`,
+      { headers: { "Cache-Control": "public, s-maxage=86400" } }
+    );
+    if (!response.ok) return [];
+    
+    const data = await response.json();
+    const country = "ES";
+    const providers = data.results?.[country];
+    
+    if (!providers) return [];
+    
+    const allProviders = [
+      ...(providers.flatrate || []),
+      ...(providers.free || []),
+      ...(providers.ads || []),
+    ];
+    
+    return allProviders.slice(0, 5).map((p: any) => ({
+      id: p.provider_id,
+      name: p.provider_name,
+      logoUrl: p.logo_path ? `https://image.tmdb.org/t/p/original${p.logo_path}` : null,
+    })).filter((p: { logoUrl: string | null }): p is { id: number; name: string; logoUrl: string } => Boolean(p.logoUrl));
+  } catch {
+    return [];
+  }
+}
+
 // Get popular movies
 async function getPopularMovies(filters?: SearchFilters) {
   let url = `${TMDB_BASE_URL}/movie/popular?api_key=${TMDB_API_KEY}&page=1&language=es-ES`;
@@ -71,7 +102,7 @@ async function getPopularMovies(filters?: SearchFilters) {
   }
 
   const data = await response.json();
-  return data.results?.slice(0, 20).map((movie: {
+  const movies = data.results?.slice(0, 20).map((movie: {
     id: number;
     title: string;
     poster_path: string | null;
@@ -89,6 +120,51 @@ async function getPopularMovies(filters?: SearchFilters) {
     releaseDate: movie.release_date,
     overview: movie.overview,
   })) || [];
+
+  // Fetch providers for first 10 movies
+  const moviesWithProviders = await Promise.all(
+    movies.slice(0, 10).map(async (movie: any, index: number) => {
+      if (index < 10) {
+        const tmdbId = movie.id.replace("tmdb_", "");
+        const providers = await getMovieProviders(parseInt(tmdbId));
+        return { ...movie, providers };
+      }
+      return movie;
+    })
+  );
+
+  return moviesWithProviders;
+}
+
+// Get streaming providers for a TV show
+async function getTvProviders(tvId: number): Promise<{ id: number; name: string; logoUrl: string }[]> {
+  try {
+    const response = await fetch(
+      `${TMDB_BASE_URL}/tv/${tvId}/watch/providers?api_key=${TMDB_API_KEY}`,
+      { headers: { "Cache-Control": "public, s-maxage=86400" } }
+    );
+    if (!response.ok) return [];
+    
+    const data = await response.json();
+    const country = "ES";
+    const providers = data.results?.[country];
+    
+    if (!providers) return [];
+    
+    const allProviders = [
+      ...(providers.flatrate || []),
+      ...(providers.free || []),
+      ...(providers.ads || []),
+    ];
+    
+    return allProviders.slice(0, 5).map((p: any) => ({
+      id: p.provider_id,
+      name: p.provider_name,
+      logoUrl: p.logo_path ? `https://image.tmdb.org/t/p/original${p.logo_path}` : null,
+    })).filter((p: { logoUrl: string | null }): p is { id: number; name: string; logoUrl: string } => Boolean(p.logoUrl));
+  } catch {
+    return [];
+  }
 }
 
 // Get popular TV
@@ -121,7 +197,7 @@ async function getPopularTv(filters?: SearchFilters) {
   }
 
   const data = await response.json();
-  return data.results?.slice(0, 20).map((show: {
+  const shows = data.results?.slice(0, 20).map((show: {
     id: number;
     name: string;
     poster_path: string | null;
@@ -139,13 +215,27 @@ async function getPopularTv(filters?: SearchFilters) {
     releaseDate: show.first_air_date,
     overview: show.overview,
   })) || [];
+
+  // Fetch providers for first 10 TV shows
+  const showsWithProviders = await Promise.all(
+    shows.slice(0, 10).map(async (show: any, index: number) => {
+      if (index < 10) {
+        const tmdbId = show.id.replace("tmdb_", "");
+        const providers = await getTvProviders(parseInt(tmdbId));
+        return { ...show, providers };
+      }
+      return show;
+    })
+  );
+
+  return showsWithProviders;
 }
 
 // Get popular games
 async function getPopularGames(filters?: SearchFilters) {
   const token = await getIgdbToken();
 
-  let queryBody = "fields id, name, cover.url, first_release_date, rating, genres.name, platforms.name;";
+  let queryBody = "fields id, name, cover.url, first_release_date, rating, genres.name, platforms.id, platforms.name, platforms.platform_logo.image_id;";
   
   // Build where clause
   const conditions: string[] = [];
@@ -203,7 +293,7 @@ async function getPopularGames(filters?: SearchFilters) {
     first_release_date?: number;
     rating?: number;
     genres?: { name: string }[];
-    platforms?: { name: string }[];
+    platforms?: { id: number; name: string; platform_logo?: { image_id: string } }[];
   }) => ({
     id: `igdb_${game.id}`,
     type: "game" as const,
@@ -217,6 +307,15 @@ async function getPopularGames(filters?: SearchFilters) {
     rating: game.rating ? Math.round(game.rating) / 10 : null,
     genres: game.genres?.map((g: { name: string }) => g.name) || [],
     platforms: game.platforms?.map((p: { name: string }) => p.name) || [],
+    platformLogos: game.platforms?.map((p: { id: number; name: string; platform_logo?: { image_id: string } }) => ({
+      id: p.id,
+      name: p.name,
+      // Use platform name for icon mapping (more reliable than ID)
+      platformName: p.name,
+      logoUrl: p.platform_logo?.image_id 
+        ? `https://images.igdb.com/igdb/image/upload/t_micro/${p.platform_logo.image_id}.png`
+        : null,
+    })).filter((p: { logoUrl: string | null }) => p.logoUrl) || [],
   }));
 }
 

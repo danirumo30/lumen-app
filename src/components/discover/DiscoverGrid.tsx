@@ -6,6 +6,19 @@ import { DiscoverSkeleton } from "./DiscoverSkeleton";
 import { MediaType } from "./DiscoverTypeChips";
 import { DiscoverFilters } from "./DiscoverFilters";
 
+interface StreamingProvider {
+  id: number;
+  name: string;
+  logoUrl: string;
+}
+
+interface PlatformLogo {
+  id: number;
+  name: string;
+  platformName?: string;
+  logoUrl: string | null;
+}
+
 interface SearchResult {
   id: string;
   type: "movie" | "tv" | "game" | "user";
@@ -18,6 +31,8 @@ interface SearchResult {
   platforms?: string[];
   username?: string;
   avatarUrl?: string | null;
+  providers?: StreamingProvider[];
+  platformLogos?: PlatformLogo[];
 }
 
 interface DiscoverGridProps {
@@ -53,8 +68,18 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
           params.set("filters", JSON.stringify(filters));
         }
 
-        // Use search API when query >= 2 chars, discover otherwise
-        const endpoint = query && query.trim().length >= 2 ? "/api/search" : "/api/discover";
+        // Use search API when:
+        // - Has query (2+ chars) - search all types
+        // - Type is "all" (to get users + trending content)
+        // - Type is "user" (to get users)
+        // Otherwise use discover API for trending content
+        const hasQuery = query && query.trim().length >= 2;
+        const isAll = type === "all";
+        const isUserOnly = type === "user";
+        
+        // Use search API for: has query, all types, or user-only
+        const useSearch = hasQuery || isAll || isUserOnly;
+        const endpoint = useSearch ? "/api/search" : "/api/discover";
         const url = `${endpoint}?${params.toString()}`;
         
         console.log("Fetching:", url);
@@ -170,6 +195,8 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
             platforms={result.platforms}
             username={result.username}
             avatarUrl={result.avatarUrl}
+            providers={result.providers}
+            platformLogos={result.platformLogos}
           />
         </div>
       ))}

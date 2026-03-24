@@ -19,6 +19,8 @@ interface TrendingItem {
   date?: string;
   overview?: string;
   summary?: string;
+  providers?: { id: number; name: string; logoUrl: string }[];
+  platformLogos?: { id: number; name: string; platformName?: string; logoUrl: string | null; key?: string }[];
 }
 
 export default function HomePage() {
@@ -160,7 +162,8 @@ export default function HomePage() {
           items={movies.map(m => ({ 
             ...m, 
             rating: m.voteAverage,
-            date: m.releaseDate 
+            date: m.releaseDate || "Desconocida",
+            providers: m.providers
           }))}
           variant="movies"
         />
@@ -171,7 +174,8 @@ export default function HomePage() {
           items={tvShows.map(t => ({ 
             ...t, 
             rating: t.voteAverage,
-            date: t.firstAirDate 
+            date: t.firstAirDate || "Desconocida",
+            providers: t.providers
           }))}
           variant="tv"
         />
@@ -179,12 +183,13 @@ export default function HomePage() {
         <Carousel
           title="Videojuegos en tendencia"
           subtitle="Los videojuegos más jugados"
-          items={games.map(g => ({ 
+          items={games.map((g, idx) => ({ 
             id: g.id,
             title: g.name || g.title || "Desconocido",
             posterUrl: g.coverUrl || g.posterUrl,
             rating: g.rating,
-            date: g.releaseDate
+            date: g.releaseDate || "Desconocida",
+            platformLogos: g.platformLogos?.map((p, i) => ({ ...p, key: `${p.id}-${idx}-${i}` }))
           }))}
           variant="games"
         />

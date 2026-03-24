@@ -37,7 +37,7 @@ async function fetchGames(accessToken: string, retry = false): Promise<Response>
       "Content-Type": "text/plain",
     },
     body: `
-      fields id, name, cover.url, rating, first_release_date, summary;
+      fields id, name, cover.url, rating, first_release_date, summary, platforms.id, platforms.name, platforms.platform_logo.image_id;
       where rating != null & first_release_date != null & first_release_date >= 1735689600;
       sort first_release_date desc;
       limit 20;
@@ -76,6 +76,7 @@ export async function GET() {
       rating?: number;
       first_release_date?: number;
       summary?: string;
+      platforms?: { id: number; name: string; platform_logo?: { image_id: string } }[];
     }) => ({
       id: `igdb_${game.id}`,
       name: game.name,
@@ -87,6 +88,15 @@ export async function GET() {
         ? new Date(game.first_release_date * 1000).toISOString().split("T")[0]
         : null,
       summary: game.summary,
+      platformLogos: game.platforms?.map((p: { id: number; name: string; platform_logo?: { image_id: string } }) => ({
+        id: p.id,
+        name: p.name,
+        // Use platform name for icon mapping (more reliable than ID)
+        platformName: p.name,
+        logoUrl: p.platform_logo?.image_id 
+          ? `https://images.igdb.com/igdb/image/upload/t_micro/${p.platform_logo.image_id}.png`
+          : null,
+      })).filter((p: { logoUrl: string | null }) => p.logoUrl) || [],
     }));
 
     return NextResponse.json({ results });

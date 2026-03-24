@@ -11,6 +11,115 @@ interface CarouselProps {
   isLoading?: boolean;
 }
 
+interface StreamingProvider {
+  id: number;
+  name: string;
+  logoUrl: string;
+}
+
+interface PlatformLogo {
+  id: number;
+  name: string;
+  logoUrl: string | null;
+  uniqueKey?: string;
+}
+
+// Platform icon mapping - using platform NAME (more reliable than ID)
+function getPlatformIcon(platformName: string | undefined, fallbackId?: number): string {
+  if (!platformName) {
+    return "/icons/platforms/windows.png";
+  }
+  
+  const name = platformName.toLowerCase();
+  
+  // PC / Windows
+  if (name.includes("pc") || name.includes("windows") || name.includes("microsoft")) {
+    return "/icons/platforms/windows.png";
+  }
+  
+  // Linux / SteamOS
+  if (name.includes("linux") || name.includes("steamos")) {
+    return "/icons/platforms/linux.png";
+  }
+  
+  // macOS
+  if (name.includes("mac") || name.includes("os x")) {
+    return "/icons/platforms/macos.png";
+  }
+  
+  // PlayStation (all versions)
+  if (name.includes("playstation") || name.includes("ps5") || name.includes("ps4") || 
+      name.includes("ps3") || name.includes("ps2") || name.includes("ps one") || name.includes("ps vita") ||
+      name.includes("playstation 5") || name.includes("playstation 4") || name.includes("playstation 3")) {
+    return "/icons/platforms/playstation.png";
+  }
+  
+  // Xbox (all versions)
+  if (name.includes("xbox") || name.includes("xbox one") || name.includes("xbox series") || 
+      name.includes("xbox 360")) {
+    return "/icons/platforms/xbox.png";
+  }
+  
+  // Nintendo Switch
+  if (name.includes("nintendo switch") || name.includes("switch 2")) {
+    return "/icons/platforms/nintendo-switch.png";
+  }
+  
+  // Nintendo legacy
+  if (name.includes("game boy") || name.includes("gameboy") || name.includes("nintendo 64") || 
+      name.includes("n64") || name.includes("gamecube") || name.includes("snes") || 
+      name.includes("super nintendo") || name.includes("snes") || name === "nintendo" ||
+      name.includes("nintendo entertainment system") || name.includes("nes")) {
+    return "/icons/platforms/nintendo.png";
+  }
+  
+  // Wii
+  if (name === "wii") {
+    return "/icons/platforms/wii.png";
+  }
+  
+  // Wii U
+  if (name.includes("wii u")) {
+    return "/icons/platforms/wiiu.png";
+  }
+  
+  // Nintendo DS / 3DS / DSi
+  if (name.includes("nintendo ds") || name.includes("nintendo 3ds") || name.includes("nintendo dsi") ||
+      name.includes("3ds") || name.includes("dsi")) {
+    return "/icons/platforms/ds.png";
+  }
+  
+  // iOS
+  if (name.includes("ios") || name.includes("iphone") || name.includes("ipad")) {
+    return "/icons/platforms/ios.png";
+  }
+  
+  // Android
+  if (name.includes("android") || name.includes("mobile")) {
+    return "/icons/platforms/android.png";
+  }
+  
+  // Google Stadia
+  if (name.includes("stadia") || name.includes("google")) {
+    return "/icons/platforms/google.png";
+  }
+  
+  // SteamOS -> steam
+  if (name.includes("steam")) {
+    return "/icons/platforms/steam.png";
+  }
+  
+  // VR
+  if (name.includes("vr") || name.includes("oculus") || name.includes("steamvr") || 
+      name.includes("playstation vr") || name.includes("ps vr") || name.includes("mixed reality") ||
+      name.includes("daydream")) {
+    return "/icons/platforms/vr.png";
+  }
+  
+  // Default
+  return "/icons/platforms/windows.png";
+}
+
 interface CarouselItem {
   id: string;
   title: string;
@@ -18,6 +127,8 @@ interface CarouselItem {
   rating?: number | null;
   date?: string;
   overview?: string;
+  providers?: StreamingProvider[];
+  platformLogos?: PlatformLogo[];
 }
 
 // Skeleton shimmer para loading state
@@ -195,17 +306,53 @@ export function Carousel({ title, subtitle, items, variant = "movies", isLoading
                   </div>
                 </div>
               )}
+
+              {/* Platform/Provider Logos for Movies/TV */}
+              {variant !== "games" && item.providers && item.providers.length > 0 && (
+                <div className="absolute bottom-2 left-2 right-2 flex gap-1">
+                  {item.providers.slice(0, 4).map((provider, idx) => (
+                    <div 
+                      key={`provider-${item.id}-${idx}`}
+                      className="w-6 h-6 flex items-center justify-center bg-black/50 rounded"
+                      title={provider.name}
+                    >
+                      <img 
+                        src={provider.logoUrl} 
+                        alt={provider.name}
+                        className="w-full h-full object-contain p-0.5"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Platform Icons for Games - using local PNG icons */}
+              {variant === "games" && item.platformLogos && item.platformLogos.length > 0 && (
+                <div className="absolute bottom-2 left-2 right-2 flex gap-1">
+                  {item.platformLogos.slice(0, 4).map((platform, idx) => (
+                    <div 
+                      key={platform.uniqueKey || `platform-${platform.id}-${idx}`}
+                      className="w-6 h-6 flex items-center justify-center"
+                      title={platform.name}
+                    >
+                      <img 
+                        src={getPlatformIcon(platform.name, platform.id)} 
+                        alt={platform.name}
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
  
               {/* Elegant Hover Overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover/item:opacity-100 transition-all duration-400 flex flex-col justify-end p-3">
                 <h3 className="text-xs font-medium text-white/95 tracking-tight line-clamp-2 leading-tight mb-2">
                   {item.title}
                 </h3>
-                {item.date && (
-                  <span className="text-[10px] text-white/50 tracking-tight mb-2">
-                    {item.date}
-                  </span>
-                )}
+                <span className="text-[10px] text-white/50 tracking-tight mb-2">
+                  {item.date || "Desconocida"}
+                </span>
                 <button className="w-full py-1.5 rounded-lg bg-white/[0.08] backdrop-blur-xl text-[10px] font-medium text-white/90 border border-white/10 hover:bg-white/[0.15] transition-all duration-200">
                   Ver más
                 </button>

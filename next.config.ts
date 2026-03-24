@@ -30,6 +30,11 @@ const nextConfig: NextConfig = {
         hostname: 'media.githubusercontent.com',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'nyjbhwlnnhgaoctxrjdd.supabase.co',
+        pathname: '/storage/v1/object/public/**',
+      },
     ],
   },
 };
