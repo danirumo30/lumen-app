@@ -69,10 +69,10 @@ export default function Header() {
               <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-indigo-500 group-hover:w-full transition-all duration-300" />
             </Link>
             <Link
-              href="/search"
+              href="/discover"
               className="text-zinc-400 hover:text-white transition-colors text-sm font-medium relative group"
             >
-              Buscar
+              Descubrir
               <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-indigo-500 group-hover:w-full transition-all duration-300" />
             </Link>
             <Link
