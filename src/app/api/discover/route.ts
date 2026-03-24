@@ -187,11 +187,17 @@ async function getPopularTv(filters?: SearchFilters) {
   let url = `${TMDB_BASE_URL}/discover/tv?api_key=${TMDB_API_KEY}&page=1&language=es-ES`;
   
   if (filters?.genre) {
-    // TMDB TV genres - Terror maps to 10770 (Mystery/Thriller) or can fall under Sci-Fi
-    const genreMap: Record<string, number> = {
-      "Drama": 18, "Comedia": 35, "Ciencia Ficción": 10765, 
-      "Terror": 10770, // TV shows don't have dedicated Horror genre, use Mystery
-      "Acción": 10759, "Romance": 10749, "Thriller": 10768, "Documental": 99, "Animación": 16
+    // TMDB TV genres - Terror includes Mystery (10770) + Sci-Fi (10765)
+    const genreMap: Record<string, string> = {
+      "Drama": "18",
+      "Comedia": "35",
+      "Ciencia Ficción": "10765",
+      "Terror": "10770,10765", // Include both Mystery and Sci-Fi for horror
+      "Acción": "10759",
+      "Romance": "10749",
+      "Thriller": "10768",
+      "Documental": "99",
+      "Animación": "16"
     };
     if (genreMap[filters.genre]) {
       url += `&with_genres=${genreMap[filters.genre]}`;
@@ -267,52 +273,43 @@ async function getPopularGames(filters?: SearchFilters) {
 
   let queryBody = "fields id, name, cover.url, first_release_date, rating, genres.name, platforms.id, platforms.name, platforms.platform_logo.image_id;";
   
-  // Map Spanish genres/platforms to IGDB English equivalents
-  const genreMap: Record<string, string> = {
-    "Acción": "Action",
-    "Aventura": "Adventure",
-    "RPG": "Role-playing game",
-    "Estrategia": "Strategy",
-    "Deportes": "Sports",
-    "Carreras": "Racing",
-    "Puzzle": "Puzzle",
-    "Horror": "Horror",
-    "Supervivencia": "Survival",
-    "Lucha": "Fighting"
+  // Genre ID mapping for IGDB
+  const genreIdMap: Record<string, number> = {
+    "Acción": 4,
+    "Aventura": 3,
+    "RPG": 12,
+    "Estrategia": 11,
+    "Deportes": 14,
+    "Carreras": 9,
+    "Puzzle": 7,
+    "Horror": 13,
+    "Supervivencia": 36,
+    "Lucha": 4
   };
   
-  const platformMap: Record<string, string> = {
-    "PlayStation": "PlayStation",
-    "Xbox": "Xbox",
-    "Nintendo": "Nintendo",
-    "PC": "PC",
-    "Mobile": "Mobile",
-    "Linux": "Linux",
-    "Web": "Web"
-  };
-  
-  // Platform ID mapping for IGDB
-  const platformIdMap: Record<string, number[]> = {
-    "PlayStation": [6, 48, 49], // PlayStation, PlayStation 4, PlayStation 5
-    "Xbox": [7, 49, 111], // Xbox, Xbox One, Xbox Series X
-    "Nintendo": [7, 8, 9, 13, 41, 130], // Nintendo various
-    "PC": [6], // PC
-    "Mobile": [4, 5], // iOS, Android
-    "Linux": [3, 34], // Linux, SteamOS
-    "Web": [15, 16] // Web
+  // Platform ID mapping for IGDB - simplified
+  const igdbPlatformIdMap: Record<string, number> = {
+    "PlayStation": 48,
+    "Xbox": 49,
+    "Nintendo": 130,
+    "PC": 6,
+    "Mobile": 4,
+    "Linux": 3,
+    "Web": 16
   };
   
   // Build where clause
   const conditions: string[] = [];
   if (filters?.genre) {
-    const igdbGenre = genreMap[filters.genre] || filters.genre;
-    conditions.push(`genres.name = "${igdbGenre}"`);
+    const genreId = genreIdMap[filters.genre];
+    if (genreId) {
+      conditions.push(`genres = (${genreId})`);
+    }
   }
   if (filters?.platform) {
-    const platformIds = platformIdMap[filters.platform];
-    if (platformIds && platformIds.length > 0) {
-      // Use first platform ID for simpler query
-      conditions.push(`platforms = ${platformIds[0]}`);
+    const platformId = igdbPlatformIdMap[filters.platform];
+    if (platformId) {
+      conditions.push(`platforms = (${platformId})`);
     }
   }
   if (filters?.yearFrom) {

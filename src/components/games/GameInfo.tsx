@@ -507,7 +507,7 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
         )}
 
         {/* Platforms with icons */}
-        {game.platforms.length > 0 && (
+        {game.platforms.length > 0 ? (
           <div className="flex flex-wrap gap-2">
             {game.platforms.map((platform, i) => {
               const iconPath = getPlatformIconPath(platform);
@@ -524,6 +524,8 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
               );
             })}
           </div>
+        ) : (
+          <span className="text-xs text-zinc-500">No disponible</span>
         )}
 
         {/* Summary */}
