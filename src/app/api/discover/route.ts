@@ -205,9 +205,9 @@ async function getPopularTv(filters?: SearchFilters) {
   
   if (filters?.genre) {
     // TMDB TV genres - correct IDs for TV shows
-    // TMDB TV genres - complete list with correct IDs
+    // TMDB TV genres - complete list with correct IDs (in Spanish)
     const genreMap: Record<string, number> = {
-      "Action & Adventure": 10759,
+      "Acción": 10759,
       "Animación": 16,
       "Comedia": 35,
       "Crimen": 80,
@@ -218,10 +218,10 @@ async function getPopularTv(filters?: SearchFilters) {
       "Misterio": 9648,
       "News": 10763,
       "Reality": 10764,
-      "Sci-Fi & Fantasy": 10765,
+      "Ciencia ficción": 10765,
       "Soap": 10766,
       "Talk": 10767,
-      "War & Politics": 10768,
+      "Guerra y política": 10768,
       "Western": 37
     };
     if (genreMap[filters.genre]) {
