@@ -215,10 +215,10 @@ async function getPopularTv(filters?: SearchFilters) {
       "Drama": 18,
       "Familia": 10751,
       "Kids": 10762,
-      "Misterio": 9648,
+      "Misterio & Terror": 9648, // Maps to Mystery which includes horror
       "News": 10763,
       "Reality": 10764,
-      "Ciencia ficción": 10765,
+      "Sci-Fi & Fantasía": 10765,
       "Soap": 10766,
       "Talk": 10767,
       "Guerra y política": 10768,

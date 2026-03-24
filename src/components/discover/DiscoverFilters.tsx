@@ -20,7 +20,7 @@ interface DiscoverFiltersProps {
 
 const genres = {
   movie: ["Acción", "Animación", "Aventura", "Bélica", "Ciencia ficción", "Comedia", "Crimen", "Documental", "Drama", "Familia", "Fantasía", "Historia", "Misterio", "Música", "Película de TV", "Romance", "Suspense", "Terror", "Western"],
-  tv: ["Acción", "Animación", "Comedia", "Crimen", "Documental", "Drama", "Familia", "Kids", "Misterio", "News", "Reality", "Ciencia ficción", "Soap", "Talk", "Guerra y política", "Western"],
+  tv: ["Acción", "Animación", "Comedia", "Crimen", "Documental", "Drama", "Familia", "Kids", "Misterio & Terror", "News", "Reality", "Sci-Fi & Fantasía", "Soap", "Talk", "Guerra y política", "Western"],
   game: ["Acción", "Aventura", "RPG", "Estrategia", "Deportes", "Carreras", "Puzzle", "Horror", "Supervivencia", "Lucha"],
 };
 
