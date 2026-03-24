@@ -1,91 +1,114 @@
-# Feature: Search, Navigation & Rankings
+# Feature: Search & Discover (Unified)
 
 > Status: **Planned** | Proposal: [#28](../proposals/028-search-navigation-and-rankings.md)
 
 ## Overview
 
-This feature implements a unified search system across movies, TV shows, games, and users, plus global and category-based rankings to gamify the platform.
+Una página unificada `/discover` que combina búsqueda activa y exploración pasiva. Los usuarios buscan cuando saben qué quieren, exploran cuando no.
+
+## Design
+
+### Aesthetic
+- Dark refined minimal (noir cinema)
+- Glassmorphism sutil en cards
+- Acentos por tipo: amber=movies, cyan=tv, violet=games, emerald=users
+
+### Color Palette
+```css
+--bg-primary: #09090b;
+--color-movie: #f59e0b;
+--color-tv: #06b6d4;
+--color-game: #8b5cf6;
+--color-user: #10b981;
+```
+
+### Layout
+```
+[Search Bar] → Modo Search (con typing)
+     ↓
+[Type Chips] → Todo | Movies | TV | Games | Users
+     ↓
+[Filters] → Género, Año, Plataforma, Ordenar
+     ↓
+[Grid] → Resultados o Tendencias (Discover)
+```
 
 ## Implementation Progress
 
-### Planned
+### Phase 1: Core (Search)
 - [ ] Unified Search API (`/api/search`)
-- [ ] Search page (`/search`)
-- [ ] Search filters (type, genre, year, rating)
-- [ ] Search history persistence
+- [ ] Discover page (`/discover`)
+- [ ] Search bar con debounce
+- [ ] Type chips selector
+
+### Phase 2: Filters & UI
+- [ ] Advanced filters (genre, year, platform)
+- [ ] Filter UI components
+- [ ] Card components por tipo
+- [ ] Responsive grid
+
+### Phase 3: Rankings
 - [ ] Rankings API (`/api/rankings`)
 - [ ] Rankings page (`/rankings`)
-- [ ] Global rankings (top users by time/items)
-- [ ] Category-specific rankings
+- [ ] Global + category rankings
+
+### Phase 4: Extras
+- [ ] Search history
+- [ ] Discover mode (tendencias)
 
 ## Architecture
 
 ```
-Search Flow:
-┌──────────────┐     ┌──────────────┐
-│ SearchBar    │────▶│ /api/search  │
-│ (debounced)  │     │              │
-└──────────────┘     └──────┬───────┘
-                             │
-         ┌───────────────────┼───────────────────┐
-         ▼                   ▼                   ▼
-   ┌──────────┐       ┌──────────┐       ┌──────────┐
-   │   TMDB   │       │   IGDB   │       │ Supabase │
-   │ (movies/ │       │  (games) │       │ (users)  │
-   │    tv)   │       │          │       │          │
-   └──────────┘       └──────────┘       └──────────┘
-
-Rankings Flow:
-┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│ RankingsPage │────▶│ /api/rankings│────▶│ user_global  │
-│              │     │              │     │ _stats view  │
-└──────────────┘     └──────────────┘     └──────────────┘
+┌─────────────────────────────────────────────┐
+│           /discover Page                    │
+│  ┌─────────────────────────────────────────┐ │
+│  │ SearchBar (expands on focus)            │ │
+│  └─────────────────────────────────────────┘ │
+│  ┌─────────────────────────────────────────┐ │
+│  │ TypeChips: All | Movies | TV | Games    │ │
+│  └─────────────────────────────────────────┘ │
+│  ┌─────────────────────────────────────────┐ │
+│  │ Filters (genre, year, platform, sort)   │ │
+│  └─────────────────────────────────────────┘ │
+│  ┌─────────────────────────────────────────┐ │
+│  │ Results Grid / Trending Grid            │ │
+│  └─────────────────────────────────────────┘ │
+└─────────────────────────────────────────────┘
 ```
 
 ## Key Decisions
 
-### Why unified search?
-- Single entry point for users
-- Easier to maintain and extend
-- Consistent UX across content types
+1. **Unified page**: Search + Explore en `/discover` para simplificar UX
+2. **Debounce 300ms**: Balance entre responsividad y rate limits
+3. **Type-first**: Los filtros avanzandos aparecen según el tipo seleccionado
+4. **Rankings separados**: `/rankings` para mantener `/discover` limpia
 
-### Why Supabase functions for rankings?
-- Avoid exposing raw stats queries to client
-- Single source of truth for ranking logic
-- Easy to add caching layer later
+## Files Structure
 
-## Files to Create/Modify
-
-### New Files
-- `src/app/search/page.tsx`
-- `src/app/rankings/page.tsx`
-- `src/app/api/search/route.ts`
-- `src/app/api/rankings/route.ts`
-- `src/components/search/*.tsx`
-- `src/components/rankings/*.tsx`
-- `supabase/migrations/028_search_rankings.sql`
-
-### Modified Files
-- `src/app/page.tsx` (add Rankings nav link)
-- `src/components/layout/Navbar.tsx` (add Rankings)
-
-## Database Changes
-
-```sql
--- user_search_history table
--- Ranking functions (get_top_users_by_metric)
+```
+src/app/discover/page.tsx           # Main page
+src/app/rankings/page.tsx           # Rankings
+src/app/api/search/route.ts         # Search API
+src/app/api/discover/route.ts       # Trending API
+src/app/api/rankings/route.ts       # Rankings API
+src/components/discover/
+├── DiscoverSearchBar.tsx
+├── DiscoverTypeChips.tsx
+├── DiscoverFilters.tsx
+├── DiscoverGrid.tsx
+├── DiscoverCard.tsx
+├── MovieDiscoverCard.tsx
+├── TvDiscoverCard.tsx
+├── GameDiscoverCard.tsx
+└── UserDiscoverCard.tsx
+src/components/rankings/
+├── RankingsPage.tsx
+├── GlobalRanking.tsx
+└── RankingCard.tsx
+supabase/migrations/028_*.sql       # History + rankings function
 ```
 
-## Testing Strategy
+## Database
 
-1. Unit tests for search debouncing
-2. Unit tests for ranking calculations
-3. Integration tests for search API
-4. E2E tests for full search flow
-5. Performance tests for rankings
-
-## Open Questions
-
-- Should search results be cached? For how long?
-- Do we need "popular searches" suggestions?
-- Should rankings be filterable by time period?
+- `user_search_history` table
+- `get_top_users_by_metric()` function
