@@ -163,17 +163,19 @@ async function getPopularMovies(filters?: SearchFilters, page: number = 1) {
     url += `&vote_average.gte=${filters.minRating}`;
   }
   
-  // Add sorting
-  if (filters?.sortBy) {
-    const sortMap: Record<string, string> = {
-      "popularity": "popularity.desc",
-      "rating": "vote_average.desc",
-      "year": "release_date.desc",
-      "relevance": "popularity.desc"
-    };
-    if (sortMap[filters.sortBy]) {
-      url += `&sort_by=${sortMap[filters.sortBy]}`;
-    }
+  // Add sorting - default to popularity when filtering by genre/platform
+  const sortMap: Record<string, string> = {
+    "popularity": "popularity.desc",
+    "rating": "vote_average.desc",
+    "year": "release_date.desc",
+    "relevance": "popularity.desc"
+  };
+  
+  if (filters?.sortBy && sortMap[filters.sortBy]) {
+    url += `&sort_by=${sortMap[filters.sortBy]}`;
+  } else if (filters?.genre || filters?.platform) {
+    // Default to popularity when filtering
+    url += "&sort_by=popularity.desc";
   }
 
   const response = await fetch(url, { headers: { "Cache-Control": "public, s-maxage=3600" } });
@@ -338,17 +340,19 @@ async function getPopularTv(filters?: SearchFilters, page: number = 1) {
     url += `&vote_average.gte=${filters.minRating}`;
   }
   
-  // Add sorting
-  if (filters?.sortBy) {
-    const sortMap: Record<string, string> = {
-      "popularity": "popularity.desc",
-      "rating": "vote_average.desc",
-      "year": "first_air_date.desc",
-      "relevance": "popularity.desc"
-    };
-    if (sortMap[filters.sortBy]) {
-      url += `&sort_by=${sortMap[filters.sortBy]}`;
-    }
+  // Add sorting - default to popularity when filtering by genre/platform
+  const sortMap: Record<string, string> = {
+    "popularity": "popularity.desc",
+    "rating": "vote_average.desc",
+    "year": "first_air_date.desc",
+    "relevance": "popularity.desc"
+  };
+  
+  if (filters?.sortBy && sortMap[filters.sortBy]) {
+    url += `&sort_by=${sortMap[filters.sortBy]}`;
+  } else if (filters?.genre || filters?.platform) {
+    // Default to popularity when filtering
+    url += "&sort_by=popularity.desc";
   }
 
   const response = await fetch(url, { headers: { "Cache-Control": "public, s-maxage=3600" } });
@@ -462,13 +466,13 @@ async function getPopularGames(filters?: SearchFilters, page: number = 1) {
   // Always filter out games without release date for better UX
   conditions.push("first_release_date != null");
   
-  // When filtering by genre/platform: show popular games from last 5 years
+  // When filtering by genre/platform: show games from last 5 years
   if (filters?.genre || filters?.platform) {
     const fiveYearsAgo = new Date();
     fiveYearsAgo.setFullYear(fiveYearsAgo.getFullYear() - 5);
     const fiveYearsAgoTimestamp = Math.floor(fiveYearsAgo.getTime() / 1000);
     conditions.push(`first_release_date >= ${fiveYearsAgoTimestamp}`);
-    conditions.push("rating != null"); // Only show rated games
+    // Don't require rating to show more results
   }
   
   // No filters: show recent popular games (last 1 year)
