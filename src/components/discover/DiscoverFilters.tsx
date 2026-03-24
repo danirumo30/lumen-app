@@ -99,7 +99,22 @@ function FilterDropdown({
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 mt-2 w-48 py-2 bg-zinc-900/95 backdrop-blur-xl border border-zinc-700/50 rounded-xl shadow-2xl z-50 animate-dropdownIn">
+        <div className="absolute top-full left-0 mt-2 w-48 py-2 bg-zinc-900/95 backdrop-blur-xl border border-zinc-700/50 rounded-xl shadow-2xl z-50 animate-dropdownIn overflow-y-auto" style={{ maxHeight: '220px' }}>
+          <style jsx>{`
+            div::-webkit-scrollbar {
+              width: 6px;
+            }
+            div::-webkit-scrollbar-track {
+              background: transparent;
+            }
+            div::-webkit-scrollbar-thumb {
+              background: rgba(255,255,255,0.2);
+              border-radius: 3px;
+            }
+            div::-webkit-scrollbar-thumb:hover {
+              background: rgba(255,255,255,0.3);
+            }
+          `}</style>
           {options.map((option) => (
             <button
               key={option.value}
