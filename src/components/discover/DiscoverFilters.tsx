@@ -38,10 +38,10 @@ const sortOptions = [
 
 const currentYear = new Date().getFullYear();
 
-// Different year ranges for different media types
-const movieYears = Array.from({ length: currentYear - 1900 + 6 }, (_, i) => 1900 + i); // 1900 to currentYear + 5
-const tvYears = Array.from({ length: currentYear - 1900 + 6 }, (_, i) => 1900 + i);   // 1900 to currentYear + 5
-const gameYears = Array.from({ length: currentYear - 1950 + 4 }, (_, i) => 1950 + i); // 1950 to currentYear + 3
+// Different year ranges for different media types (descending order: newest first)
+const movieYears = Array.from({ length: currentYear - 1900 + 6 }, (_, i) => currentYear + 5 - i); // 2031 down to 1900
+const tvYears = Array.from({ length: currentYear - 1900 + 6 }, (_, i) => currentYear + 5 - i);   // 2031 down to 1900
+const gameYears = Array.from({ length: currentYear - 1950 + 4 }, (_, i) => currentYear + 3 - i); // 2029 down to 1950
 
 // Get years based on media type
 function getYearsForType(type: MediaType): number[] {
