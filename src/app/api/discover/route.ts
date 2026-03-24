@@ -203,7 +203,8 @@ async function getPopularTv(filters?: SearchFilters) {
   let url = `${TMDB_BASE_URL}/discover/tv?api_key=${TMDB_API_KEY}&page=1&language=es-ES`;
   
   if (filters?.genre) {
-    // TMDB TV genres - complete list with correct IDs
+    // TMDB TV genres - correct IDs for TV shows
+    // TV doesn't have Fantasy (14) - it's combined with Sci-Fi as 10765
     const genreMap: Record<string, number> = {
       "Acción": 10759,
       "Animación": 16,
@@ -213,10 +214,10 @@ async function getPopularTv(filters?: SearchFilters) {
       "Documental": 99,
       "Drama": 18,
       "Familia": 10751,
-      "Fantasía": 14,
+      "Fantasía": 10765, // TV has Sci-Fi & Fantasy combined
       "Misterio": 9648,
       "Romance": 10749,
-      "Terror": 9648, // TV doesn't have horror genre, use Mystery
+      "Terror": 9648, // TV uses Mystery for horror
       "Thriller": 10768
     };
     if (genreMap[filters.genre]) {
@@ -346,13 +347,13 @@ async function getPopularGames(filters?: SearchFilters) {
     queryBody += " where " + conditions.join(" & ");
   }
   
-  // Sorting - add space before sort
+  // Sorting - add space before sort keyword
   if (filters?.sortBy === "rating") {
-    queryBody += " sort rating desc;";
+    queryBody += " sort rating desc";
   } else if (filters?.sortBy === "year") {
-    queryBody += " sort first_release_date desc;";
+    queryBody += " sort first_release_date desc";
   } else {
-    queryBody += " sort popularity desc;";
+    queryBody += " sort popularity desc";
   }
   
   queryBody += " limit 20;";
