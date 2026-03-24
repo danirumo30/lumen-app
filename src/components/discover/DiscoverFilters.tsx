@@ -37,7 +37,21 @@ const sortOptions = [
 ];
 
 const currentYear = new Date().getFullYear();
-const years = Array.from({ length: 50 }, (_, i) => currentYear - i);
+
+// Different year ranges for different media types
+const movieYears = Array.from({ length: currentYear - 1900 + 6 }, (_, i) => 1900 + i); // 1900 to currentYear + 5
+const tvYears = Array.from({ length: currentYear - 1900 + 6 }, (_, i) => 1900 + i);   // 1900 to currentYear + 5
+const gameYears = Array.from({ length: currentYear - 1950 + 4 }, (_, i) => 1950 + i); // 1950 to currentYear + 3
+
+// Get years based on media type
+function getYearsForType(type: MediaType): number[] {
+  switch (type) {
+    case "movie": return movieYears;
+    case "tv": return tvYears;
+    case "game": return gameYears;
+    default: return movieYears;
+  }
+}
 
 // Dropdown component with chip-style selection (from franchise page)
 function FilterDropdown({
@@ -147,6 +161,7 @@ export function DiscoverFiltersComponent({ type, filters, onChange }: DiscoverFi
 
   const typeGenres = genres[type as keyof typeof genres] || [];
   const typePlatforms = platforms[type as keyof typeof platforms] || [];
+  const typeYears = getYearsForType(type);
 
   const updateFilter = <K extends keyof DiscoverFilters>(key: K, value: DiscoverFilters[K]) => {
     onChange({ ...filters, [key]: value });
@@ -164,12 +179,12 @@ export function DiscoverFiltersComponent({ type, filters, onChange }: DiscoverFi
 
   const yearFromOptions = [
     { value: "all", label: "Desde" },
-    ...years.map(y => ({ value: String(y), label: String(y) }))
+    ...typeYears.map(y => ({ value: String(y), label: String(y) }))
   ];
 
   const yearToOptions = [
     { value: "all", label: "Hasta" },
-    ...years.map(y => ({ value: String(y), label: String(y) }))
+    ...typeYears.map(y => ({ value: String(y), label: String(y) }))
   ];
 
   const hasActiveFilters = filters.genre || filters.yearFrom || filters.yearTo || filters.platform || filters.sortBy;
