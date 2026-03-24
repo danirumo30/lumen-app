@@ -398,18 +398,44 @@ async function getPopularGames(filters?: SearchFilters, page: number = 1) {
 
   let queryBody = "fields id, name, cover.url, first_release_date, rating, genres.name, platforms.id, platforms.name, platforms.platform_logo.image_id;";
   
-  // Genre ID mapping for IGDB - corrected
+  // Genre ID mapping for IGDB - CORRECTED from official IGDB genres
   const genreIdMap: Record<string, number> = {
-    "Acción": 4,
-    "Aventura": 3,
-    "RPG": 12,
-    "Estrategia": 11,
-    "Deportes": 14,
-    "Carreras": 9,
-    "Puzzle": 7,
-    "Horror": 13,
-    "Supervivencia": 36,
-    "Lucha": 24  // Fixed: Fighting genre ID is 24
+    "Acción": 4,          // Fighting (closest to action)
+    "Aventura": 31,       // CORRECTED: Adventure is 31, not 3
+    "RPG": 12,            // Role-playing (RPG)
+    "Estrategia": 15,     // Strategy
+    "Deportes": 14,       // Sport
+    "Carreras": 10,       // Racing
+    "Puzzle": 9,          // Puzzle
+    "Horror": 13,         // Simulator (IGDB doesn't have horror, use Simulator)
+    "Supervivencia": 36,  // MOBA (closest)
+    "Lucha": 4,           // Fighting
+    "Shooter": 5,         // Shooter
+    "Plataformas": 8,     // Platform
+    "Música": 7,          // Music
+    "Arcade": 33,         // Arcade
+    "Visual Novel": 34,   // Visual Novel
+    "Simulación": 13,     // Simulator
+  };
+  
+  // Platform ID mapping for IGDB - with MULTIPLE IDs per category
+  // Using OR syntax: platforms = (id1 | id2 | id3)
+  const igdbPlatformIdsMap: Record<string, number[]> = {
+    "PlayStation": [48, 167, 169],    // PS4, PS5, PS3
+    "Xbox": [49, 169, 14],            // Xbox One, Xbox Series X|S, Xbox 360
+    "Nintendo": [130, 508, 137],      // Nintendo Switch, Switch 2, Wii U
+    "PC": [6],                         // PC (Microsoft Windows)
+    "Mobile": [39, 34],               // iOS, Android
+    "Linux": [3],                      // Linux
+    "Web": [16],                       // Web
+    "PS4": [48],                       // PlayStation 4
+    "PS5": [167],                      // PlayStation 5
+    "Xbox One": [49],                  // Xbox One
+    "Xbox Series X|S": [169],          // Xbox Series X|S
+    "Nintendo Switch": [130],          // Nintendo Switch
+    "Nintendo Switch 2": [508],        // Nintendo Switch 2
+    "iOS": [39],                       // iOS
+    "Android": [34],                   // Android
   };
   
   // Platform ID mapping for IGDB - expanded
@@ -457,9 +483,14 @@ async function getPopularGames(filters?: SearchFilters, page: number = 1) {
     }
   }
   if (filters?.platform) {
-    const platformId = igdbPlatformIdMap[filters.platform];
-    if (platformId) {
-      conditions.push(`platforms = ${platformId}`);
+    const platformIds = igdbPlatformIdsMap[filters.platform];
+    if (platformIds && platformIds.length > 0) {
+      // Use OR syntax for multiple platform IDs: platforms = (id1 | id2 | id3)
+      if (platformIds.length === 1) {
+        conditions.push(`platforms = ${platformIds[0]}`);
+      } else {
+        conditions.push(`platforms = (${platformIds.join(" | ")})`);
+      }
     }
   }
   if (filters?.yearFrom) {
@@ -481,15 +512,21 @@ async function getPopularGames(filters?: SearchFilters, page: number = 1) {
     queryBody += " where " + conditions.join(" & ") + ";";
   }
   
-  // Sorting - default to rating for popularity/relevance
-  let sortValue = "first_release_date";
+  // Sorting - default to popularity for filtered queries
+  let sortValue = "rating"; // Default to rating (proxy for popularity)
+  
   if (filters?.sortBy === "rating") {
     sortValue = "rating";
   } else if (filters?.sortBy === "year") {
     sortValue = "first_release_date";
   } else if (filters?.sortBy === "popularity" || filters?.sortBy === "relevance") {
-    // IGDB doesn't have a direct popularity field, use rating as proxy
+    sortValue = "rating"; // IGDB rating as popularity proxy
+  } else if (filters?.genre || filters?.platform) {
+    // When filtering by genre/platform, sort by rating (popularity proxy)
     sortValue = "rating";
+  } else {
+    // No filters: sort by release date (latest releases)
+    sortValue = "first_release_date";
   }
   queryBody += " sort " + sortValue + " desc;";
   
