@@ -15,7 +15,14 @@ export function DiscoverClient() {
     setQuery(newQuery);
     if (resetType) {
       setSelectedType("all");
+      setFilters({}); // Clear filters when resetting type
     }
+  }, []);
+
+  // Clear filters when changing type
+  const handleTypeChange = useCallback((newType: MediaType) => {
+    setSelectedType(newType);
+    setFilters({}); // Clear filters on type change
   }, []);
 
   return (
@@ -46,7 +53,7 @@ export function DiscoverClient() {
 
           {/* Type Chips */}
           <div className="mt-8 flex justify-center">
-            <DiscoverTypeChips selected={selectedType} onChange={setSelectedType} />
+            <DiscoverTypeChips selected={selectedType} onChange={handleTypeChange} />
           </div>
 
           {/* Filters */}
