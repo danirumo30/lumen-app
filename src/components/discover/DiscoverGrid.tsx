@@ -52,6 +52,7 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
   useEffect(() => {
     setPage(1);
     setResults([]);
+    setHasMore(false); // Reset hasMore when filters change
   }, [query, type, filters]);
 
   // Load more handler
