@@ -182,7 +182,13 @@ export function DiscoverFiltersComponent({ type, filters, onChange }: DiscoverFi
   const typeYears = getYearsForType(type);
 
   const updateFilter = <K extends keyof DiscoverFilters>(key: K, value: DiscoverFilters[K]) => {
-    onChange({ ...filters, [key]: value });
+    if (value === undefined || value === null) {
+      // Remove the filter property
+      const { [key]: removed, ...rest } = filters;
+      onChange(rest);
+    } else {
+      onChange({ ...filters, [key]: value });
+    }
   };
 
   const genreOptions = [

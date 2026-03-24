@@ -86,30 +86,44 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
         if (type === "all") {
           const hasQuery = query && query.trim().length >= 2;
           console.log(`Fetching 'all' tab ${hasQuery ? 'with search' : 'with discover endpoints'}...`);
-          
-          const filtersParams = new URLSearchParams();
-          if (filters) {
-            filtersParams.set("filters", JSON.stringify(filters));
-          }
-          
+
           const searchParams = new URLSearchParams();
           if (hasQuery) {
             searchParams.set("q", query);
           }
-          
+
+          const filtersParams = new URLSearchParams();
+          if (filters) {
+            filtersParams.set("filters", JSON.stringify(filters));
+          }
+
           // When searching: use search endpoint for all types
           // When not searching: use discover for movies/TV/games (same as individual tabs)
-          const moviesPromise = hasQuery
-            ? fetch(`/api/search?type=movie&${searchParams.toString()}&${filtersParams.toString()}`)
-            : fetch(`/api/discover?type=movie&${filtersParams.toString()}`);
-          
-          const tvPromise = hasQuery
-            ? fetch(`/api/search?type=tv&${searchParams.toString()}&${filtersParams.toString()}`)
-            : fetch(`/api/discover?type=tv&${filtersParams.toString()}`);
-          
-          const gamesPromise = hasQuery
-            ? fetch(`/api/search?type=game&${searchParams.toString()}&${filtersParams.toString()}`)
-            : fetch(`/api/discover?type=game&${filtersParams.toString()}`);
+          // But use discover also when we have filters but no search query (to filter trending content)
+          const useDiscover = !hasQuery && filters;
+          const hasFiltersOnly = !hasQuery && filters;
+          const endpointPrefix = hasFiltersOnly ? "/api/discover" : "/api/search";
+
+          let moviesUrl = `${endpointPrefix}?type=movie`;
+          let tvUrl = `${endpointPrefix}?type=tv`;
+          let gamesUrl = `${endpointPrefix}?type=game`;
+
+          if (hasQuery) {
+            moviesUrl += `&${searchParams.toString()}`;
+            tvUrl += `&${searchParams.toString()}`;
+            gamesUrl += `&${searchParams.toString()}`;
+          }
+
+          const filtersString = filtersParams.toString();
+          if (filtersString) {
+            moviesUrl += `&${filtersString}`;
+            tvUrl += `&${filtersString}`;
+            gamesUrl += `&${filtersString}`;
+          }
+        
+        const moviesPromise = fetch(moviesUrl);
+        const tvPromise = fetch(tvUrl);
+        const gamesPromise = fetch(gamesUrl);
           
           const usersPromise = fetch(`/api/search?type=user&${searchParams.toString()}`);
           
