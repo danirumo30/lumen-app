@@ -651,48 +651,58 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
         {/* Playtime tracker - Two separate inputs for hours and minutes */}
         {/* Only show when playing, completed, or dropped */}
         {user && (currentPlayStatus === "playing" || currentPlayStatus === "completed" || currentPlayStatus === "dropped") && (
-          <div className="mt-4 p-3 rounded-xl bg-zinc-900/50 border border-white/5">
-            <div className="flex items-center gap-2">
+          <div className="mt-4 p-4 rounded-xl bg-zinc-900/50 border border-white/5">
+            {/* Header with current time */}
+            <div className="flex items-center justify-between mb-3">
               <span className="text-sm text-zinc-400">Tiempo de juego:</span>
               <span className="text-white font-medium">{formatPlaytime(gameStatus.playtimeMinutes)}</span>
-              <div className="flex-1" />
-              
+            </div>
+            
+            {/* Input row - responsive design */}
+            <div className="flex flex-col sm:flex-row gap-3">
               {/* Hours input */}
-              <input
-                type="number"
-                value={hoursInput}
-                onChange={(e) => setHoursInput(e.target.value)}
-                placeholder="0"
-                className="w-14 px-2 py-1 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-sm text-center [-moz-appearance:textfield]"
-                min="0"
-                style={{ WebkitAppearance: 'none', appearance: 'textfield' }}
-              />
-              <span className="text-xs text-zinc-500">Horas</span>
+              <div className="flex-1">
+                <label className="block text-xs text-zinc-500 mb-1">Horas</label>
+                <input
+                  type="number"
+                  value={hoursInput}
+                  onChange={(e) => setHoursInput(e.target.value)}
+                  placeholder="0"
+                  className="w-full px-3 py-2 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-sm text-center [-moz-appearance:textfield]"
+                  min="0"
+                  style={{ WebkitAppearance: 'none', appearance: 'textfield' }}
+                />
+              </div>
               
               {/* Minutes input */}
-              <input
-                type="number"
-                value={minsInput}
-                onChange={(e) => {
-                  const val = parseInt(e.target.value) || 0;
-                  // Cap at 59
-                  setMinsInput(val > 59 ? "59" : val.toString());
-                }}
-                placeholder="0"
-                className="w-14 px-2 py-1 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-sm text-center [-moz-appearance:textfield]"
-                min="0"
-                max="59"
-                style={{ WebkitAppearance: 'none', appearance: 'textfield' }}
-              />
-              <span className="text-xs text-zinc-500">Min</span>
+              <div className="flex-1">
+                <label className="block text-xs text-zinc-500 mb-1">Minutos</label>
+                <input
+                  type="number"
+                  value={minsInput}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value) || 0;
+                    // Cap at 59
+                    setMinsInput(val > 59 ? "59" : val.toString());
+                  }}
+                  placeholder="0"
+                  className="w-full px-3 py-2 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-sm text-center [-moz-appearance:textfield]"
+                  min="0"
+                  max="59"
+                  style={{ WebkitAppearance: 'none', appearance: 'textfield' }}
+                />
+              </div>
               
-              <button
-                onClick={handlePlaytimeSubmit}
-                disabled={isLoading}
-                className="px-3 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-sm hover:bg-emerald-500/30"
-              >
-                Guardar
-              </button>
+              {/* Save button */}
+              <div className="sm:self-end">
+                <button
+                  onClick={handlePlaytimeSubmit}
+                  disabled={isLoading}
+                  className="w-full sm:w-auto px-6 py-2 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-sm hover:bg-emerald-500/30 transition-colors"
+                >
+                  {isLoading ? "Guardando..." : "Guardar"}
+                </button>
+              </div>
             </div>
           </div>
         )}

@@ -68,17 +68,57 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
           params.set("filters", JSON.stringify(filters));
         }
 
-        // Use search API when:
-        // - Has query (2+ chars) - search all types
-        // - Type is "all" (to get users + trending content)
-        // - Type is "user" (to get users)
-        // Otherwise use discover API for trending content
+        // Special handling for "all" tab: fetch from individual endpoints to get same results
+        if (type === "all" && !query) {
+          console.log("Fetching 'all' tab from individual discover endpoints...");
+          
+          const filtersParams = new URLSearchParams();
+          if (filters) {
+            filtersParams.set("filters", JSON.stringify(filters));
+          }
+          
+          // Fetch movies, TV, games from discover endpoint (same as individual tabs)
+          const [moviesRes, tvRes, gamesRes, usersRes] = await Promise.all([
+            fetch(`/api/discover?type=movie&${filtersParams.toString()}`),
+            fetch(`/api/discover?type=tv&${filtersParams.toString()}`),
+            fetch(`/api/discover?type=game&${filtersParams.toString()}`),
+            fetch(`/api/search?type=user`),
+          ]);
+          
+          if (cancelled) return;
+          
+          const [moviesData, tvData, gamesData, usersData] = await Promise.all([
+            moviesRes.json(),
+            tvRes.json(),
+            gamesRes.json(),
+            usersRes.json(),
+          ]);
+          
+          const combined = [
+            ...(moviesData.movies || []).slice(0, 10),
+            ...(tvData.tv || []).slice(0, 10),
+            ...(gamesData.games || []).slice(0, 10),
+            ...(usersData.users || []),
+          ];
+          
+          console.log("All tab results:", { 
+            movies: moviesData.movies?.length, 
+            tv: tvData.tv?.length, 
+            games: gamesData.games?.length, 
+            users: usersData.users?.length, 
+            combined: combined.length 
+          });
+          
+          setResults(combined);
+          return;
+        }
+        
+        // Regular flow for other tabs or when searching
         const hasQuery = query && query.trim().length >= 2;
-        const isAll = type === "all";
         const isUserOnly = type === "user";
         
-        // Use search API for: has query, all types, or user-only
-        const useSearch = hasQuery || isAll || isUserOnly;
+        // Use search API for: has query, or user-only
+        const useSearch = hasQuery || isUserOnly;
         const endpoint = useSearch ? "/api/search" : "/api/discover";
         const url = `${endpoint}?${params.toString()}`;
         
@@ -96,14 +136,7 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
         // Combine results based on type
         let combined: SearchResult[] = [];
 
-        if (type === "all") {
-          combined = [
-            ...(data.movies || []),
-            ...(data.tv || []),
-            ...(data.games || []),
-            ...(data.users || []),
-          ];
-        } else if (type === "movie") {
+        if (type === "movie") {
           combined = data.movies || [];
         } else if (type === "tv") {
           combined = data.tv || [];
