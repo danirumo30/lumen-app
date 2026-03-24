@@ -443,22 +443,61 @@ async function getTrendingUsers(supabaseUrl: string, supabaseKey: string, page: 
   }));
 }
 
-// Get trending movies (recent releases)
-async function getTrendingMovies(limit: number = 10) {
+// Get trending movies (recent releases) with optional filters
+async function getTrendingMovies(filters?: SearchFilters, limit: number = 10) {
   try {
-    // Get now playing (recent releases)
-    const response = await fetch(
-      `${TMDB_BASE_URL}/movie/now_playing?api_key=${TMDB_API_KEY}&language=es-ES&page=1`,
-      { headers: { "Cache-Control": "public, s-maxage=3600" } }
-    );
+    // Build discover URL with filters if provided
+    let url = `${TMDB_BASE_URL}/discover/movie?api_key=${TMDB_API_KEY}&language=es-ES&page=1&sort_by=popularity.desc`;
+
+    // Add genre filter if specified
+    const genreMap: Record<string, number> = {
+      "Acción": 28,
+      "Animación": 16,
+      "Aventura": 12,
+      "Bélica": 10752,
+      "Ciencia ficción": 878,
+      "Comedia": 35,
+      "Crimen": 80,
+      "Documental": 99,
+      "Drama": 18,
+      "Familia": 10751,
+      "Fantasía": 14,
+      "Historia": 36,
+      "Misterio": 9648,
+      "Música": 10402,
+      "Película de TV": 10770,
+      "Romance": 10749,
+      "Suspense": 53,
+      "Terror": 27,
+      "Western": 37
+    };
+
+    if (filters?.genre && genreMap[filters.genre]) {
+      url += `&with_genres=${genreMap[filters.genre]}`;
+    }
+
+    // Add year filter
+    if (filters?.yearFrom) {
+      url += `&primary_release_date.gte=${filters.yearFrom}-01-01`;
+    }
+    if (filters?.yearTo) {
+      url += `&primary_release_date.lte=${filters.yearTo}-12-31`;
+    }
+
+    // Add minimum rating
+    if (filters?.minRating) {
+      url += `&vote_average.gte=${filters.minRating}`;
+    }
+
+    const response = await fetch(url, { headers: { "Cache-Control": "public, s-maxage=3600" } });
 
     if (!response.ok) {
-      console.error("TMDB now playing error:", response.status);
+      console.error("TMDB discover movies error:", response.status);
       return [];
     }
 
     const data = await response.json();
-    
+
     return data.results?.slice(0, limit).map((movie: {
       id: number;
       title: string;
@@ -481,21 +520,58 @@ async function getTrendingMovies(limit: number = 10) {
   }
 }
 
-// Get trending TV shows (airing now)
-async function getTrendingTv(limit: number = 10) {
+// Get trending TV shows (airing now) with optional filters
+async function getTrendingTv(filters?: SearchFilters, limit: number = 10) {
   try {
-    const response = await fetch(
-      `${TMDB_BASE_URL}/tv/on_the_air?api_key=${TMDB_API_KEY}&language=es-ES&page=1`,
-      { headers: { "Cache-Control": "public, s-maxage=3600" } }
-    );
+    // Build discover URL with filters if provided
+    let url = `${TMDB_BASE_URL}/discover/tv?api_key=${TMDB_API_KEY}&language=es-ES&page=1&sort_by=popularity.desc`;
+
+    // Add genre filter if specified
+    const genreMap: Record<string, number> = {
+      "Acción": 10759,
+      "Animación": 16,
+      "Comedia": 35,
+      "Crimen": 80,
+      "Documental": 99,
+      "Drama": 18,
+      "Familia": 10751,
+      "Kids": 10762,
+      "Misterio & Terror": 9648,
+      "News": 10763,
+      "Reality": 10764,
+      "Sci-Fi & Fantasía": 10765,
+      "Soap": 10766,
+      "Talk": 10767,
+      "Guerra y política": 10768,
+      "Western": 37
+    };
+
+    if (filters?.genre && genreMap[filters.genre]) {
+      url += `&with_genres=${genreMap[filters.genre]}`;
+    }
+
+    // Add year filter
+    if (filters?.yearFrom) {
+      url += `&first_air_date.gte=${filters.yearFrom}-01-01`;
+    }
+    if (filters?.yearTo) {
+      url += `&first_air_date.lte=${filters.yearTo}-12-31`;
+    }
+
+    // Add minimum rating
+    if (filters?.minRating) {
+      url += `&vote_average.gte=${filters.minRating}`;
+    }
+
+    const response = await fetch(url, { headers: { "Cache-Control": "public, s-maxage=3600" } });
 
     if (!response.ok) {
-      console.error("TMDB TV airing error:", response.status);
+      console.error("TMDB discover TV error:", response.status);
       return [];
     }
 
     const data = await response.json();
-    
+
     return data.results?.slice(0, limit).map((show: {
       id: number;
       name: string;
@@ -518,18 +594,48 @@ async function getTrendingTv(limit: number = 10) {
   }
 }
 
-// Get trending games (recent releases)
-async function getTrendingGames(limit: number = 10) {
+// Get trending games (recent releases) with optional filters
+async function getTrendingGames(filters?: SearchFilters, limit: number = 10) {
   try {
-    // Get recent games from IGDB
     const token = IGDB_ACCESS_TOKEN || await getIgdbToken();
-    
-    const queryBody = `
-      fields id, name, cover.url, first_release_date, rating;
-      where first_release_date != null;
-      sort first_release_date desc;
-      limit ${limit};
-    `;
+
+    // Build IGDB query with filters if provided
+    let whereClause = " where first_release_date != null";
+    const conditions: string[] = [];
+
+    if (filters?.genre) {
+      conditions.push(`genres.name = "${filters.genre}"`);
+    }
+    if (filters?.platform) {
+      conditions.push(`platforms.name = "${filters.platform}"`);
+    }
+    if (filters?.yearFrom) {
+      const fromTimestamp = Math.floor(new Date(`${filters.yearFrom}-01-01`).getTime() / 1000);
+      conditions.push(`first_release_date >= ${fromTimestamp}`);
+    }
+    if (filters?.yearTo) {
+      const toTimestamp = Math.floor(new Date(`${filters.yearTo}-12-31`).getTime() / 1000);
+      conditions.push(`first_release_date <= ${toTimestamp}`);
+    }
+    if (filters?.minRating) {
+      conditions.push(`rating >= ${filters.minRating * 10}`);
+    }
+
+    if (conditions.length > 0) {
+      whereClause += " & " + conditions.join(" & ");
+    }
+
+    // Sorting
+    let sortClause = " sort first_release_date desc";
+    if (filters?.sortBy === "rating") {
+      sortClause = " sort rating desc";
+    } else if (filters?.sortBy === "popularity") {
+      sortClause = " sort popularity desc";
+    }
+
+    // Request platforms with logo info
+    const offset = 0; // No pagination for trending
+    const queryBody = `fields id, name, cover.url, first_release_date, rating, genres.name, platforms.id, platforms.name, platforms.platform_logo.image_id;${whereClause}${sortClause} limit ${limit};`;
 
     const response = await fetch("https://api.igdb.com/v4/games", {
       method: "POST",
@@ -542,18 +648,20 @@ async function getTrendingGames(limit: number = 10) {
     });
 
     if (!response.ok) {
-      console.error("IGDB trending error:", response.status);
+      console.error("IGDB discover games error:", response.status);
       return [];
     }
 
     const data = await response.json();
-    
+
     return data.map((game: {
       id: number;
       name: string;
       cover?: { url: string };
       first_release_date?: number;
       rating?: number;
+      genres?: { name: string }[];
+      platforms?: { id: number; name: string; platform_logo?: { image_id: string } }[];
     }) => ({
       id: `igdb_${game.id}`,
       type: "game" as const,
@@ -565,6 +673,16 @@ async function getTrendingGames(limit: number = 10) {
         ? new Date(game.first_release_date * 1000).toISOString().split("T")[0]
         : null,
       rating: game.rating ? Math.round(game.rating) / 10 : null,
+      genres: game.genres?.map((g: { name: string }) => g.name) || [],
+      platforms: game.platforms?.map((p: { name: string }) => p.name) || [],
+      platformLogos: game.platforms?.map((p: { id: number; name: string; platform_logo?: { image_id: string } }) => ({
+        id: p.id,
+        name: p.name,
+        platformName: p.name,
+        logoUrl: p.platform_logo?.image_id
+          ? `https://images.igdb.com/igdb/image/upload/t_micro/${p.platform_logo.image_id}.png`
+          : null,
+      })).filter((p: { logoUrl: string | null }) => p.logoUrl) || [],
     }));
   } catch (error) {
     console.error("Error fetching trending games:", error);
@@ -631,21 +749,21 @@ export async function GET(request: Request) {
       games = results[2].status === "fulfilled" ? results[2].value : [];
       users = results[3].status === "fulfilled" ? results[3].value : [];
     } else {
-      // Trending mode - get 10 of each type
-      console.log("[SEARCH] Fetching trending content...");
-      
+      // Trending mode - get 10 of each type (with filters if provided)
+      console.log("[SEARCH] Fetching trending content with filters:", !!filters);
+
       const trendingResults = await Promise.all([
-        (type === "all" || type === "movie") ? getTrendingMovies(10) : Promise.resolve([]),
-        (type === "all" || type === "tv") ? getTrendingTv(10) : Promise.resolve([]),
-        (type === "all" || type === "game") ? getTrendingGames(10) : Promise.resolve([]),
+        (type === "all" || type === "movie") ? getTrendingMovies(filters, 10) : Promise.resolve([]),
+        (type === "all" || type === "tv") ? getTrendingTv(filters, 10) : Promise.resolve([]),
+        (type === "all" || type === "game") ? getTrendingGames(filters, 10) : Promise.resolve([]),
         (type === "all" || type === "user") ? getTrendingUsers(supabaseUrl, supabaseKey, page) : Promise.resolve([]),
       ]);
-      
+
       movies = trendingResults[0];
       tv = trendingResults[1];
       games = trendingResults[2];
       users = trendingResults[3];
-      
+
       console.log("[SEARCH] Trending - movies:", movies.length, "tv:", tv.length, "games:", games.length, "users:", users.length);
     }
 
