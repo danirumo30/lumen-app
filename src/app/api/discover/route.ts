@@ -592,6 +592,12 @@ export async function GET(request: Request) {
       tv,
       games,
       total: movies.length + tv.length + games.length,
+      // Return pagination info from TMDB (movies and TV)
+      pagination: {
+        moviesTotal: movies.length,
+        tvTotal: tv.length,
+        gamesTotal: games.length,
+      }
     });
   } catch (error) {
     console.error("Discover error:", error);

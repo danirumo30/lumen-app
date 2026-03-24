@@ -190,10 +190,11 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
           setResults(prev => [...prev, ...newResults]);
         }
         
-        // Check if there are more results (has 20 means likely more)
-        setHasMore(newResults.length >= 20);
+        // Has more if we got any results (infinite pagination until no more)
+        // Only stop when we get 0 results (meaning no more pages)
+        setHasMore(newResults.length > 0);
         
-        console.log("Search results:", { type, page, newResults: newResults.length, hasMore: newResults.length >= 20 });
+        console.log("Search results:", { type, page, newResults: newResults.length, hasMore: newResults.length > 0 });
       } catch (err) {
         if (!cancelled) {
           console.error("Fetch error:", err);
