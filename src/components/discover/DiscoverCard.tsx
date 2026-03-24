@@ -31,6 +31,31 @@ const typeAccent = {
   user: "text-emerald-400",
 };
 
+// Platform icon mapping
+const platformIcons: Record<string, string> = {
+  "PlayStation": "🎮",
+  "PlayStation 5": "🎮",
+  "PlayStation 4": "🎮",
+  "PlayStation 3": "🎮",
+  "PlayStation 2": "🎮",
+  "Xbox": "❎",
+  "Xbox Series X": "❎",
+  "Xbox One": "❎",
+  "Xbox 360": "❎",
+  "Nintendo Switch": "🔴",
+  "Nintendo": "🔴",
+  "PC": "💻",
+  "Mobile": "📱",
+  "iOS": "📱",
+  "Android": "📱",
+  "Linux": "🐧",
+  "Web": "🌐",
+};
+
+function getPlatformIcon(platform: string): string {
+  return platformIcons[platform] || "🎮";
+}
+
 export function DiscoverCard({
   id,
   type,
@@ -142,24 +167,38 @@ export function DiscoverCard({
             </span>
           )}
         </div>
+
+        {/* Platform Icons for Games - inside the image at bottom */}
+        {type === "game" && platforms && platforms.length > 0 && (
+          <div className="absolute bottom-2 left-2 right-2 flex gap-1">
+            {platforms.slice(0, 4).map((platform) => (
+              <span 
+                key={platform}
+                className="text-lg drop-shadow-lg"
+                title={platform}
+              >
+                {getPlatformIcon(platform)}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Info */}
       <div className="p-3">
-        <h3 className="font-semibold text-white text-sm truncate group-hover:text-amber-400 transition-colors">
+        <h3 className={`font-semibold text-sm truncate group-hover:${type === "game" ? "text-violet-400" : type === "tv" ? "text-cyan-400" : type === "user" ? "text-emerald-400" : "text-amber-400"} transition-colors`}>
           {type === "user" ? username : title}
         </h3>
         
-        {type !== "user" && (
+        {/* Only show year for movies/TV, not games */}
+        {type !== "user" && type !== "game" && (
           <div className="mt-1 flex items-center gap-2 text-xs text-zinc-500">
             {year && <span>{year}</span>}
-            {platforms && platforms.length > 0 && (
-              <span className="truncate">{platforms.slice(0, 2).join(", ")}</span>
-            )}
           </div>
         )}
 
-        {genres && genres.length > 0 && (
+        {/* Only show genres for movies/TV */}
+        {type !== "user" && type !== "game" && genres && genres.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1">
             {genres.slice(0, 2).map((genre) => (
               <span

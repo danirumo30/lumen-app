@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 
 interface SearchBarProps {
   initialQuery?: string;
-  onSearch?: (query: string) => void;
+  onSearch?: (query: string, resetType?: boolean) => void;
 }
 
 export function DiscoverSearchBar({ initialQuery = "", onSearch }: SearchBarProps) {
@@ -33,7 +33,7 @@ export function DiscoverSearchBar({ initialQuery = "", onSearch }: SearchBarProp
     setQuery(term);
     setIsFocused(false);
     if (onSearch) {
-      onSearch(term);
+      onSearch(term, true); // resetType = true
     }
   };
 

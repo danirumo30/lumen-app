@@ -11,8 +11,11 @@ export function DiscoverClient() {
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState<DiscoverFilters>({});
 
-  const handleSearch = useCallback((newQuery: string) => {
+  const handleSearch = useCallback((newQuery: string, resetType = false) => {
     setQuery(newQuery);
+    if (resetType) {
+      setSelectedType("all");
+    }
   }, []);
 
   return (

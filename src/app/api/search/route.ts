@@ -12,14 +12,13 @@ type SearchType = "all" | "movie" | "tv" | "game" | "user";
 
 interface SearchFilters {
   // Movies/TV
-  genres?: string[];
+  genre?: string;
   yearFrom?: number;
   yearTo?: number;
   minRating?: number;
   // Games
-  platforms?: string[];
-  // Users
-  hasAvatar?: boolean;
+  platform?: string;
+  sortBy?: "relevance" | "rating" | "year" | "popularity";
 }
 
 interface SearchParams {
@@ -51,12 +50,36 @@ async function getIgdbToken(): Promise<string> {
   return IGDB_ACCESS_TOKEN;
 }
 
-// Search movies on TMDB
-async function searchMovies(query: string, page = 1) {
-  const response = await fetch(
-    `${TMDB_BASE_URL}/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}&page=${page}&language=es-ES`,
-    { headers: { "Cache-Control": "public, s-maxage=600" } }
-  );
+// Search movies on TMDB with filters
+async function searchMovies(query: string, page = 1, filters?: SearchFilters) {
+  // Build TMDB query params
+  let url = `${TMDB_BASE_URL}/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}&page=${page}&language=es-ES`;
+  
+  // Add genre filter if specified
+  const genreMap: Record<string, number> = {
+    "Acción": 28, "Comedia": 35, "Drama": 18, "Terror": 27, 
+    "Ciencia Ficción": 878, "Romance": 10749, "Thriller": 53, 
+    "Animación": 16, "Documental": 99, "Aventura": 12
+  };
+  
+  if (filters?.genre && genreMap[filters.genre]) {
+    url += `&with_genres=${genreMap[filters.genre]}`;
+  }
+  
+  // Add year filter
+  if (filters?.yearFrom) {
+    url += `&primary_release_date.gte=${filters.yearFrom}-01-01`;
+  }
+  if (filters?.yearTo) {
+    url += `&primary_release_date.lte=${filters.yearTo}-12-31`;
+  }
+  
+  // Add minimum rating
+  if (filters?.minRating) {
+    url += `&vote_average.gte=${filters.minRating}`;
+  }
+
+  const response = await fetch(url, { headers: { "Cache-Control": "public, s-maxage=600" } });
 
   if (!response.ok) {
     throw new Error(`TMDB movies error: ${response.status}`);
@@ -83,12 +106,32 @@ async function searchMovies(query: string, page = 1) {
   })) || [];
 }
 
-// Search TV on TMDB
-async function searchTv(query: string, page = 1) {
-  const response = await fetch(
-    `${TMDB_BASE_URL}/search/tv?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}&page=${page}&language=es-ES`,
-    { headers: { "Cache-Control": "public, s-maxage=600" } }
-  );
+// Search TV on TMDB with filters
+async function searchTv(query: string, page = 1, filters?: SearchFilters) {
+  let url = `${TMDB_BASE_URL}/search/tv?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}&page=${page}&language=es-ES`;
+  
+  // Genre map for TV
+  const genreMap: Record<string, number> = {
+    "Drama": 18, "Comedia": 35, "Ciencia Ficción": 10765, "Terror": 10770, 
+    "Acción": 10759, "Romance": 10749, "Thriller": 10768, "Documental": 99, "Animación": 16
+  };
+  
+  if (filters?.genre && genreMap[filters.genre]) {
+    url += `&with_genres=${genreMap[filters.genre]}`;
+  }
+  
+  if (filters?.yearFrom) {
+    url += `&first_air_date.gte=${filters.yearFrom}-01-01`;
+  }
+  if (filters?.yearTo) {
+    url += `&first_air_date.lte=${filters.yearTo}-12-31`;
+  }
+  
+  if (filters?.minRating) {
+    url += `&vote_average.gte=${filters.minRating}`;
+  }
+
+  const response = await fetch(url, { headers: { "Cache-Control": "public, s-maxage=600" } });
 
   if (!response.ok) {
     throw new Error(`TMDB TV error: ${response.status}`);
@@ -115,9 +158,40 @@ async function searchTv(query: string, page = 1) {
   })) || [];
 }
 
-// Search games on IGDB
-async function searchGames(query: string) {
+// Search games on IGDB with filters
+async function searchGames(query: string, filters?: SearchFilters) {
   const token = await getIgdbToken();
+
+  // Build IGDB query
+  let queryBody = `search "${query}";`;
+  
+  // Add filters
+  if (filters?.genre) {
+    queryBody += ` where genres.name = "${filters.genre}";`;
+  }
+  if (filters?.platform) {
+    queryBody += ` where platforms.name = "${filters.platform}";`;
+  }
+  if (filters?.yearFrom) {
+    queryBody += ` where first_release_date >= ${filters.yearFrom * 10000};`;
+  }
+  if (filters?.yearTo) {
+    queryBody += ` where first_release_date <= ${filters.yearTo * 10000};`;
+  }
+  if (filters?.minRating) {
+    queryBody += ` where rating >= ${filters.minRating * 10};`;
+  }
+  
+  // Sorting
+  if (filters?.sortBy === "rating") {
+    queryBody += " sort rating desc;";
+  } else if (filters?.sortBy === "year") {
+    queryBody += " sort first_release_date desc;";
+  } else {
+    queryBody += " sort popularity desc;";
+  }
+  
+  queryBody += " fields id, name, cover.url, first_release_date, rating, genres.name, platforms.name; limit 20;";
 
   const response = await fetch("https://api.igdb.com/v4/games", {
     method: "POST",
@@ -126,7 +200,7 @@ async function searchGames(query: string) {
       "Authorization": `Bearer ${token}`,
       "Content-Type": "text/plain",
     },
-    body: `search "${query}"; fields id, name, cover.url, first_release_date, rating, genres.name, platforms.name; limit 20;`,
+    body: queryBody,
   });
 
   if (!response.ok) {
@@ -164,7 +238,7 @@ async function searchUsers(query: string, supabaseUrl: string, supabaseKey: stri
   const supabase = createClient(supabaseUrl, supabaseKey);
   
   const { data, error } = await supabase
-    .from("users")
+    .from("user_profiles")
     .select("id, username, avatar_url")
     .ilike("username", `%${query}%`)
     .eq("is_public", true)
@@ -209,10 +283,15 @@ export async function GET(request: Request) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
+    // Only apply filters for the selected type
+    const movieFilters = (type === "all" || type === "movie") ? filters : undefined;
+    const tvFilters = (type === "all" || type === "tv") ? filters : undefined;
+    const gameFilters = (type === "all" || type === "game") ? filters : undefined;
+
     const results = await Promise.allSettled([
-      type === "all" || type === "movie" ? searchMovies(query, page) : Promise.resolve([]),
-      type === "all" || type === "tv" ? searchTv(query, page) : Promise.resolve([]),
-      type === "all" || type === "game" ? searchGames(query) : Promise.resolve([]),
+      type === "all" || type === "movie" ? searchMovies(query, page, movieFilters) : Promise.resolve([]),
+      type === "all" || type === "tv" ? searchTv(query, page, tvFilters) : Promise.resolve([]),
+      type === "all" || type === "game" ? searchGames(query, gameFilters) : Promise.resolve([]),
       type === "all" || type === "user" ? searchUsers(query, supabaseUrl, supabaseKey) : Promise.resolve([]),
     ]);
 
@@ -221,42 +300,12 @@ export async function GET(request: Request) {
     const games = results[2].status === "fulfilled" ? results[2].value : [];
     const users = results[3].status === "fulfilled" ? results[3].value : [];
 
-    // Apply filters
-    let filteredMovies = movies;
-    let filteredTv = tv;
-    let filteredGames = games;
-
-    if (filters.yearFrom || filters.yearTo) {
-      const from = filters.yearFrom || 1900;
-      const to = filters.yearTo || 2100;
-      filteredMovies = filteredMovies.filter((m: { releaseDate?: string }) => {
-        const year = m.releaseDate ? parseInt(m.releaseDate.split("-")[0]) : 0;
-        return year >= from && year <= to;
-      });
-      filteredTv = filteredTv.filter((t: { releaseDate?: string }) => {
-        const year = t.releaseDate ? parseInt(t.releaseDate.split("-")[0]) : 0;
-        return year >= from && year <= to;
-      });
-    }
-
-    if (filters.minRating) {
-      filteredMovies = filteredMovies.filter((m: { voteAverage?: number }) => 
-        (m.voteAverage || 0) >= filters.minRating!
-      );
-      filteredTv = filteredTv.filter((t: { voteAverage?: number }) => 
-        (t.voteAverage || 0) >= filters.minRating!
-      );
-      filteredGames = filteredGames.filter((g: { rating?: number | null }) => 
-        (g.rating || 0) >= filters.minRating!
-      );
-    }
-
-    const totalResults = filteredMovies.length + filteredTv.length + filteredGames.length + users.length;
+    const totalResults = movies.length + tv.length + games.length + users.length;
 
     return NextResponse.json({
-      movies: filteredMovies,
-      tv: filteredTv,
-      games: filteredGames,
+      movies,
+      tv,
+      games,
       users,
       totalResults,
     });
