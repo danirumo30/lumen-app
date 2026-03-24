@@ -376,10 +376,10 @@ async function searchGames(query: string, page: number = 1, filters?: SearchFilt
 }
 
 // Search users on Supabase
-async function searchUsers(query: string, supabaseUrl: string, supabaseKey: string) {
+async function searchUsers(query: string, supabaseUrl: string, supabaseKey: string, page: number = 1) {
   const supabase = createClient(supabaseUrl, supabaseKey);
   
-  console.log("[USER SEARCH] Searching for:", query);
+  console.log("[USER SEARCH] Searching for:", query, "page:", page);
   
   // If no query, return empty (use trending users instead)
   if (!query || query.length === 0) {
@@ -387,12 +387,15 @@ async function searchUsers(query: string, supabaseUrl: string, supabaseKey: stri
     return [];
   }
   
+  const offset = (page - 1) * 20;
+  
   const { data, error } = await supabase
     .from("user_profiles")
     .select("id, username, avatar_url")
     .eq("is_public", true)
     .ilike("username", `%${query}%`)
-    .limit(20);
+    .range(offset, offset + 19)
+    .order("username", { ascending: true });
 
   if (error) {
     console.error("[USER SEARCH] Error:", error);
@@ -413,26 +416,26 @@ async function searchUsers(query: string, supabaseUrl: string, supabaseKey: stri
   })) || [];
 }
 
-// Get all users in random order
-async function getTrendingUsers(supabaseUrl: string, supabaseKey: string) {
+// Get trending users with pagination
+async function getTrendingUsers(supabaseUrl: string, supabaseKey: string, page: number = 1) {
   const supabase = createClient(supabaseUrl, supabaseKey);
   
-  // Get all public user profiles
+  const offset = (page - 1) * 20;
+  
+  // Get public user profiles with pagination
   const { data: profiles, error: profilesError } = await supabase
     .from("user_profiles")
     .select("id, username, avatar_url")
     .eq("is_public", true)
-    .limit(50);
+    .range(offset, offset + 19)
+    .order("created_at", { ascending: false });
 
   if (profilesError || !profiles) {
     console.error("Error fetching profiles:", profilesError);
     return [];
   }
 
-  // Shuffle array for random order
-  const shuffled = [...profiles].sort(() => Math.random() - 0.5);
-
-  return shuffled.slice(0, 10).map((user: any) => ({
+  return profiles.map((user: any) => ({
     id: user.id,
     type: "user" as const,
     username: user.username,
@@ -620,7 +623,7 @@ export async function GET(request: Request) {
         (type === "all" || type === "movie") ? searchMovies(query, page, movieFilters) : Promise.resolve([]),
         (type === "all" || type === "tv") ? searchTv(query, page, tvFilters) : Promise.resolve([]),
         (type === "all" || type === "game") ? searchGames(query, page, gameFilters) : Promise.resolve([]),
-        (type === "all" || type === "user") ? searchUsers(query, supabaseUrl, supabaseKey) : Promise.resolve([]),
+        (type === "all" || type === "user") ? searchUsers(query, supabaseUrl, supabaseKey, page) : Promise.resolve([]),
       ]);
 
       movies = results[0].status === "fulfilled" ? results[0].value : [];
@@ -635,7 +638,7 @@ export async function GET(request: Request) {
         (type === "all" || type === "movie") ? getTrendingMovies(10) : Promise.resolve([]),
         (type === "all" || type === "tv") ? getTrendingTv(10) : Promise.resolve([]),
         (type === "all" || type === "game") ? getTrendingGames(10) : Promise.resolve([]),
-        (type === "all" || type === "user") ? getTrendingUsers(supabaseUrl, supabaseKey) : Promise.resolve([]),
+        (type === "all" || type === "user") ? getTrendingUsers(supabaseUrl, supabaseKey, page) : Promise.resolve([]),
       ]);
       
       movies = trendingResults[0];

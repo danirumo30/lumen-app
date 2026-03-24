@@ -150,10 +150,8 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
         const hasQuery = query && query.trim().length >= 2;
         const isUserOnly = type === "user";
         
-        // Add page parameter for pagination (except users)
-        if (type !== "user") {
-          params.set("page", page.toString());
-        }
+        // Add page parameter for pagination
+        params.set("page", page.toString());
         
         // Use search API for: has query, or user-only
         const useSearch = hasQuery || isUserOnly;
