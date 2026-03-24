@@ -95,6 +95,19 @@ async function getPopularMovies(filters?: SearchFilters) {
   if (filters?.minRating) {
     url += `&vote_average.gte=${filters.minRating}`;
   }
+  
+  // Add sorting
+  if (filters?.sortBy) {
+    const sortMap: Record<string, string> = {
+      "popularity": "popularity.desc",
+      "rating": "vote_average.desc",
+      "year": "release_date.desc",
+      "relevance": "popularity.desc"
+    };
+    if (sortMap[filters.sortBy]) {
+      url += `&sort_by=${sortMap[filters.sortBy]}`;
+    }
+  }
 
   const response = await fetch(url, { headers: { "Cache-Control": "public, s-maxage=3600" } });
 
@@ -193,6 +206,19 @@ async function getPopularTv(filters?: SearchFilters) {
   if (filters?.minRating) {
     url += `&vote_average.gte=${filters.minRating}`;
   }
+  
+  // Add sorting
+  if (filters?.sortBy) {
+    const sortMap: Record<string, string> = {
+      "popularity": "popularity.desc",
+      "rating": "vote_average.desc",
+      "year": "first_air_date.desc",
+      "relevance": "popularity.desc"
+    };
+    if (sortMap[filters.sortBy]) {
+      url += `&sort_by=${sortMap[filters.sortBy]}`;
+    }
+  }
 
   const response = await fetch(url, { headers: { "Cache-Control": "public, s-maxage=3600" } });
 
@@ -284,8 +310,9 @@ async function getPopularGames(filters?: SearchFilters) {
   }
   if (filters?.platform) {
     const platformIds = platformIdMap[filters.platform];
-    if (platformIds) {
-      conditions.push(`platforms = (${platformIds.join(",")})`);
+    if (platformIds && platformIds.length > 0) {
+      // Use first platform ID for simpler query
+      conditions.push(`platforms = ${platformIds[0]}`);
     }
   }
   if (filters?.yearFrom) {

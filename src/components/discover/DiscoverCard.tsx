@@ -228,17 +228,15 @@ export function DiscoverCard({
           </>
         )}
 
-        {/* Rating Badge */}
-        {voteAverage && voteAverage > 0 && (
-          <div className="absolute top-2 right-2 px-2 py-1 bg-black/70 backdrop-blur-sm rounded-lg flex items-center gap-1">
-            <svg className={`w-3 h-3 ${typeAccent[type]}`} fill="currentColor" viewBox="0 0 20 20">
-              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-            </svg>
-            <span className={`text-xs font-bold ${typeAccent[type]}`}>
-              {voteAverage.toFixed(1)}
-            </span>
-          </div>
-        )}
+        {/* Rating Badge - show rating or ? if no rating */}
+        <div className={`absolute top-2 right-2 px-2 py-1 bg-black/70 backdrop-blur-sm rounded-lg flex items-center gap-1 ${voteAverage && voteAverage > 0 ? '' : 'opacity-60'}`}>
+          <svg className={`w-3 h-3 ${voteAverage && voteAverage > 0 ? typeAccent[type] : 'text-zinc-400'}`} fill="currentColor" viewBox="0 0 20 20">
+            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+          </svg>
+          <span className={`text-xs font-bold ${voteAverage && voteAverage > 0 ? typeAccent[type] : 'text-zinc-400'}`}>
+            {voteAverage && voteAverage > 0 ? voteAverage.toFixed(1) : "?"}
+          </span>
+        </div>
 
         {/* Type Badge */}
         <div className="absolute top-2 left-2">
@@ -259,22 +257,31 @@ export function DiscoverCard({
           )}
         </div>
 
-        {/* Platform Icons for Games - using local PNG icons */}
-        {type === "game" && platformLogos && platformLogos.length > 0 && (
+        {/* Platform Icons for Games - show icons or fallback text */}
+        {type === "game" && (
           <div className="absolute bottom-2 left-2 right-2 flex gap-1">
-            {platformLogos.slice(0, 4).map((platform, idx) => (
-              <div 
-                key={platform.uniqueKey || `platform-${platform.id}-${idx}`}
-                className="w-6 h-6 flex items-center justify-center"
-                title={platform.name}
-              >
-                <img 
-                  src={getPlatformIcon(platform.platformName || platform.name, platform.id)} 
-                  alt={platform.name}
-                  className="w-full h-full object-contain"
-                />
+            {platformLogos && platformLogos.length > 0 ? (
+              platformLogos.slice(0, 4).map((platform, idx) => (
+                <div 
+                  key={platform.uniqueKey || `platform-${platform.id}-${idx}`}
+                  className="w-6 h-6 flex items-center justify-center"
+                  title={platform.name}
+                >
+                  <img 
+                    src={getPlatformIcon(platform.platformName || platform.name, platform.id)} 
+                    alt={platform.name}
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+              ))
+            ) : (
+              <div className="flex items-center gap-1 text-[10px] text-zinc-400 bg-black/50 px-2 py-1 rounded">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+                </svg>
+                <span>No disponible</span>
               </div>
-            ))}
+            )}
           </div>
         )}
 
