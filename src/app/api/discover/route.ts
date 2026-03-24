@@ -108,9 +108,9 @@ async function getPopularMovies(filters?: SearchFilters) {
       overview: movie.overview,
     })) || [];
     
-    // Fetch providers for first 10 movies
+    // Fetch providers for first 10 movies, return all 20
     const moviesWithProviders = await Promise.all(
-      movies.slice(0, 10).map(async (movie: any, index: number) => {
+      movies.map(async (movie: any, index: number) => {
         if (index < 10) {
           const tmdbId = movie.id.replace("tmdb_", "");
           const providers = await getMovieProviders(parseInt(tmdbId));
@@ -285,9 +285,9 @@ async function getPopularTv(filters?: SearchFilters) {
       overview: show.overview,
     })) || [];
     
-    // Fetch providers for first 10 TV shows
+    // Fetch providers for first 10 TV shows, return all 20
     const showsWithProviders = await Promise.all(
-      shows.slice(0, 10).map(async (show: any, index: number) => {
+      shows.map(async (show: any, index: number) => {
         if (index < 10) {
           const tmdbId = show.id.replace("tmdb_", "");
           const providers = await getTvProviders(parseInt(tmdbId));
