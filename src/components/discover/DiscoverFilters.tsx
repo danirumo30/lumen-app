@@ -59,19 +59,19 @@ function FilterDropdown({
   options,
   value,
   onChange,
-  icon
+  icon,
+  scrollToValue
 }: {
   label: string;
   options: { value: string; label: string }[];
   value: string;
   onChange: (value: string) => void;
   icon?: React.ReactNode;
+  scrollToValue?: string;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  const selectedOption = options.find(o => o.value === value);
-  const displayLabel = selectedOption?.value === "" || selectedOption?.value === "all" || !selectedOption ? label : selectedOption.label;
+  const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -79,9 +79,24 @@ function FilterDropdown({
         setIsOpen(false);
       }
     }
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Scroll to specific value when dropdown opens (e.g., current year)
+  useEffect(() => {
+    if (isOpen && scrollToValue && listRef.current) {
+      const element = listRef.current.querySelector(`[data-value="${scrollToValue}"]`);
+      if (element) {
+        element.scrollIntoView({ block: 'center', behavior: 'instant' });
+      }
+    }
+  }, [isOpen, scrollToValue]);
+
+  // Get display label
+  const selectedOption = options.find(o => o.value === value);
+  const displayLabel = selectedOption ? selectedOption.label : label;
 
   // Get accent color based on type
   const accentClass = label.includes("Género") 
@@ -113,7 +128,7 @@ function FilterDropdown({
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 mt-2 w-48 py-2 bg-zinc-900/95 backdrop-blur-xl border border-zinc-700/50 rounded-xl shadow-2xl z-50 animate-dropdownIn overflow-y-auto" style={{ maxHeight: '220px' }}>
+        <div ref={listRef} className="absolute top-full left-0 mt-2 w-48 py-2 bg-zinc-900/95 backdrop-blur-xl border border-zinc-700/50 rounded-xl shadow-2xl z-50 animate-dropdownIn overflow-y-auto" style={{ maxHeight: '220px' }}>
           <style jsx>{`
             div::-webkit-scrollbar {
               width: 6px;
@@ -132,6 +147,7 @@ function FilterDropdown({
           {options.map((option) => (
             <button
               key={option.value}
+              data-value={option.value}
               onClick={() => {
                 onChange(option.value);
                 setIsOpen(false);
@@ -247,6 +263,7 @@ export function DiscoverFiltersComponent({ type, filters, onChange }: DiscoverFi
           options={yearFromOptions}
           value={filters.yearFrom ? String(filters.yearFrom) : "all"}
           onChange={(value) => updateFilter("yearFrom", value === "all" ? undefined : parseInt(value))}
+          scrollToValue={String(currentYear)}
           icon={
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -260,6 +277,7 @@ export function DiscoverFiltersComponent({ type, filters, onChange }: DiscoverFi
           options={yearToOptions}
           value={filters.yearTo ? String(filters.yearTo) : "all"}
           onChange={(value) => updateFilter("yearTo", value === "all" ? undefined : parseInt(value))}
+          scrollToValue={String(currentYear)}
         />
 
         {/* Sort By */}
