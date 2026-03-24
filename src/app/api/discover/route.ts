@@ -80,9 +80,10 @@ async function getPopularMovies(filters?: SearchFilters) {
     // TMDB movie genres - complete list with correct IDs
     const genreMap: Record<string, number> = {
       "Acción": 28,
-      "Aventura": 12,
       "Animación": 16,
-      "Ciencia Ficción": 878,
+      "Aventura": 12,
+      "Bélica": 10752,
+      "Ciencia ficción": 878,
       "Comedia": 35,
       "Crimen": 80,
       "Documental": 99,
@@ -90,12 +91,12 @@ async function getPopularMovies(filters?: SearchFilters) {
       "Familia": 10751,
       "Fantasía": 14,
       "Historia": 36,
-      "Música": 10402,
       "Misterio": 9648,
+      "Música": 10402,
+      "Película de TV": 10770,
       "Romance": 10749,
+      "Suspense": 53,
       "Terror": 27,
-      "Thriller": 53,
-      "Guerra": 10752,
       "Western": 37
     };
     if (genreMap[filters.genre]) {
@@ -204,21 +205,24 @@ async function getPopularTv(filters?: SearchFilters) {
   
   if (filters?.genre) {
     // TMDB TV genres - correct IDs for TV shows
-    // TV doesn't have Fantasy (14) - it's combined with Sci-Fi as 10765
+    // TMDB TV genres - complete list with correct IDs
     const genreMap: Record<string, number> = {
-      "Acción": 10759,
+      "Action & Adventure": 10759,
       "Animación": 16,
-      "Ciencia Ficción": 10765,
       "Comedia": 35,
       "Crimen": 80,
       "Documental": 99,
       "Drama": 18,
       "Familia": 10751,
-      "Fantasía": 10765, // TV has Sci-Fi & Fantasy combined
+      "Kids": 10762,
       "Misterio": 9648,
-      "Romance": 10749,
-      "Terror": 9648, // TV uses Mystery for horror
-      "Thriller": 10768
+      "News": 10763,
+      "Reality": 10764,
+      "Sci-Fi & Fantasy": 10765,
+      "Soap": 10766,
+      "Talk": 10767,
+      "War & Politics": 10768,
+      "Western": 37
     };
     if (genreMap[filters.genre]) {
       url += `&with_genres=${genreMap[filters.genre]}`;
