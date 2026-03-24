@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { mapGenresToSpanish, mapGameModesToSpanish } from "@/lib/translate";
+import { mapGenresToSpanish, mapGameModesToSpanish, translateText } from "@/lib/translate";
 
 const IGDB_ACCESS_TOKEN = process.env.IGDB_ACCESS_TOKEN || "";
 const IGDB_CLIENT_ID = process.env.TWITCH_CLIENT_ID || "";
@@ -78,11 +78,18 @@ export async function GET(
       );
     }
 
-    // Check cache first
-    const cacheKey = `game_${igdbId}`;
+    // Detect language from browser
+    const acceptLanguage = request.headers.get('accept-language') || 'en';
+    const browserLang = acceptLanguage.split(',')[0].split('-')[0]; // Get primary language code
+    const targetLang = browserLang === 'es' ? 'es' : browserLang === 'fr' ? 'fr' : browserLang === 'de' ? 'de' : browserLang === 'it' ? 'it' : browserLang === 'pt' ? 'pt' : 'es'; // Default to Spanish
+    
+    console.log(`[games/[id]] Detected browser language: ${browserLang}, using: ${targetLang}`);
+
+    // Check cache first - include language in cache key
+    const cacheKey = `game_${igdbId}_${targetLang}`;
     const cached = gameCache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-      console.log(`[games/[id]] Cache hit for game ${igdbId}`);
+      console.log(`[games/[id]] Cache hit for game ${igdbId} in ${targetLang}`);
       return NextResponse.json(cached.data);
     }
 
@@ -111,8 +118,20 @@ export async function GET(
     const englishGenres = game.genres?.map((g: { name: string }) => g.name) || [];
     const genres = mapGenresToSpanish(englishGenres);
 
-    // Don't translate summary anymore - too slow and error-prone
-    const summary: string | null = game.summary || null;
+    // Translate summary to browser language (skip if English)
+    let summary: string | null = game.summary || null;
+    const shouldTranslate = browserLang !== 'en' && summary && summary.trim() !== '';
+    
+    if (shouldTranslate) {
+      try {
+        console.log(`[games/[id]] Translating summary to ${targetLang} (${summary!.length} chars)`);
+        summary = await translateText(summary!, targetLang);
+        console.log(`[games/[id]] Translation complete`);
+      } catch (error) {
+        console.error("[games/[id]] Translation failed, using original:", error);
+        // Keep original English summary if translation fails
+      }
+    }
 
     const result = {
       id: `igdb_${game.id}`,
