@@ -174,8 +174,10 @@ async function getPopularTv(filters?: SearchFilters) {
   let url = `${TMDB_BASE_URL}/discover/tv?api_key=${TMDB_API_KEY}&page=1&language=es-ES`;
   
   if (filters?.genre) {
+    // TMDB TV genres - Terror maps to 10770 (Mystery/Thriller) or can fall under Sci-Fi
     const genreMap: Record<string, number> = {
-      "Drama": 18, "Comedia": 35, "Ciencia Ficción": 10765, "Terror": 10770, 
+      "Drama": 18, "Comedia": 35, "Ciencia Ficción": 10765, 
+      "Terror": 10770, // TV shows don't have dedicated Horror genre, use Mystery
       "Acción": 10759, "Romance": 10749, "Thriller": 10768, "Documental": 99, "Animación": 16
     };
     if (genreMap[filters.genre]) {
@@ -263,6 +265,17 @@ async function getPopularGames(filters?: SearchFilters) {
     "Web": "Web"
   };
   
+  // Platform ID mapping for IGDB
+  const platformIdMap: Record<string, number[]> = {
+    "PlayStation": [6, 48, 49], // PlayStation, PlayStation 4, PlayStation 5
+    "Xbox": [7, 49, 111], // Xbox, Xbox One, Xbox Series X
+    "Nintendo": [7, 8, 9, 13, 41, 130], // Nintendo various
+    "PC": [6], // PC
+    "Mobile": [4, 5], // iOS, Android
+    "Linux": [3, 34], // Linux, SteamOS
+    "Web": [15, 16] // Web
+  };
+  
   // Build where clause
   const conditions: string[] = [];
   if (filters?.genre) {
@@ -270,8 +283,10 @@ async function getPopularGames(filters?: SearchFilters) {
     conditions.push(`genres.name = "${igdbGenre}"`);
   }
   if (filters?.platform) {
-    const igdbPlatform = platformMap[filters.platform] || filters.platform;
-    conditions.push(`platforms.name = "${igdbPlatform}"`);
+    const platformIds = platformIdMap[filters.platform];
+    if (platformIds) {
+      conditions.push(`platforms = (${platformIds.join(",")})`);
+    }
   }
   if (filters?.yearFrom) {
     conditions.push(`first_release_date >= ${filters.yearFrom * 10000}`);
@@ -332,7 +347,7 @@ async function getPopularGames(filters?: SearchFilters) {
     releaseDate: game.first_release_date
       ? new Date(game.first_release_date * 1000).toISOString().split("T")[0]
       : null,
-    rating: game.rating ? Math.round(game.rating) / 10 : null,
+    voteAverage: game.rating ? Math.round(game.rating) / 10 : null,
     genres: game.genres?.map((g: { name: string }) => g.name) || [],
     platforms: game.platforms?.map((p: { name: string }) => p.name) || [],
     platformLogos: game.platforms?.map((p: { id: number; name: string; platform_logo?: { image_id: string } }) => ({
