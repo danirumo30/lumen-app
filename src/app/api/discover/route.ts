@@ -462,14 +462,18 @@ async function getPopularGames(filters?: SearchFilters, page: number = 1) {
   // Always filter out games without release date for better UX
   conditions.push("first_release_date != null");
   
-  // Only filter by rating when no specific filters are applied
-  // (to allow filtered searches to return more results)
-  if (!filters?.genre && !filters?.platform && !filters?.yearFrom && !filters?.yearTo) {
-    conditions.push("rating != null");
+  // When filtering by genre/platform: show popular games from last 5 years
+  if (filters?.genre || filters?.platform) {
+    const fiveYearsAgo = new Date();
+    fiveYearsAgo.setFullYear(fiveYearsAgo.getFullYear() - 5);
+    const fiveYearsAgoTimestamp = Math.floor(fiveYearsAgo.getTime() / 1000);
+    conditions.push(`first_release_date >= ${fiveYearsAgoTimestamp}`);
+    conditions.push("rating != null"); // Only show rated games
   }
   
-  // Default: show games from the last year only when no filters are applied
+  // No filters: show recent popular games (last 1 year)
   if (!filters?.genre && !filters?.platform && !filters?.yearFrom && !filters?.yearTo) {
+    conditions.push("rating != null");
     const oneYearAgo = new Date();
     oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
     const oneYearAgoTimestamp = Math.floor(oneYearAgo.getTime() / 1000);
