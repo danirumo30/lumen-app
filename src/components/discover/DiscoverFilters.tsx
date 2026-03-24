@@ -155,6 +155,8 @@ function FilterDropdown({
               className={`w-full px-4 py-2 text-left text-sm transition-all duration-150 ${
                 value === option.value
                   ? "text-amber-400 bg-amber-600/10"
+                  : scrollToValue && option.value === scrollToValue
+                  ? "text-white bg-zinc-700/50 ring-1 ring-zinc-600"
                   : "text-zinc-300 hover:bg-zinc-800 hover:text-white"
               }`}
             >
