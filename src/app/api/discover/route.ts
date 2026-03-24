@@ -73,7 +73,8 @@ async function getMovieProviders(movieId: number): Promise<{ id: number; name: s
 
 // Get popular movies
 async function getPopularMovies(filters?: SearchFilters) {
-  let url = `${TMDB_BASE_URL}/movie/popular?api_key=${TMDB_API_KEY}&page=1&language=es-ES`;
+  // Use discover/movie instead of popular to allow filtering
+  let url = `${TMDB_BASE_URL}/discover/movie?api_key=${TMDB_API_KEY}&page=1&language=es-ES`;
   
   if (filters?.genre) {
     const genreMap: Record<string, number> = {
@@ -169,7 +170,8 @@ async function getTvProviders(tvId: number): Promise<{ id: number; name: string;
 
 // Get popular TV
 async function getPopularTv(filters?: SearchFilters) {
-  let url = `${TMDB_BASE_URL}/tv/popular?api_key=${TMDB_API_KEY}&page=1&language=es-ES`;
+  // Use discover/tv instead of popular to allow filtering
+  let url = `${TMDB_BASE_URL}/discover/tv?api_key=${TMDB_API_KEY}&page=1&language=es-ES`;
   
   if (filters?.genre) {
     const genreMap: Record<string, number> = {
@@ -237,13 +239,39 @@ async function getPopularGames(filters?: SearchFilters) {
 
   let queryBody = "fields id, name, cover.url, first_release_date, rating, genres.name, platforms.id, platforms.name, platforms.platform_logo.image_id;";
   
+  // Map Spanish genres/platforms to IGDB English equivalents
+  const genreMap: Record<string, string> = {
+    "Acción": "Action",
+    "Aventura": "Adventure",
+    "RPG": "Role-playing game",
+    "Estrategia": "Strategy",
+    "Deportes": "Sports",
+    "Carreras": "Racing",
+    "Puzzle": "Puzzle",
+    "Horror": "Horror",
+    "Supervivencia": "Survival",
+    "Lucha": "Fighting"
+  };
+  
+  const platformMap: Record<string, string> = {
+    "PlayStation": "PlayStation",
+    "Xbox": "Xbox",
+    "Nintendo": "Nintendo",
+    "PC": "PC",
+    "Mobile": "Mobile",
+    "Linux": "Linux",
+    "Web": "Web"
+  };
+  
   // Build where clause
   const conditions: string[] = [];
   if (filters?.genre) {
-    conditions.push(`genres.name = "${filters.genre}"`);
+    const igdbGenre = genreMap[filters.genre] || filters.genre;
+    conditions.push(`genres.name = "${igdbGenre}"`);
   }
   if (filters?.platform) {
-    conditions.push(`platforms.name = "${filters.platform}"`);
+    const igdbPlatform = platformMap[filters.platform] || filters.platform;
+    conditions.push(`platforms.name = "${igdbPlatform}"`);
   }
   if (filters?.yearFrom) {
     conditions.push(`first_release_date >= ${filters.yearFrom * 10000}`);
