@@ -68,7 +68,7 @@ export async function GET(request: Request) {
       return NextResponse.json([]);
     }
 
-    // Deduplicate by provider_id, collecting all unique types (using Set)
+    // Deduplicate by provider_id, collecting all access types from flatrate/free/ads/rent/buy arrays
     interface ProviderEntry {
       id: number;
       name: string;
@@ -82,17 +82,25 @@ export async function GET(request: Request) {
       const id = p.provider_id;
       const name = p.provider_name;
       const logoUrl = p.logo_path ? `https://image.tmdb.org/t/p/original${p.logo_path}` : null;
-      const type = p.type; // 'flatrate', 'rent', 'buy', 'ads', 'free'
+      
+      // Check which access type arrays are non-empty
+      const types = new Set<string>();
+      if (p.flatrate && p.flatrate.length > 0) types.add('flatrate');
+      if (p.free && p.free.length > 0) types.add('free');
+      if (p.ads && p.ads.length > 0) types.add('ads');
+      if (p.rent && p.rent.length > 0) types.add('rent');
+      if (p.buy && p.buy.length > 0) types.add('buy');
 
       const existing = providerMap.get(id);
       if (existing) {
-        if (type) existing.types.add(type);
+        // Merge types (union of sets)
+        types.forEach(t => existing.types.add(t));
       } else {
         providerMap.set(id, {
           id,
           name,
           logoUrl,
-          types: new Set(type ? [type] : []),
+          types,
         });
       }
     });
