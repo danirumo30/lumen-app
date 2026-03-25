@@ -222,15 +222,12 @@ async function getPopularMovies(filters?: SearchFilters, page: number = 1) {
     overview: movie.overview,
   })) || [];
 
-   // Fetch providers for first 10 movies; others get empty array to avoid undefined
+   // Fetch providers for ALL 20 movies (concurrent, may be slow but complete)
    const moviesWithProviders = await Promise.all(
-     movies.map(async (movie: any, index: number) => {
-       if (index < 10) {
-         const tmdbId = movie.id.replace("tmdb_", "");
-         const providers = await getMovieProviders(parseInt(tmdbId));
-         return { ...movie, providers };
-       }
-       return { ...movie, providers: [] };
+     movies.map(async (movie: any) => {
+       const tmdbId = movie.id.replace("tmdb_", "");
+       const providers = await getMovieProviders(parseInt(tmdbId));
+       return { ...movie, providers };
      })
    );
 
@@ -412,15 +409,12 @@ async function getPopularTv(filters?: SearchFilters, page: number = 1) {
     overview: show.overview,
   })) || [];
 
-   // Fetch providers for first 10 TV shows; others get empty array to avoid undefined
+   // Fetch providers for ALL 20 TV shows
    const showsWithProviders = await Promise.all(
-     shows.map(async (show: any, index: number) => {
-       if (index < 10) {
-         const tmdbId = show.id.replace("tmdb_", "");
-         const providers = await getTvProviders(parseInt(tmdbId));
-         return { ...show, providers };
-       }
-       return { ...show, providers: [] };
+     shows.map(async (show: any) => {
+       const tmdbId = show.id.replace("tmdb_", "");
+       const providers = await getTvProviders(parseInt(tmdbId));
+       return { ...show, providers };
      })
    );
 
