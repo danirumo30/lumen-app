@@ -183,25 +183,43 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
            throw new Error(data.error || "Failed to fetch");
          }
 
-         // Combine results based on type
-         let newResults: SearchResult[] = [];
+          // Combine results based on type
+          let newResults: SearchResult[] = [];
 
-         if (type === "movie") {
-           newResults = data.movies || [];
-         } else if (type === "tv") {
-           newResults = data.tv || [];
-         } else if (type === "game") {
-           newResults = data.games || [];
-         } else if (type === "user") {
-           newResults = data.users || [];
-         }
+          if (type === "movie") {
+            newResults = data.movies || [];
+          } else if (type === "tv") {
+            newResults = data.tv || [];
+          } else if (type === "game") {
+            newResults = data.games || [];
+          } else if (type === "user") {
+            newResults = data.users || [];
+          }
 
-         // Append results for pagination (except page 1 which replaces)
-         if (page === 1) {
-           setResults(newResults);
-         } else {
-           setResults(prev => [...prev, ...newResults]);
-         }
+          // Client-side fallback sorting for movie/tv when TMDB may not honor sort_by during search
+          if (hasQuery && filters.sortBy && (type === "movie" || type === "tv")) {
+            const direction = filters.sortDirection === "asc" ? 1 : -1;
+            newResults.sort((a, b) => {
+              switch (filters.sortBy) {
+                case "popularity":
+                case "rating":
+                  return ((a.voteAverage || 0) - (b.voteAverage || 0)) * direction;
+                case "year":
+                  const aYear = a.releaseDate ? new Date(a.releaseDate).getFullYear() : 0;
+                  const bYear = b.releaseDate ? new Date(b.releaseDate).getFullYear() : 0;
+                  return (aYear - bYear) * direction;
+                default:
+                  return 0;
+              }
+            });
+          }
+
+          // Append results for pagination (except page 1 which replaces)
+          if (page === 1) {
+            setResults(newResults);
+          } else {
+            setResults(prev => [...prev, ...newResults]);
+          }
          
          // Has more if we got any results (infinite pagination until no more)
          // Only stop when we get 0 results (meaning no more pages)

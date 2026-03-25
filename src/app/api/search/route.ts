@@ -162,42 +162,13 @@ async function searchMovies(query: string, page = 1, filters?: SearchFilters) {
       sortField = discoverSortMap[filters.sortBy] || "popularity";
     }
     url += `&sort_by=${sortField}.${direction}`;
-  } else if (!hasQuery && filters?.genre) {
-    // Default to popularity when filtering by genre on discover
-    url += "&sort_by=popularity.desc";
-  }
-  
-  // Add year filter
-  if (filters?.yearFrom) {
-    url += `&primary_release_date.gte=${filters.yearFrom}-01-01`;
-  }
-  if (filters?.yearTo) {
-    url += `&primary_release_date.lte=${filters.yearTo}-12-31`;
-  }
-  
-  // Add minimum rating
-  if (filters?.minRating) {
-    url += `&vote_average.gte=${filters.minRating}`;
-  }
+   } else if (!hasQuery && filters?.genre) {
+     // Default to popularity when filtering by genre on discover
+     url += "&sort_by=popularity.desc";
+   }
 
-  // Add sorting
-  if (filters?.sortBy) {
-    const direction = filters.sortDirection || "desc";
-    const sortFieldMap: Record<string, string> = {
-      "popularity": "popularity",
-      "rating": "vote_average",
-      "year": "release_date",
-      "relevance": "popularity"
-    };
-    if (sortFieldMap[filters.sortBy]) {
-      url += `&sort_by=${sortFieldMap[filters.sortBy]}.${direction}`;
-    }
-  } else if (filters?.genre) {
-    // Default to popularity when filtering by genre
-    url += "&sort_by=popularity.desc";
-  }
-
-  const response = await fetch(url, { headers: { "Cache-Control": "public, s-maxage=600" } });
+   console.log("[searchMovies] final URL:", url);
+   const response = await fetch(url, { headers: { "Cache-Control": "public, s-maxage=600" } });
 
   if (!response.ok) {
     throw new Error(`TMDB movies error: ${response.status}`);
@@ -334,39 +305,12 @@ async function searchTv(query: string, page = 1, filters?: SearchFilters) {
       sortField = discoverSortMap[filters.sortBy] || "popularity";
     }
     url += `&sort_by=${sortField}.${direction}`;
-  } else if (!hasQuery && filters?.genre) {
-    url += "&sort_by=popularity.desc";
-  }
-  
-  if (filters?.yearFrom) {
-    url += `&first_air_date.gte=${filters.yearFrom}-01-01`;
-  }
-  if (filters?.yearTo) {
-    url += `&first_air_date.lte=${filters.yearTo}-12-31`;
-  }
-  
-  if (filters?.minRating) {
-    url += `&vote_average.gte=${filters.minRating}`;
-  }
+   } else if (!hasQuery && filters?.genre) {
+     url += "&sort_by=popularity.desc";
+   }
 
-  // Add sorting
-  if (filters?.sortBy) {
-    const direction = filters.sortDirection || "desc";
-    const sortFieldMap: Record<string, string> = {
-      "popularity": "popularity",
-      "rating": "vote_average",
-      "year": "first_air_date",
-      "relevance": "popularity"
-    };
-    if (sortFieldMap[filters.sortBy]) {
-      url += `&sort_by=${sortFieldMap[filters.sortBy]}.${direction}`;
-    }
-  } else if (filters?.genre) {
-    // Default to popularity when filtering by genre
-    url += "&sort_by=popularity.desc";
-  }
-
-  const response = await fetch(url, { headers: { "Cache-Control": "public, s-maxage=600" } });
+   console.log("[searchTv] final URL:", url);
+   const response = await fetch(url, { headers: { "Cache-Control": "public, s-maxage=600" } });
 
   if (!response.ok) {
     throw new Error(`TMDB TV error: ${response.status}`);
@@ -409,7 +353,11 @@ async function searchTv(query: string, page = 1, filters?: SearchFilters) {
 
 // Search games on IGDB with filters
 async function searchGames(query: string, page: number = 1, filters?: SearchFilters) {
+  console.log("[searchGames] called with:", { query, page, filters });
   const token = await getIgdbToken();
+
+  // Escape double quotes in query to avoid breaking IGDB query
+  const escapedQuery = query.replace(/"/g, '\\"');
 
   // Build IGDB query - fields first, then where, then sort
   let whereClause = "";
@@ -459,9 +407,9 @@ async function searchGames(query: string, page: number = 1, filters?: SearchFilt
     conditions.push(`rating >= ${filters.minRating * 10}`);
   }
   
-  if (conditions.length > 0) {
-    whereClause = " where " + conditions.join(" & ");
-  }
+   if (conditions.length > 0) {
+     whereClause = " where " + conditions.join(" & ") + ";";
+   }
   
    // Sorting: only allowed when there is NO search query (IGDB error when both)
    let sortClause = "";
@@ -479,12 +427,13 @@ async function searchGames(query: string, page: number = 1, filters?: SearchFilt
      }
      sortClause = ` sort ${sortField} ${direction};`;
    }
-  
-  // IGDB query format: search "term"; fields ...; where ...; sort ...; offset ...; limit ...;
-  // Request platforms with logo info
-  const offset = (page - 1) * 20;
-  const offsetClause = offset > 0 ? ` offset ${offset};` : "";
-  const queryBody = `search "${query}"; fields id, name, cover.url, first_release_date, rating, genres.name, platforms.id, platforms.name, platforms.platform_logo.image_id;${whereClause}${sortClause}${offsetClause} limit 20;`;
+   
+   // IGDB query format: search "term"; fields ...; where ...; sort ...; offset ...; limit ...;
+   // Request platforms with logo info
+   const offset = (page - 1) * 20;
+   const offsetClause = offset > 0 ? ` offset ${offset};` : "";
+   const queryBody = `search "${escapedQuery}"; fields id, name, cover.url, first_release_date, rating, genres.name, platforms.id, platforms.name, platforms.platform_logo.image_id;${whereClause}${sortClause}${offsetClause} limit 20;`;
+   console.log("[searchGames] queryBody:", queryBody);
 
   const response = await fetch("https://api.igdb.com/v4/games", {
     method: "POST",
