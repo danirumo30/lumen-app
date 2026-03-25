@@ -132,6 +132,23 @@ async function searchMovies(query: string, page = 1, filters?: SearchFilters) {
     url += `&vote_average.gte=${filters.minRating}`;
   }
 
+  // Add sorting
+  if (filters?.sortBy) {
+    const direction = filters.sortDirection || "desc";
+    const sortFieldMap: Record<string, string> = {
+      "popularity": "popularity",
+      "rating": "vote_average",
+      "year": "release_date",
+      "relevance": "popularity"
+    };
+    if (sortFieldMap[filters.sortBy]) {
+      url += `&sort_by=${sortFieldMap[filters.sortBy]}.${direction}`;
+    }
+  } else if (filters?.genre) {
+    // Default to popularity when filtering by genre
+    url += "&sort_by=popularity.desc";
+  }
+
   const response = await fetch(url, { headers: { "Cache-Control": "public, s-maxage=600" } });
 
   if (!response.ok) {
@@ -248,6 +265,23 @@ async function searchTv(query: string, page = 1, filters?: SearchFilters) {
     url += `&vote_average.gte=${filters.minRating}`;
   }
 
+  // Add sorting
+  if (filters?.sortBy) {
+    const direction = filters.sortDirection || "desc";
+    const sortFieldMap: Record<string, string> = {
+      "popularity": "popularity",
+      "rating": "vote_average",
+      "year": "first_air_date",
+      "relevance": "popularity"
+    };
+    if (sortFieldMap[filters.sortBy]) {
+      url += `&sort_by=${sortFieldMap[filters.sortBy]}.${direction}`;
+    }
+  } else if (filters?.genre) {
+    // Default to popularity when filtering by genre
+    url += "&sort_by=popularity.desc";
+  }
+
   const response = await fetch(url, { headers: { "Cache-Control": "public, s-maxage=600" } });
 
   if (!response.ok) {
@@ -297,12 +331,38 @@ async function searchGames(query: string, page: number = 1, filters?: SearchFilt
   let whereClause = "";
   const conditions: string[] = [];
   
-  if (filters?.genre) {
-    conditions.push(`genres.name = "${filters.genre}"`);
-  }
-  if (filters?.platform) {
-    conditions.push(`platforms.name = "${filters.platform}"`);
-  }
+   if (filters?.genre) {
+     conditions.push(`genres.name = "${filters.genre}"`);
+   }
+   if (filters?.platform) {
+     // Use ID mapping for reliable filtering (same as getPopularGames)
+     const igdbPlatformIdsMap: Record<string, number[]> = {
+       "PlayStation": [48, 167, 169],
+       "Xbox": [49, 169, 14],
+       "Nintendo": [130, 508, 137],
+       "PC": [6],
+       "Mobile": [39, 34],
+       "Linux": [3],
+       "Web": [16],
+       "PS4": [48],
+       "PS5": [167],
+       "Xbox One": [49],
+       "Xbox Series X|S": [169],
+       "Nintendo Switch": [130],
+       "Nintendo Switch 2": [508],
+       "iOS": [39],
+       "Android": [34]
+     };
+     const platformIds = igdbPlatformIdsMap[filters.platform];
+     if (platformIds && platformIds.length > 0) {
+       if (platformIds.length === 1) {
+         conditions.push(`platforms = ${platformIds[0]}`);
+       } else {
+         const platformConditions = platformIds.map(id => `platforms = ${id}`).join(" | ");
+         conditions.push(`(${platformConditions})`);
+       }
+     }
+   }
   if (filters?.yearFrom) {
     const fromTimestamp = Math.floor(new Date(`${filters.yearFrom}-01-01`).getTime() / 1000);
     conditions.push(`first_release_date >= ${fromTimestamp}`);

@@ -55,178 +55,176 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
     setHasMore(false); // Reset hasMore when filters change
   }, [query, type, filters]);
 
-  // Load more handler
-  const loadMore = useCallback(() => {
-    setPage(prev => prev + 1);
-  }, []);
+   // Load more handler
+   const loadMore = useCallback(() => {
+     setPage(prev => prev + 1);
+   }, []);
 
-  useEffect(() => {
-    let cancelled = false;
+   // Debounced fetch: wait for 300ms after any change before fetching
+   useEffect(() => {
+     let cancelled = false;
+     const timer = setTimeout(async () => {
+       setIsLoading(true);
+       setError(null);
+       try {
+         const params = new URLSearchParams();
+         params.set("type", type);
 
-    async function doFetch() {
-      setIsLoading(true);
-      setError(null);
+         // Only add query if it has at least 2 characters
+         if (query && query.trim().length >= 2) {
+           params.set("q", query);
+         }
 
-      try {
-        const params = new URLSearchParams();
-        params.set("type", type);
+         // Add filters - ALWAYS add them
+         console.log("Filters being sent:", filters);
+         if (filters) {
+           params.set("filters", JSON.stringify(filters));
+         }
 
-        // Only add query if it has at least 2 characters
-        if (query && query.trim().length >= 2) {
-          params.set("q", query);
-        }
+         // Special handling for "all" tab: fetch from same endpoints as individual tabs
+         if (type === "all") {
+           const hasQuery = query && query.trim().length >= 2;
+           console.log(`Fetching 'all' tab ${hasQuery ? 'with search' : 'with discover endpoints'}...`);
 
-        // Add filters - ALWAYS add them
-        console.log("Filters being sent:", filters);
-        if (filters) {
-          params.set("filters", JSON.stringify(filters));
-        }
+           const searchParams = new URLSearchParams();
+           if (hasQuery) {
+             searchParams.set("q", query);
+           }
 
-        // Special handling for "all" tab: fetch from same endpoints as individual tabs
-        if (type === "all") {
-          const hasQuery = query && query.trim().length >= 2;
-          console.log(`Fetching 'all' tab ${hasQuery ? 'with search' : 'with discover endpoints'}...`);
+           const filtersParams = new URLSearchParams();
+           if (filters) {
+             filtersParams.set("filters", JSON.stringify(filters));
+           }
 
-          const searchParams = new URLSearchParams();
-          if (hasQuery) {
-            searchParams.set("q", query);
-          }
+           // When searching: use search endpoint for all types
+           // When not searching: use discover for movies/TV/games (same as individual tabs)
+           // But use discover also when we have filters but no search query (to filter trending content)
+           const useDiscover = !hasQuery && filters;
+           const hasFiltersOnly = !hasQuery && filters;
+           const endpointPrefix = hasFiltersOnly ? "/api/discover" : "/api/search";
 
-          const filtersParams = new URLSearchParams();
-          if (filters) {
-            filtersParams.set("filters", JSON.stringify(filters));
-          }
+           let moviesUrl = `${endpointPrefix}?type=movie`;
+           let tvUrl = `${endpointPrefix}?type=tv`;
+           let gamesUrl = `${endpointPrefix}?type=game`;
 
-          // When searching: use search endpoint for all types
-          // When not searching: use discover for movies/TV/games (same as individual tabs)
-          // But use discover also when we have filters but no search query (to filter trending content)
-          const useDiscover = !hasQuery && filters;
-          const hasFiltersOnly = !hasQuery && filters;
-          const endpointPrefix = hasFiltersOnly ? "/api/discover" : "/api/search";
+           if (hasQuery) {
+             moviesUrl += `&${searchParams.toString()}`;
+             tvUrl += `&${searchParams.toString()}`;
+             gamesUrl += `&${searchParams.toString()}`;
+           }
 
-          let moviesUrl = `${endpointPrefix}?type=movie`;
-          let tvUrl = `${endpointPrefix}?type=tv`;
-          let gamesUrl = `${endpointPrefix}?type=game`;
+           const filtersString = filtersParams.toString();
+           if (filtersString) {
+             moviesUrl += `&${filtersString}`;
+             tvUrl += `&${filtersString}`;
+             gamesUrl += `&${filtersString}`;
+           }
+         
+           const moviesPromise = fetch(moviesUrl);
+           const tvPromise = fetch(tvUrl);
+           const gamesPromise = fetch(gamesUrl);
+           
+           const usersPromise = fetch(`/api/search?type=user&${searchParams.toString()}`);
+           
+           const [moviesRes, tvRes, gamesRes, usersRes] = await Promise.all([
+             moviesPromise, tvPromise, gamesPromise, usersPromise
+           ]);
+           
+           if (cancelled) return;
+           
+           const [moviesData, tvData, gamesData, usersData] = await Promise.all([
+             moviesRes.json(),
+             tvRes.json(),
+             gamesRes.json(),
+             usersRes.json(),
+           ]);
+           
+           const combined = [
+             ...(moviesData.movies || []).slice(0, 10),
+             ...(tvData.tv || []).slice(0, 10),
+             ...(gamesData.games || []).slice(0, 10),
+             ...(usersData.users || []).slice(0, 10),
+           ];
+           
+           console.log("All tab results:", { 
+             query: query || "(none)",
+             movies: moviesData.movies?.length, 
+             tv: tvData.tv?.length, 
+             games: gamesData.games?.length, 
+             users: usersData.users?.length, 
+             combined: combined.length 
+           });
+           
+           setResults(combined);
+           setHasMore(false); // "All" tab doesn't have pagination
+           return;
+         }
+         
+         // Regular flow for other tabs
+         const hasQuery = query && query.trim().length >= 2;
+         const isUserOnly = type === "user";
+         
+         // Add page parameter for pagination
+         params.set("page", page.toString());
+         
+         // Use search API for: has query, or user-only
+         const useSearch = hasQuery || isUserOnly;
+         const endpoint = useSearch ? "/api/search" : "/api/discover";
+         const url = `${endpoint}?${params.toString()}`;
+         
+         console.log("Fetching:", url);
 
-          if (hasQuery) {
-            moviesUrl += `&${searchParams.toString()}`;
-            tvUrl += `&${searchParams.toString()}`;
-            gamesUrl += `&${searchParams.toString()}`;
-          }
+         const response = await fetch(url);
+         const data = await response.json();
 
-          const filtersString = filtersParams.toString();
-          if (filtersString) {
-            moviesUrl += `&${filtersString}`;
-            tvUrl += `&${filtersString}`;
-            gamesUrl += `&${filtersString}`;
-          }
-        
-        const moviesPromise = fetch(moviesUrl);
-        const tvPromise = fetch(tvUrl);
-        const gamesPromise = fetch(gamesUrl);
-          
-          const usersPromise = fetch(`/api/search?type=user&${searchParams.toString()}`);
-          
-          const [moviesRes, tvRes, gamesRes, usersRes] = await Promise.all([
-            moviesPromise, tvPromise, gamesPromise, usersPromise
-          ]);
-          
-          if (cancelled) return;
-          
-          const [moviesData, tvData, gamesData, usersData] = await Promise.all([
-            moviesRes.json(),
-            tvRes.json(),
-            gamesRes.json(),
-            usersRes.json(),
-          ]);
-          
-          const combined = [
-            ...(moviesData.movies || []).slice(0, 10),
-            ...(tvData.tv || []).slice(0, 10),
-            ...(gamesData.games || []).slice(0, 10),
-            ...(usersData.users || []).slice(0, 10),
-          ];
-          
-          console.log("All tab results:", { 
-            query: query || "(none)",
-            movies: moviesData.movies?.length, 
-            tv: tvData.tv?.length, 
-            games: gamesData.games?.length, 
-            users: usersData.users?.length, 
-            combined: combined.length 
-          });
-          
-          setResults(combined);
-          setHasMore(false); // "All" tab doesn't have pagination
-          return;
-        }
-        
-        // Regular flow for other tabs
-        const hasQuery = query && query.trim().length >= 2;
-        const isUserOnly = type === "user";
-        
-        // Add page parameter for pagination
-        params.set("page", page.toString());
-        
-        // Use search API for: has query, or user-only
-        const useSearch = hasQuery || isUserOnly;
-        const endpoint = useSearch ? "/api/search" : "/api/discover";
-        const url = `${endpoint}?${params.toString()}`;
-        
-        console.log("Fetching:", url);
+         if (cancelled) return;
 
-        const response = await fetch(url);
-        const data = await response.json();
+         if (!response.ok) {
+           throw new Error(data.error || "Failed to fetch");
+         }
 
-        if (cancelled) return;
+         // Combine results based on type
+         let newResults: SearchResult[] = [];
 
-        if (!response.ok) {
-          throw new Error(data.error || "Failed to fetch");
-        }
+         if (type === "movie") {
+           newResults = data.movies || [];
+         } else if (type === "tv") {
+           newResults = data.tv || [];
+         } else if (type === "game") {
+           newResults = data.games || [];
+         } else if (type === "user") {
+           newResults = data.users || [];
+         }
 
-        // Combine results based on type
-        let newResults: SearchResult[] = [];
+         // Append results for pagination (except page 1 which replaces)
+         if (page === 1) {
+           setResults(newResults);
+         } else {
+           setResults(prev => [...prev, ...newResults]);
+         }
+         
+         // Has more if we got any results (infinite pagination until no more)
+         // Only stop when we get 0 results (meaning no more pages)
+         setHasMore(newResults.length > 0);
+         
+         console.log("Search results:", { type, page, newResults: newResults.length, hasMore: newResults.length > 0 });
+       } catch (err) {
+         if (!cancelled) {
+           console.error("Fetch error:", err);
+           setError(err instanceof Error ? err.message : "Something went wrong");
+         }
+       } finally {
+         if (!cancelled) {
+           setIsLoading(false);
+         }
+       }
+     }, 300); // 300ms debounce
 
-        if (type === "movie") {
-          newResults = data.movies || [];
-        } else if (type === "tv") {
-          newResults = data.tv || [];
-        } else if (type === "game") {
-          newResults = data.games || [];
-        } else if (type === "user") {
-          newResults = data.users || [];
-        }
-
-        // Append results for pagination (except page 1 which replaces)
-        if (page === 1) {
-          setResults(newResults);
-        } else {
-          setResults(prev => [...prev, ...newResults]);
-        }
-        
-        // Has more if we got any results (infinite pagination until no more)
-        // Only stop when we get 0 results (meaning no more pages)
-        setHasMore(newResults.length > 0);
-        
-        console.log("Search results:", { type, page, newResults: newResults.length, hasMore: newResults.length > 0 });
-      } catch (err) {
-        if (!cancelled) {
-          console.error("Fetch error:", err);
-          setError(err instanceof Error ? err.message : "Something went wrong");
-        }
-      } finally {
-        if (!cancelled) {
-          setIsLoading(false);
-        }
-      }
-    }
-
-    doFetch();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [query, type, filters, page]);
+     return () => {
+       clearTimeout(timer);
+       cancelled = true;
+     };
+   }, [query, type, filters, page]);
 
   // Loading state - show on initial load
   if (isLoading && results.length === 0) {

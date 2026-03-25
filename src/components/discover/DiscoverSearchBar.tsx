@@ -16,16 +16,16 @@ export function DiscoverSearchBar({ initialQuery = "", onSearch }: SearchBarProp
     setQuery(initialQuery || "");
   }, [initialQuery]);
 
-  // Debounced search
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (onSearch) {
-        onSearch(query);
-      }
-    }, 300);
+  // Handle input change (immediate, debounce moved to parent)
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newQuery = e.target.value;
+    setQuery(newQuery);
+    if (onSearch) {
+      onSearch(newQuery);
+    }
+  };
 
-    return () => clearTimeout(timer);
-  }, [query, onSearch]);
+  // Remove the debounced useEffect - now handled by parent
 
   const handleClear = () => {
     setQuery("");
@@ -76,7 +76,7 @@ export function DiscoverSearchBar({ initialQuery = "", onSearch }: SearchBarProp
         <input
           type="text"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={handleChange}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setTimeout(() => setIsFocused(false), 200)}
           placeholder="Buscar películas, series, juegos, usuarios..."
