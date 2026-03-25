@@ -91,9 +91,9 @@ export function DiscoverClient() {
           }} />
         </div>
 
-        <div className="relative max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
+        <div className="relative max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
           {/* Header */}
-          <div className="text-center mb-10">
+          <div className="text-center mb-6">
             <h1 className="text-4xl sm:text-5xl font-bold text-white mb-3">
               Desc<span className="text-amber-400">ubrir</span>
             </h1>
