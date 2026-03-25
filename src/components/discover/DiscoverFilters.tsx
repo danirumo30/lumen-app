@@ -360,10 +360,11 @@ export function DiscoverFiltersComponent({
     return null;
   }
 
-  const isSearching = !!(query && query.trim().length >= 2);
-  const isMovieOrTv = type === "movie" || type === "tv";
-  const isGenreDisabled = isSearching && isMovieOrTv;
-  const isYearDisabled = isSearching && isMovieOrTv;
+   const isSearching = !!(query && query.trim().length >= 2);
+   const isMovieOrTv = type === "movie" || type === "tv";
+   const isGenreDisabled = isSearching && isMovieOrTv;
+   const isYearDisabled = isSearching && isMovieOrTv;
+   const isPlatformDisabled = isSearching && isMovieOrTv;
 
   const typeGenres = genres[type as keyof typeof genres] || [];
   const typePlatforms = platforms[type as keyof typeof platforms] || [];
@@ -488,29 +489,31 @@ export function DiscoverFiltersComponent({
               <>
                 {/* Provider dropdown */}
                 <div className="flex-shrink-0 snap-start">
-                <FilterDropdown
-                  label="Plataforma"
-                  options={[
-                    { value: "all", label: "Todas" },
-                    ...availableProviders.map(p => ({ value: String(p.id), label: p.name, isCurrent: false }))
-                  ]}
-                  value={filters.providerIds?.map(String) || undefined}
-                  onChange={(value) => {
-                    const ids = Array.isArray(value)
-                      ? value.map(v => parseInt(v)).filter(n => !isNaN(n))
-                      : (value && value !== "all") ? [parseInt(value)] : [];
-                    onProviderChange?.(ids);
-                  }}
-                  multiSelect={true}
-                  icon={
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                      </svg>
-                    }
-                    dropdownId="provider"
-                    isOpen={openDropdownId === "provider"}
-                    onOpenChange={handleDropdownToggle}
-                  />
+                 <FilterDropdown
+                   label="Plataforma"
+                   options={[
+                     { value: "all", label: "Todas" },
+                     ...availableProviders.map(p => ({ value: String(p.id), label: p.name, isCurrent: false }))
+                   ]}
+                   value={filters.providerIds?.map(String) || undefined}
+                   onChange={(value) => {
+                     const ids = Array.isArray(value)
+                       ? value.map(v => parseInt(v)).filter(n => !isNaN(n))
+                       : (value && value !== "all") ? [parseInt(value)] : [];
+                     onProviderChange?.(ids);
+                   }}
+                   multiSelect={true}
+                   disabled={isPlatformDisabled}
+                   title={isPlatformDisabled ? "No disponible durante búsqueda" : undefined}
+                   icon={
+                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                       </svg>
+                     }
+                     dropdownId="provider"
+                     isOpen={openDropdownId === "provider"}
+                     onOpenChange={handleDropdownToggle}
+                   />
                 </div>
 
                 {/* Access type pills - show when provider selected */}
