@@ -10,7 +10,7 @@ interface StreamingProvider {
   id: number;
   name: string;
   logoUrl: string | null;
-  types: ("subscription" | "free" | "ads" | "rent" | "buy")[];
+  types: string[]; // TMDB types: flatrate, free, ads, rent, buy, etc.
 }
 
 export function DiscoverClient() {
@@ -93,7 +93,9 @@ export function DiscoverClient() {
     filters.providerIds.forEach(id => {
       const provider = availableProviders.find(p => p.id === id);
       if (provider) {
+        console.log(`[DEBUG] Provider ${provider.name} types:`, provider.types);
         provider.types.forEach(t => {
+          console.log(`[DEBUG] Processing type:`, t);
           // Map TMDB type to UI accessType
           if (t === "flatrate") {
             typesSet.add("subscription");
