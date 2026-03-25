@@ -17,7 +17,7 @@ interface SearchFilters {
   minRating?: number;
   platform?: string;
   providerIds?: number[]; // Streaming platform IDs (Netflix, Amazon, etc.)
-  accessType?: "subscription" | "free" | "ads" | "rent" | "buy";
+  accessType?: ("subscription" | "free" | "ads" | "rent" | "buy")[]; // Multiple access types (OR)
   sortBy?: "relevance" | "rating" | "year" | "popularity";
   sortDirection?: "asc" | "desc";
 }
@@ -208,6 +208,24 @@ async function getPopularMovies(filters?: SearchFilters, page: number = 1, query
       const providerIdsStr = filters.providerIds.join('|');
       url += `&with_watch_providers=${providerIdsStr}`;
       console.log("[DEBUG] Added with_watch_providers:", providerIdsStr);
+    }
+    if (filters?.accessType && filters.accessType.length > 0) {
+      // Map UI accessType to TMDB monetization types (comma-separated? Actually TMDB uses | for OR)
+      const monetizationMap: Record<string, string> = {
+        subscription: "flatrate",
+        free: "free",
+        ads: "ads",
+        rent: "rent",
+        buy: "buy"
+      };
+      const types = filters.accessType
+        .map(uiType => monetizationMap[uiType])
+        .filter(Boolean) as string[];
+      if (types.length > 0) {
+        // TMDB expects pipe-separated for OR
+        url += `&with_watch_monetization_types=${types.join('|')}`;
+        console.log("[DEBUG] Added with_watch_monetization_types:", types.join('|'));
+      }
     }
    if (filters?.yearFrom) {
      url += `&primary_release_date.gte=${filters.yearFrom}-01-01`;
@@ -433,6 +451,21 @@ async function getPopularTv(filters?: SearchFilters, page: number = 1, query?: s
       const providerIdsStr = filters.providerIds.join('|');
       url += `&with_watch_providers=${providerIdsStr}`;
       console.log("[DEBUG] Added with_watch_providers:", providerIdsStr);
+    }
+    if (filters?.accessType) {
+      // Map UI accessType to TMDB monetization type
+      const monetizationMap: Record<string, string> = {
+        subscription: "flatrate",
+        free: "free",
+        ads: "ads",
+        rent: "rent",
+        buy: "buy"
+      };
+      const monetizationType = monetizationMap[filters.accessType];
+      if (monetizationType) {
+        url += `&with_watch_monetization_types=${monetizationType}`;
+        console.log("[DEBUG] Added with_watch_monetization_types:", monetizationType);
+      }
     }
    if (filters?.yearFrom) {
      url += `&first_air_date.gte=${filters.yearFrom}-01-01`;

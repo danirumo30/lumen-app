@@ -7,12 +7,12 @@ export interface DiscoverFilters {
   genre?: string;
   yearFrom?: number;
   yearTo?: number;
+  minRating?: number;
   platform?: string;
-  providerIds?: number[]; // Multiple streaming providers
-  accessType?: "subscription" | "free" | "ads" | "rent" | "buy";
+  providerIds?: number[]; // Streaming platform IDs (Netflix, Amazon, etc.)
+  accessType?: ("subscription" | "free" | "ads" | "rent" | "buy")[]; // Multiple access types (OR)
   sortBy?: "relevance" | "rating" | "year" | "popularity";
   sortDirection?: "asc" | "desc";
-  minRating?: number;
 }
 
 interface DiscoverFiltersProps {
@@ -25,7 +25,7 @@ interface DiscoverFiltersProps {
   isLoadingProviders?: boolean;
   providersError?: string | null;
   onProviderChange?: (providerIds: number[]) => void;
-  onAccessTypeChange?: (accessType: "subscription" | "free" | "ads" | "rent" | "buy" | null) => void;
+  onAccessTypeChange?: (accessType: ("subscription" | "free" | "ads" | "rent" | "buy")[] | null) => void;
 }
 
 // Dropdown props extension
@@ -480,13 +480,12 @@ export function DiscoverFiltersComponent({
                    />
                  </div>
 
-                 {/* Access Type Dropdown - show when provider selected */}
+                 {/* Access Type Dropdown - multi-select, OR logic */}
                  {filters.providerIds && filters.providerIds.length > 0 && (
                    <div className="flex-shrink-0 snap-start">
                      <FilterDropdown
                        label="Tipo de acceso"
                        options={[
-                         { value: "all", label: "Todos" },
                          { value: "subscription", label: "Suscripción" },
                          { value: "free", label: "Gratis" },
                          { value: "ads", label: "Con Ads" },
@@ -495,15 +494,17 @@ export function DiscoverFiltersComponent({
                        ]}
                        value={filters.accessType || undefined}
                        onChange={(value) => {
-                         if (!value || value === "all") {
+                         // value is string[] | undefined (multiSelect)
+                         if (!value || value.length === 0) {
                            onAccessTypeChange?.(null);
                          } else {
-                           onAccessTypeChange?.(value as "subscription" | "free" | "ads" | "rent" | "buy");
+                           onAccessTypeChange?.(value as ("subscription" | "free" | "ads" | "rent" | "buy")[]);
                          }
                        }}
+                       multiSelect={true}
                        icon={
                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                          </svg>
                        }
                        dropdownId="accessType"

@@ -78,21 +78,14 @@ export function DiscoverClient() {
     }));
   }, []);
 
-  const handleAccessTypeChange = useCallback((accessType: "subscription" | "free" | "ads" | "rent" | "buy" | null) => {
+  const handleAccessTypeChange = useCallback((accessType: ("subscription" | "free" | "ads" | "rent" | "buy")[] | null) => {
     setFilters(prev => ({
       ...prev,
-      accessType: accessType || undefined,
+      accessType: accessType && accessType.length > 0 ? accessType : undefined,
     }));
   }, []);
 
-  // Compute allowed access types: show ALL types when any provider is selected
-  const availableAccessTypes = useMemo(() => {
-    if (filters.providerIds && filters.providerIds.length > 0) {
-      // All possible access types (TMDB monetization types mapped to UI)
-      return ["subscription", "free", "ads", "rent", "buy"] as ("subscription" | "free" | "ads" | "rent" | "buy")[];
-    }
-    return [] as ("subscription" | "free" | "ads" | "rent" | "buy")[];
-  }, [filters.providerIds]);
+   // No availableAccessTypes needed; dropdown always shows all options when providers selected
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-zinc-950 to-black pt-16">
@@ -135,10 +128,9 @@ export function DiscoverClient() {
                availableProviders={selectedType !== "game" ? availableProviders : []}
                isLoadingProviders={isLoadingProviders}
                providersError={providersError}
-               onProviderChange={handleProviderChange}
-               onAccessTypeChange={handleAccessTypeChange}
-               availableAccessTypes={availableAccessTypes}
-             />
+                onProviderChange={handleProviderChange}
+                onAccessTypeChange={handleAccessTypeChange}
+              />
           </div>
         </div>
       </div>

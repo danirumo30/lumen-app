@@ -52,12 +52,21 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
   const applyStreamingFilters = useCallback((items: SearchResult[]) => {
     if (type !== "movie" && type !== "tv") return items;
     const { accessType } = filters;
-    return items.filter(item => {
-      if (accessType && !item.providers?.some((p: any) => p.type === accessType)) {
-        return false;
-      }
-      return true;
-    });
+    // accessType is now an array of UI types (subscription, free, ads, rent, buy)
+    // p.type from providers is TMDB type (flatrate, free, ads, rent, buy)
+    if (accessType && accessType.length > 0) {
+      return items.filter(item => {
+        return item.providers?.some((p: any) => {
+          const ptype = p.type; // 'flatrate' | 'free' | 'ads' | 'rent' | 'buy'
+          // Map UI to TMDB: subscription -> flatrate, others match directly
+          return accessType.some(uiType => {
+            if (uiType === 'subscription') return ptype === 'flatrate';
+            return ptype === uiType;
+          });
+        });
+      });
+    }
+    return items;
   }, [type, filters]);
 
   // Fetch results
