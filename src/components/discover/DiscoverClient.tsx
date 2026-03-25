@@ -102,7 +102,10 @@ export function DiscoverClient() {
         });
       }
     });
-    return Array.from(typesSet) as ("subscription" | "free" | "ads" | "rent" | "buy")[];
+    const result = Array.from(typesSet) as ("subscription" | "free" | "ads" | "rent" | "buy")[];
+    // Debug
+    console.log("[DEBUG] availableAccessTypes computed:", result, "providerIds:", filters.providerIds);
+    return result;
   }, [filters.providerIds, availableProviders]);
 
   return (

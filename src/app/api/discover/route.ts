@@ -204,8 +204,8 @@ async function getPopularMovies(filters?: SearchFilters, page: number = 1, query
      }
    }
     if (filters?.providerIds && filters.providerIds.length > 0) {
-      // TMDB expects comma-separated provider IDs
-      const providerIdsStr = filters.providerIds.join(',');
+      // TMDB expects pipe-separated provider IDs for OR
+      const providerIdsStr = filters.providerIds.join('|');
       url += `&with_watch_providers=${providerIdsStr}`;
       console.log("[DEBUG] Added with_watch_providers:", providerIdsStr);
     }
@@ -430,7 +430,7 @@ async function getPopularTv(filters?: SearchFilters, page: number = 1, query?: s
      }
    }
     if (filters?.providerIds && filters.providerIds.length > 0) {
-      const providerIdsStr = filters.providerIds.join(',');
+      const providerIdsStr = filters.providerIds.join('|');
       url += `&with_watch_providers=${providerIdsStr}`;
       console.log("[DEBUG] Added with_watch_providers:", providerIdsStr);
     }
