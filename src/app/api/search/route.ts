@@ -6,6 +6,20 @@ const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 const IGDB_ACCESS_TOKEN = process.env.IGDB_ACCESS_TOKEN || "";
 const IGDB_CLIENT_ID = process.env.TWITCH_CLIENT_ID || "";
 
+// IGDB genre IDs mapping (Spanish UI -> IGDB numeric IDs)
+const IGDB_GENRE_IDS: Record<string, number> = {
+  "Acción": 4,
+  "Aventura": 8,
+  "RPG": 12,
+  "Estrategia": 15,
+  "Deportes": 13,
+  "Carreras": 14,
+  "Puzzle": 9,
+  "Horror": 20,
+  "Supervivencia": 35,
+  "Lucha": 25
+};
+
 export const runtime = "nodejs";
 
 type SearchType = "all" | "movie" | "tv" | "game" | "user";
@@ -90,33 +104,67 @@ async function getMovieProviders(movieId: number): Promise<{ id: number; name: s
 // Search movies on TMDB with filters
 async function searchMovies(query: string, page = 1, filters?: SearchFilters) {
   // Build TMDB query params
+  const hasQuery = query && query.trim().length >= 2;
   let url = `${TMDB_BASE_URL}/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}&page=${page}&language=es-ES`;
-  
-  // Add genre filter if specified - complete mapping from DiscoverFilters.tsx
-  const genreMap: Record<string, number> = {
-    "Acción": 28,
-    "Animación": 16,
-    "Aventura": 12,
-    "Bélica": 10752,
-    "Ciencia ficción": 878,
-    "Comedia": 35,
-    "Crimen": 80,
-    "Documental": 99,
-    "Drama": 18,
-    "Familia": 10751,
-    "Fantasía": 14,
-    "Historia": 36,
-    "Misterio": 9648,
-    "Música": 10402,
-    "Película de TV": 10770,
-    "Romance": 10749,
-    "Suspense": 53,
-    "Terror": 27,
-    "Western": 37
-  };
-  
-  if (filters?.genre && genreMap[filters.genre]) {
-    url += `&with_genres=${genreMap[filters.genre]}`;
+
+  // Genre filter: only for discover (no search)
+  if (!hasQuery && filters?.genre) {
+    const genreMap: Record<string, number> = {
+      "Acción": 28, "Animación": 16, "Aventura": 12, "Bélica": 10752,
+      "Ciencia ficción": 878, "Comedia": 35, "Crimen": 80, "Documental": 99,
+      "Drama": 18, "Familia": 10751, "Fantasía": 14, "Historia": 36,
+      "Misterio": 9648, "Música": 10402, "Película de TV": 10770,
+      "Romance": 10749, "Suspense": 53, "Terror": 27, "Western": 37
+    };
+    if (genreMap[filters.genre]) {
+      url += `&with_genres=${genreMap[filters.genre]}`;
+    }
+  }
+
+  // Year filter: if searching, use single year; if discover, use range
+  if (filters?.yearFrom) {
+    if (hasQuery && !filters.yearTo) {
+      url += `&year=${filters.yearFrom}`;
+    } else if (!hasQuery) {
+      url += `&primary_release_date.gte=${filters.yearFrom}-01-01`;
+    }
+  }
+  if (!hasQuery && filters?.yearTo) {
+    url += `&primary_release_date.lte=${filters.yearTo}-12-31`;
+  }
+
+  // Minimum rating: only for discover
+  if (!hasQuery && filters?.minRating) {
+    url += `&vote_average.gte=${filters.minRating}`;
+  }
+
+  // Sorting
+  if (filters?.sortBy) {
+    const direction = filters.sortDirection || "desc";
+    let sortField: string;
+    if (hasQuery) {
+      // In search, TMDB does not support vote_average; use vote_count for rating
+      const searchSortMap: Record<string, string> = {
+        "popularity": "popularity",
+        "rating": "vote_count",
+        "year": "release_date",
+        "relevance": "popularity"
+      };
+      sortField = searchSortMap[filters.sortBy] || "popularity";
+    } else {
+      // Discover supports vote_average
+      const discoverSortMap: Record<string, string> = {
+        "popularity": "popularity",
+        "rating": "vote_average",
+        "year": "release_date",
+        "relevance": "popularity"
+      };
+      sortField = discoverSortMap[filters.sortBy] || "popularity";
+    }
+    url += `&sort_by=${sortField}.${direction}`;
+  } else if (!hasQuery && filters?.genre) {
+    // Default to popularity when filtering by genre on discover
+    url += "&sort_by=popularity.desc";
   }
   
   // Add year filter
@@ -228,30 +276,66 @@ async function getTvProviders(tvId: number): Promise<{ id: number; name: string;
 
 // Search TV on TMDB with filters
 async function searchTv(query: string, page = 1, filters?: SearchFilters) {
+  console.log("[searchTv] called with:", { query, page, filters });
+  const hasQuery = query && query.trim().length >= 2;
   let url = `${TMDB_BASE_URL}/search/tv?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}&page=${page}&language=es-ES`;
-  
-  // Genre map for TV - synchronized with DiscoverFilters.tsx
-  const genreMap: Record<string, number> = {
-    "Acción": 10759,
-    "Animación": 16,
-    "Comedia": 35,
-    "Crimen": 80,
-    "Documental": 99,
-    "Drama": 18,
-    "Familia": 10751,
-    "Kids": 10762,
-    "Misterio & Terror": 9648, // Maps to Mystery which includes horror
-    "News": 10763,
-    "Reality": 10764,
-    "Sci-Fi & Fantasía": 10765,
-    "Soap": 10766,
-    "Talk": 10767,
-    "Guerra y política": 10768,
-    "Western": 37
-  };
-  
-  if (filters?.genre && genreMap[filters.genre]) {
-    url += `&with_genres=${genreMap[filters.genre]}`;
+
+  // Genre filter: only for discover (no search)
+  if (!hasQuery && filters?.genre) {
+    const genreMap: Record<string, number> = {
+      "Acción": 10759, "Animación": 16, "Comedia": 35, "Crimen": 80,
+      "Documental": 99, "Drama": 18, "Familia": 10751, "Kids": 10762,
+      "Misterio & Terror": 9648, "News": 10763, "Reality": 10764,
+      "Sci-Fi & Fantasía": 10765, "Soap": 10766, "Talk": 10767,
+      "Guerra y política": 10768, "Western": 37
+    };
+    if (genreMap[filters.genre]) {
+      url += `&with_genres=${genreMap[filters.genre]}`;
+    }
+  }
+
+  // Year filter: if searching, use single first_air_date_year; if discover, use range
+  if (filters?.yearFrom) {
+    if (hasQuery && !filters.yearTo) {
+      url += `&first_air_date_year=${filters.yearFrom}`;
+    } else if (!hasQuery) {
+      url += `&first_air_date.gte=${filters.yearFrom}-01-01`;
+    }
+  }
+  if (!hasQuery && filters?.yearTo) {
+    url += `&first_air_date.lte=${filters.yearTo}-12-31`;
+  }
+
+  // Minimum rating: only for discover
+  if (!hasQuery && filters?.minRating) {
+    url += `&vote_average.gte=${filters.minRating}`;
+  }
+
+  // Sorting
+  if (filters?.sortBy) {
+    const direction = filters.sortDirection || "desc";
+    let sortField: string;
+    if (hasQuery) {
+      // In search, TMDB does not support vote_average; use vote_count for rating
+      const searchSortMap: Record<string, string> = {
+        "popularity": "popularity",
+        "rating": "vote_count",
+        "year": "first_air_date",
+        "relevance": "popularity"
+      };
+      sortField = searchSortMap[filters.sortBy] || "popularity";
+    } else {
+      const discoverSortMap: Record<string, string> = {
+        "popularity": "popularity",
+        "rating": "vote_average",
+        "year": "first_air_date",
+        "relevance": "popularity"
+      };
+      sortField = discoverSortMap[filters.sortBy] || "popularity";
+    }
+    url += `&sort_by=${sortField}.${direction}`;
+  } else if (!hasQuery && filters?.genre) {
+    url += "&sort_by=popularity.desc";
   }
   
   if (filters?.yearFrom) {
@@ -331,8 +415,8 @@ async function searchGames(query: string, page: number = 1, filters?: SearchFilt
   let whereClause = "";
   const conditions: string[] = [];
   
-   if (filters?.genre) {
-     conditions.push(`genres.name = "${filters.genre}"`);
+   if (filters?.genre && IGDB_GENRE_IDS[filters.genre]) {
+     conditions.push(`genres = ${IGDB_GENRE_IDS[filters.genre]}`);
    }
    if (filters?.platform) {
      // Use ID mapping for reliable filtering (same as getPopularGames)
@@ -379,9 +463,9 @@ async function searchGames(query: string, page: number = 1, filters?: SearchFilt
     whereClause = " where " + conditions.join(" & ");
   }
   
-   // Sorting
+   // Sorting: only allowed when there is NO search query (IGDB error when both)
    let sortClause = "";
-   if (filters?.sortBy) {
+   if (filters?.sortBy && !query) {
      const direction = filters.sortDirection || "desc";
      let sortField: string;
      if (filters.sortBy === "rating") {
@@ -389,9 +473,9 @@ async function searchGames(query: string, page: number = 1, filters?: SearchFilt
      } else if (filters.sortBy === "year") {
        sortField = "first_release_date";
      } else if (filters.sortBy === "popularity" || filters.sortBy === "relevance") {
-       sortField = "rating"; // IGDB rating as popularity proxy
+       sortField = "rating";
      } else {
-       sortField = "rating"; // default
+       sortField = "rating";
      }
      sortClause = ` sort ${sortField} ${direction};`;
    }

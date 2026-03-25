@@ -22,7 +22,7 @@ export function DiscoverClient() {
   // Clear filters when changing type
   const handleTypeChange = useCallback((newType: MediaType) => {
     setSelectedType(newType);
-    setFilters({}); // Clear filters on type change
+    // setFilters({}); // Removed: keep filters when changing tabs for better UX
   }, []);
 
   return (
@@ -56,14 +56,15 @@ export function DiscoverClient() {
             <DiscoverTypeChips selected={selectedType} onChange={handleTypeChange} />
           </div>
 
-          {/* Filters */}
-          <div className="mt-4 flex justify-center">
-            <DiscoverFiltersComponent
-              type={selectedType}
-              filters={filters}
-              onChange={setFilters}
-            />
-          </div>
+           {/* Filters */}
+           <div className="mt-4 flex justify-center">
+             <DiscoverFiltersComponent
+               type={selectedType}
+               filters={filters}
+               onChange={setFilters}
+               query={query}
+             />
+           </div>
         </div>
       </div>
 

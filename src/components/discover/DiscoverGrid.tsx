@@ -48,12 +48,12 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
 
-  // Reset page when query, type, or filters change
-  useEffect(() => {
-    setPage(1);
-    setResults([]);
-    setHasMore(false); // Reset hasMore when filters change
-  }, [query, type, filters]);
+   // Reset page when query, type, or filters change
+   useEffect(() => {
+     setPage(1);
+     setHasMore(false); // Reset hasMore when filters change
+     setIsLoading(true); // Show skeleton only if no results (handled by conditional render)
+   }, [query, type, filters]);
 
    // Load more handler
    const loadMore = useCallback(() => {
@@ -218,7 +218,7 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
            setIsLoading(false);
          }
        }
-     }, 300); // 300ms debounce
+      }, 150); // 150ms debounce for better responsiveness
 
      return () => {
        clearTimeout(timer);

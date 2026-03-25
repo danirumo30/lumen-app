@@ -17,6 +17,21 @@ interface DiscoverFiltersProps {
   type: MediaType;
   filters: DiscoverFilters;
   onChange: (filters: DiscoverFilters) => void;
+  query?: string;
+}
+
+// Dropdown props extension
+interface FilterDropdownProps {
+  label: string;
+  options: { value: string; label: string }[];
+  value: string | undefined;
+  onChange: (value: string | undefined) => void;
+  icon?: React.ReactNode;
+  scrollToValue?: string;
+  sortDirection?: "asc" | "desc";
+  onSortDirectionChange?: (direction: "asc" | "desc") => void;
+  disabled?: boolean;
+  title?: string;
 }
 
 const genres = {
@@ -62,17 +77,21 @@ function FilterDropdown({
   onChange,
   icon,
   scrollToValue,
-  sortDirection, // New prop
-  onSortDirectionChange, // New prop
+  sortDirection,
+  onSortDirectionChange,
+  disabled = false,
+  title,
 }: {
   label: string;
   options: { value: string; label: string }[];
-  value: string | undefined; // Can be undefined for "Ordenar Por"
-  onChange: (value: string | undefined) => void; // Can accept undefined
+  value: string | undefined;
+  onChange: (value: string | undefined) => void;
   icon?: React.ReactNode;
   scrollToValue?: string;
-  sortDirection?: "asc" | "desc"; // New prop
-  onSortDirectionChange?: (direction: "asc" | "desc") => void; // New prop
+  sortDirection?: "asc" | "desc";
+  onSortDirectionChange?: (direction: "asc" | "desc") => void;
+  disabled?: boolean;
+  title?: string;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -116,12 +135,14 @@ function FilterDropdown({
   return (
     <div ref={dropdownRef} className="relative">
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        disabled={disabled}
+        title={title}
         className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-medium transition-all duration-200 ${
           value && value !== ""
             ? accentClass
             : "bg-zinc-800/60 text-zinc-400 hover:bg-zinc-700 hover:text-white border border-zinc-700/50"
-        }`}
+        } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
       >
         {icon && <span className={`w-4 h-4 ${sortIconRotationClass}`}>{icon}</span>}
         <span>{displayLabel}</span>
@@ -177,7 +198,7 @@ function FilterDropdown({
   );
 }
 
-export function DiscoverFiltersComponent({ type, filters, onChange }: DiscoverFiltersProps) {
+export function DiscoverFiltersComponent({ type, filters, onChange, query }: DiscoverFiltersProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   // Only show filters when a specific type is selected
@@ -185,9 +206,19 @@ export function DiscoverFiltersComponent({ type, filters, onChange }: DiscoverFi
     return null;
   }
 
+  const isSearching = !!(query && query.trim().length >= 2);
+  const isMovieOrTv = type === "movie" || type === "tv";
+  const isGenreDisabled = isSearching && isMovieOrTv;
+  const isYearDisabled = isSearching && isMovieOrTv;
+
   const typeGenres = genres[type as keyof typeof genres] || [];
   const typePlatforms = platforms[type as keyof typeof platforms] || [];
   const typeYears = getYearsForType(type);
+
+  // For search in movies/TV, limit sort options to those supported by TMDB search
+  const availableSortOptions = (isSearching && isMovieOrTv)
+    ? sortOptions.filter(opt => opt.value === "popularity" || opt.value === "year")
+    : sortOptions;
 
   const updateFilter = <K extends keyof DiscoverFilters>(key: K, value: DiscoverFilters[K]) => {
     if (value === undefined || value === null) {
@@ -250,6 +281,8 @@ export function DiscoverFiltersComponent({ type, filters, onChange }: DiscoverFi
             options={genreOptions}
             value={filters.genre}
             onChange={(value) => updateFilter("genre", !value || value === "all" ? undefined : value)}
+            disabled={isSearching && (type === "movie" || type === "tv")}
+            title={isSearching && (type === "movie" || type === "tv") ? "No disponible durante búsqueda" : undefined}
             icon={
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
@@ -273,64 +306,100 @@ export function DiscoverFiltersComponent({ type, filters, onChange }: DiscoverFi
           />
         )}
 
-        {/* Year From */}
-        <FilterDropdown
-          label="Desde"
-          options={yearFromOptions}
-          value={filters.yearFrom ? String(filters.yearFrom) : undefined}
-          onChange={(value) => updateFilter("yearFrom", !value || value === "all" ? undefined : parseInt(value))}
-          scrollToValue={String(currentYear)}
-          icon={
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-          }
-        />
+         {/* Year filter: single dropdown for search in movies/tv; dual dropdowns otherwise */}
+         {isMovieOrTv && isSearching ? (
+           <FilterDropdown
+             label="Año"
+             options={typeYears.map(y => ({ value: String(y), label: String(y) }))}
+             value={filters.yearFrom ? String(filters.yearFrom) : undefined}
+             onChange={(value) => {
+               updateFilter("yearFrom", !value || value === "all" ? undefined : parseInt(value));
+               // Clear yearTo to avoid mixing modes
+               if (filters.yearTo) {
+                 const { yearTo, ...rest } = filters;
+                 onChange(rest);
+               }
+             }}
+             scrollToValue={String(currentYear)}
+             icon={
+               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+               </svg>
+             }
+           />
+         ) : (
+           <>
+             {/* Year From */}
+             <FilterDropdown
+               label="Desde"
+               options={yearFromOptions}
+               value={filters.yearFrom ? String(filters.yearFrom) : undefined}
+               onChange={(value) => updateFilter("yearFrom", !value || value === "all" ? undefined : parseInt(value))}
+               scrollToValue={String(currentYear)}
+               disabled={isYearDisabled}
+               title={isYearDisabled ? "No disponible durante búsqueda" : undefined}
+               icon={
+                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                 </svg>
+               }
+             />
+             {/* Year To */}
+             <FilterDropdown
+               label="Hasta"
+               options={yearToOptions}
+               value={filters.yearTo ? String(filters.yearTo) : undefined}
+               onChange={(value) => updateFilter("yearTo", !value || value === "all" ? undefined : parseInt(value))}
+               scrollToValue={String(currentYear)}
+               disabled={isYearDisabled}
+               title={isYearDisabled ? "No disponible durante búsqueda" : undefined}
+             />
+           </>
+         )}
 
-        {/* Year To */}
-        <FilterDropdown
-          label="Hasta"
-          options={yearToOptions}
-          value={filters.yearTo ? String(filters.yearTo) : undefined}
-          onChange={(value) => updateFilter("yearTo", !value || value === "all" ? undefined : parseInt(value))}
-          scrollToValue={String(currentYear)}
-        />
-
-        {/* Sort By */}
-        <FilterDropdown
-          label="Ordenar"
-          options={sortOptions}
-          value={filters.sortBy}
-          onChange={(value) => {
-            if (value) {
-              if (filters.sortBy === value) {
-                // Toggle direction
-                updateFilter("sortDirection", filters.sortDirection === "asc" ? "desc" : "asc");
-              } else {
-                // New option: update both sortBy and sortDirection in one go
-                onChange({ ...filters, sortBy: value as DiscoverFilters["sortBy"], sortDirection: "asc" });
-              }
-            } else {
-              // Clear both
-              const { sortBy, sortDirection, ...rest } = filters;
-              onChange(rest);
-            }
-          }}
-          sortDirection={filters.sortDirection}
-          onSortDirectionChange={(direction) => updateFilter("sortDirection", direction)}
-          icon={
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
-            </svg>
-          }
-        />
+         {/* Sort By */}
+         <FilterDropdown
+           label="Ordenar"
+           options={availableSortOptions}
+           value={filters.sortBy}
+           onChange={(value) => {
+             if (value) {
+               if (filters.sortBy === value) {
+                 // Toggle direction
+                 updateFilter("sortDirection", filters.sortDirection === "asc" ? "desc" : "asc");
+               } else {
+                 // New option: update both sortBy and sortDirection in one go
+                 onChange({ ...filters, sortBy: value as DiscoverFilters["sortBy"], sortDirection: "asc" });
+               }
+             } else {
+               // Clear both
+               const { sortBy, sortDirection, ...rest } = filters;
+               onChange(rest);
+             }
+           }}
+           sortDirection={filters.sortDirection}
+           onSortDirectionChange={(direction) => updateFilter("sortDirection", direction)}
+           disabled={isSearching && type === "game"}
+           title={isSearching && type === "game" ? "No disponible durante búsqueda (IGDB no soporta)" : undefined}
+           icon={
+             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+             </svg>
+           }
+         />
 
         {/* Clear Filters */}
         {hasActiveFilters && (
-          <button
-            onClick={() => onChange({})}
-            className="text-sm text-zinc-500 hover:text-white transition-colors px-2"
-          >
+      <button
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        disabled={disabled}
+        title={title}
+        className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+          value && value !== ""
+            ? accentClass
+            : "bg-zinc-800/60 text-zinc-400 hover:bg-zinc-700 hover:text-white border border-zinc-700/50"
+        } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+      >
             Limpiar
           </button>
         )}
