@@ -112,8 +112,8 @@ export function DiscoverClient() {
             </div>
           </div>
 
-          {/* Filters - already scrollable, just adjust margin */}
-          <div className="mt-2 flex justify-center">
+          {/* Filters - scrollable horizontal on mobile */}
+          <div className="mt-2 flex justify-center overflow-x-auto hide-scrollbar">
             <DiscoverFiltersComponent
                 type={selectedType}
                 filters={filters}

@@ -65,11 +65,15 @@ body {
 }
 
 /* Hide scrollbar for any element (horizontal or vertical) */
-.hide-scrollbar, .dropdown-scrollbar {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+.hide-scrollbar,
+.dropdown-scrollbar {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+  scrollbar-gutter: stable !important;
 }
 .hide-scrollbar::-webkit-scrollbar,
 .dropdown-scrollbar::-webkit-scrollbar {
-  display: none;
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
