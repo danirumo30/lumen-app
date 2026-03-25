@@ -95,8 +95,16 @@ export async function GET(request: Request) {
       }
     }
 
-    // Deduplicate by provider_id, collecting all types
-    const providerMap = new Map<number, { id: number; name: string; logoUrl: string | null; types: string[] }>();
+    // Deduplicate by provider_id, collecting all types and keeping lowest display_priority
+    interface ProviderWithPriority {
+      id: number;
+      name: string;
+      logoUrl: string | null;
+      types: string[];
+      displayPriority: number;
+    }
+
+    const providerMap = new Map<number, ProviderWithPriority>();
 
     allProviders.forEach(p => {
       const existing = providerMap.get(p.provider_id);
@@ -104,24 +112,33 @@ export async function GET(request: Request) {
         if (!existing.types.includes(p.type)) {
           existing.types.push(p.type);
         }
+        // Keep the lowest display_priority (most important)
+        if (p.display_priority !== undefined && p.display_priority < existing.displayPriority) {
+          existing.displayPriority = p.display_priority;
+        }
       } else {
         providerMap.set(p.provider_id, {
           id: p.provider_id,
           name: p.provider_name,
           logoUrl: p.logo_path ? `https://image.tmdb.org/t/p/original${p.logo_path}` : null,
           types: [p.type],
+          displayPriority: p.display_priority ?? 999, // Default high priority for missing values
         });
       }
     });
 
-    const result = Array.from(providerMap.values()).map(p => ({
+    // Convert to array, sort by display_priority ascending (0, 1, 2, ...)
+    const sortedProviders: ProviderWithPriority[] = Array.from(providerMap.values())
+      .sort((a, b) => a.displayPriority - b.displayPriority);
+
+    const result = sortedProviders.map(p => ({
       id: p.id,
       name: p.name,
       logoUrl: p.logoUrl,
       types: p.types as ("subscription" | "free" | "ads" | "rent" | "buy")[],
     }));
 
-    console.log("[watch-providers] Final deduped providers:", result.length);
+    console.log("[watch-providers] Final sorted providers (by display_priority):", sortedProviders.map(p => ({ name: p.name, priority: p.displayPriority })));
     return NextResponse.json(result);
   } catch (error) {
     console.error("Error fetching watch providers:", error);
