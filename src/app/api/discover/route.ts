@@ -16,6 +16,7 @@ interface SearchFilters {
   minRating?: number;
   platform?: string;
   sortBy?: "relevance" | "rating" | "year" | "popularity";
+  sortDirection?: "asc" | "desc";
 }
 
 // Get IGDB access token
@@ -164,15 +165,16 @@ async function getPopularMovies(filters?: SearchFilters, page: number = 1) {
   }
   
   // Add sorting - default to popularity when filtering by genre/platform
-  const sortMap: Record<string, string> = {
-    "popularity": "popularity.desc",
-    "rating": "vote_average.desc",
-    "year": "release_date.desc",
-    "relevance": "popularity.desc"
+  const sortFieldMap: Record<string, string> = {
+    "popularity": "popularity",
+    "rating": "vote_average",
+    "year": "release_date",
+    "relevance": "popularity"
   };
   
-  if (filters?.sortBy && sortMap[filters.sortBy]) {
-    url += `&sort_by=${sortMap[filters.sortBy]}`;
+  if (filters?.sortBy && sortFieldMap[filters.sortBy]) {
+    const direction = filters.sortDirection || "desc"; // Default to desc for backward compatibility
+    url += `&sort_by=${sortFieldMap[filters.sortBy]}.${direction}`;
   } else if (filters?.genre || filters?.platform) {
     // Default to popularity when filtering
     url += "&sort_by=popularity.desc";
@@ -341,15 +343,16 @@ async function getPopularTv(filters?: SearchFilters, page: number = 1) {
   }
   
   // Add sorting - default to popularity when filtering by genre/platform
-  const sortMap: Record<string, string> = {
-    "popularity": "popularity.desc",
-    "rating": "vote_average.desc",
-    "year": "first_air_date.desc",
-    "relevance": "popularity.desc"
+  const sortFieldMap: Record<string, string> = {
+    "popularity": "popularity",
+    "rating": "vote_average",
+    "year": "first_air_date",
+    "relevance": "popularity"
   };
   
-  if (filters?.sortBy && sortMap[filters.sortBy]) {
-    url += `&sort_by=${sortMap[filters.sortBy]}`;
+  if (filters?.sortBy && sortFieldMap[filters.sortBy]) {
+    const direction = filters.sortDirection || "desc"; // Default to desc for backward compatibility
+    url += `&sort_by=${sortFieldMap[filters.sortBy]}.${direction}`;
   } else if (filters?.genre || filters?.platform) {
     // Default to popularity when filtering
     url += "&sort_by=popularity.desc";
@@ -538,7 +541,9 @@ async function getPopularGames(filters?: SearchFilters, page: number = 1) {
     // No filters: sort by release date (latest releases)
     sortValue = "first_release_date";
   }
-  queryBody += " sort " + sortValue + " desc;";
+  
+  const direction = filters?.sortDirection || "desc"; // Default to desc for backward compatibility
+  queryBody += " sort " + sortValue + " " + direction + ";";
   
   // Add offset for pagination (20 per page)
   const offset = (page - 1) * 20;
