@@ -26,7 +26,6 @@ interface DiscoverFiltersProps {
   providersError?: string | null;
   onProviderChange?: (providerIds: number[]) => void;
   onAccessTypeChange?: (accessType: "subscription" | "free" | "ads" | "rent" | "buy" | null) => void;
-  availableAccessTypes?: ("subscription" | "free" | "ads" | "rent" | "buy")[];
 }
 
 // Dropdown props extension
@@ -298,13 +297,12 @@ export function DiscoverFiltersComponent({
   filters,
   onChange,
   query,
-  availableProviders = [],
-  isLoadingProviders = false,
-  providersError = null,
-  onProviderChange,
-  onAccessTypeChange,
-  availableAccessTypes = [],
-}: DiscoverFiltersProps) {
+   availableProviders = [],
+   isLoadingProviders = false,
+   providersError = null,
+   onProviderChange,
+   onAccessTypeChange,
+ }: DiscoverFiltersProps) {
   // Estado para saber cuál dropdown está abierto (solo uno a la vez)
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
 
@@ -321,41 +319,7 @@ export function DiscoverFiltersComponent({
     }
   };
 
-  // Access type config (matching WatchProvidersSection)
-  const accessTypeConfig: Record<string, { label: string; bgActive: string; textActive: string; borderActive: string }> = {
-    subscription: {
-      label: "Suscripción",
-      bgActive: "bg-emerald-500",
-      textActive: "text-emerald-400",
-      borderActive: "border-emerald-500/50",
-    },
-    free: {
-      label: "Gratis",
-      bgActive: "bg-cyan-500",
-      textActive: "text-cyan-400",
-      borderActive: "border-cyan-500/50",
-    },
-    ads: {
-      label: "Con Ads",
-      bgActive: "bg-amber-500",
-      textActive: "text-amber-400",
-      borderActive: "border-amber-500/50",
-    },
-    rent: {
-      label: "Alquilar",
-      bgActive: "bg-violet-500",
-      textActive: "text-violet-400",
-      borderActive: "border-violet-500/50",
-    },
-    buy: {
-      label: "Comprar",
-      bgActive: "bg-rose-500",
-      textActive: "text-rose-400",
-      borderActive: "border-rose-500/50",
-    },
-  };
-
-  // Si el tipo es "all" o "user", no mostrar filtros (pero los hooks ya se ejecutaron)
+   // Si el tipo es "all" o "user", no mostrar filtros (pero los hooks ya se ejecutaron)
   if (type === "all" || type === "user") {
     return null;
   }
@@ -514,39 +478,44 @@ export function DiscoverFiltersComponent({
                      isOpen={openDropdownId === "provider"}
                      onOpenChange={handleDropdownToggle}
                    />
-                </div>
+                 </div>
 
-                {/* Access type pills - show when provider selected */}
-                {filters.providerIds && filters.providerIds.length > 0 && availableAccessTypes && availableAccessTypes.length > 0 && (
-                  <div className="flex-shrink-0 snap-start flex items-center gap-1">
-                    {availableAccessTypes.map(accessType => {
-                      const typeConf = accessTypeConfig[accessType];
-                      // Skip unknown access types
-                      if (!typeConf) return null;
-                      const isActive = filters.accessType === accessType;
-                      return (
-                        <button
-                          key={accessType}
-                          onClick={() => onAccessTypeChange?.(isActive ? null : accessType)}
-                          className={`
-                            px-2 py-1 rounded-full text-[10px] font-medium whitespace-nowrap
-                            transition-all duration-200
-                            ${isActive
-                              ? `${typeConf.bgActive}/20 ${typeConf.textActive} border ${typeConf.borderActive} shadow-sm`
-                              : "text-zinc-500 hover:text-zinc-300 hover:bg-white/5 border border-transparent"
-                            }
-                          `}
-                        >
-                          {typeConf.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </>
-            )}
-          </>
-        )}
+                 {/* Access Type Dropdown - show when provider selected */}
+                 {filters.providerIds && filters.providerIds.length > 0 && (
+                   <div className="flex-shrink-0 snap-start">
+                     <FilterDropdown
+                       label="Tipo de acceso"
+                       options={[
+                         { value: "all", label: "Todos" },
+                         { value: "subscription", label: "Suscripción" },
+                         { value: "free", label: "Gratis" },
+                         { value: "ads", label: "Con Ads" },
+                         { value: "rent", label: "Alquilar" },
+                         { value: "buy", label: "Comprar" },
+                       ]}
+                       value={filters.accessType || undefined}
+                       onChange={(value) => {
+                         if (!value || value === "all") {
+                           onAccessTypeChange?.(null);
+                         } else {
+                           onAccessTypeChange?.(value as "subscription" | "free" | "ads" | "rent" | "buy");
+                         }
+                       }}
+                       icon={
+                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+                         </svg>
+                       }
+                       dropdownId="accessType"
+                       isOpen={openDropdownId === "accessType"}
+                       onOpenChange={handleDropdownToggle}
+                     />
+                   </div>
+                 )}
+               </>
+             )}
+           </>
+         )}
 
         {/* Platform Dropdown (for games) */}
         {type === "game" && typePlatforms.length > 0 && (
