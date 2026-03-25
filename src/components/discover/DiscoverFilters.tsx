@@ -373,7 +373,7 @@ export function DiscoverFiltersComponent({
     >
       {/* Filter Bar - Always visible like franchise page */}
       <div
-        className="flex sm:flex-wrap items-center justify-start sm:justify-center gap-2 overflow-x-auto sm:overflow-x-visible overflow-y-visible snap-x snap-mandatory -mx-1 px-1 pb-2 relative z-20 hide-scrollbar"
+        className="flex sm:flex-wrap items-center justify-start sm:justify-center gap-2 overflow-x-auto sm:overflow-x-visible overflow-y-visible snap-x snap-mandatory pb-2 relative z-20 hide-scrollbar"
         style={{
           touchAction: openDropdownId ? 'pan-y' : 'auto', // Disable horizontal scroll when any dropdown open
         }}
