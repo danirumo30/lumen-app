@@ -85,32 +85,14 @@ export function DiscoverClient() {
     }));
   }, []);
 
-  // Compute allowed access types for currently selected providers
+  // Compute allowed access types: show ALL types when any provider is selected
   const availableAccessTypes = useMemo(() => {
-    if (!filters.providerIds || filters.providerIds.length === 0) return [];
-    // Get union of all types from selected providers, mapping TMDB types to UI types
-    const typesSet = new Set<string>();
-    filters.providerIds.forEach(id => {
-      const provider = availableProviders.find(p => p.id === id);
-      if (provider) {
-        console.log(`[DEBUG] Provider ${provider.name} types:`, provider.types);
-        provider.types.forEach(t => {
-          console.log(`[DEBUG] Processing type:`, t);
-          // Map TMDB type to UI accessType
-          if (t === "flatrate") {
-            typesSet.add("subscription");
-          } else if (t === "free" || t === "ads" || t === "rent" || t === "buy") {
-            typesSet.add(t);
-          }
-          // Ignore other types
-        });
-      }
-    });
-    const result = Array.from(typesSet) as ("subscription" | "free" | "ads" | "rent" | "buy")[];
-    // Debug
-    console.log("[DEBUG] availableAccessTypes computed:", result, "providerIds:", filters.providerIds);
-    return result;
-  }, [filters.providerIds, availableProviders]);
+    if (filters.providerIds && filters.providerIds.length > 0) {
+      // All possible access types (TMDB monetization types mapped to UI)
+      return ["subscription", "free", "ads", "rent", "buy"] as ("subscription" | "free" | "ads" | "rent" | "buy")[];
+    }
+    return [] as ("subscription" | "free" | "ads" | "rent" | "buy")[];
+  }, [filters.providerIds]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-zinc-950 to-black pt-16">
