@@ -45,7 +45,7 @@ async function getIgdbToken(): Promise<string> {
 }
 
 // Get streaming providers for a movie
-async function getMovieProviders(movieId: number): Promise<{ id: number; name: string; logoUrl: string }[]> {
+async function getMovieProviders(movieId: number): Promise<{ id: number; name: string; logoUrl: string; type: string }[]> {
   try {
     const response = await fetch(
       `${TMDB_BASE_URL}/movie/${movieId}/watch/providers?api_key=${TMDB_API_KEY}`,
@@ -59,10 +59,13 @@ async function getMovieProviders(movieId: number): Promise<{ id: number; name: s
     
     if (!providers) return [];
     
+    // Build array with type information
     const allProviders = [
-      ...(providers.flatrate || []),
-      ...(providers.free || []),
-      ...(providers.ads || []),
+      ...(providers.flatrate || []).map(p => ({ ...p, type: 'flatrate' })),
+      ...(providers.free || []).map(p => ({ ...p, type: 'free' })),
+      ...(providers.ads || []).map(p => ({ ...p, type: 'ads' })),
+      ...(providers.rent || []).map(p => ({ ...p, type: 'rent' })),
+      ...(providers.buy || []).map(p => ({ ...p, type: 'buy' })),
     ];
     
     // Deduplicate by provider_id to avoid duplicate keys in UI
@@ -72,7 +75,8 @@ async function getMovieProviders(movieId: number): Promise<{ id: number; name: s
       id: p.provider_id,
       name: p.provider_name,
       logoUrl: p.logo_path ? `https://image.tmdb.org/t/p/original${p.logo_path}` : null,
-    })).filter((p: { logoUrl: string | null }): p is { id: number; name: string; logoUrl: string } => Boolean(p.logoUrl));
+      type: p.type,
+    })).filter((p: { logoUrl: string | null; type: string }): p is { id: number; name: string; logoUrl: string; type: string } => Boolean(p.logoUrl));
   } catch {
     return [];
   }
@@ -292,7 +296,7 @@ async function getPopularMovies(filters?: SearchFilters, page: number = 1, query
 }
 
 // Get streaming providers for a TV show
-async function getTvProviders(tvId: number): Promise<{ id: number; name: string; logoUrl: string }[]> {
+async function getTvProviders(tvId: number): Promise<{ id: number; name: string; logoUrl: string; type: string }[]> {
   try {
     const response = await fetch(
       `${TMDB_BASE_URL}/tv/${tvId}/watch/providers?api_key=${TMDB_API_KEY}`,
@@ -306,10 +310,13 @@ async function getTvProviders(tvId: number): Promise<{ id: number; name: string;
     
     if (!providers) return [];
     
+    // Build array with type information
     const allProviders = [
-      ...(providers.flatrate || []),
-      ...(providers.free || []),
-      ...(providers.ads || []),
+      ...(providers.flatrate || []).map(p => ({ ...p, type: 'flatrate' })),
+      ...(providers.free || []).map(p => ({ ...p, type: 'free' })),
+      ...(providers.ads || []).map(p => ({ ...p, type: 'ads' })),
+      ...(providers.rent || []).map(p => ({ ...p, type: 'rent' })),
+      ...(providers.buy || []).map(p => ({ ...p, type: 'buy' })),
     ];
     
     // Deduplicate by provider_id to avoid duplicate keys in UI
@@ -319,7 +326,8 @@ async function getTvProviders(tvId: number): Promise<{ id: number; name: string;
       id: p.provider_id,
       name: p.provider_name,
       logoUrl: p.logo_path ? `https://image.tmdb.org/t/p/original${p.logo_path}` : null,
-    })).filter((p: { logoUrl: string | null }): p is { id: number; name: string; logoUrl: string } => Boolean(p.logoUrl));
+      type: p.type,
+    })).filter((p: { logoUrl: string | null; type: string }): p is { id: number; name: string; logoUrl: string; type: string } => Boolean(p.logoUrl));
   } catch {
     return [];
   }
