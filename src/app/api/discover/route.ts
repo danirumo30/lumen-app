@@ -62,7 +62,10 @@ async function getMovieProviders(movieId: number): Promise<{ id: number; name: s
       ...(providers.ads || []),
     ];
     
-    return allProviders.slice(0, 5).map((p: any) => ({
+    // Deduplicate by provider_id to avoid duplicate keys in UI
+    const uniqueProviders = Array.from(new Map(allProviders.map((p: any) => [p.provider_id, p])).values());
+    
+    return uniqueProviders.slice(0, 5).map((p: any) => ({
       id: p.provider_id,
       name: p.provider_name,
       logoUrl: p.logo_path ? `https://image.tmdb.org/t/p/original${p.logo_path}` : null,
@@ -242,7 +245,10 @@ async function getTvProviders(tvId: number): Promise<{ id: number; name: string;
       ...(providers.ads || []),
     ];
     
-    return allProviders.slice(0, 5).map((p: any) => ({
+    // Deduplicate by provider_id to avoid duplicate keys in UI
+    const uniqueProviders = Array.from(new Map(allProviders.map((p: any) => [p.provider_id, p])).values());
+    
+    return uniqueProviders.slice(0, 5).map((p: any) => ({
       id: p.provider_id,
       name: p.provider_name,
       logoUrl: p.logo_path ? `https://image.tmdb.org/t/p/original${p.logo_path}` : null,
@@ -525,25 +531,24 @@ async function getPopularGames(filters?: SearchFilters, page: number = 1) {
     queryBody += " where " + conditions.join(" & ") + ";";
   }
   
-  // Sorting - default to popularity for filtered queries
-  let sortValue = "rating"; // Default to rating (proxy for popularity)
+  // Sorting - similar to movies/TV
+  const sortFieldMap: Record<string, string> = {
+    "popularity": "rating",
+    "rating": "rating",
+    "year": "first_release_date",
+    "relevance": "rating"
+  };
   
-  if (filters?.sortBy === "rating") {
-    sortValue = "rating";
-  } else if (filters?.sortBy === "year") {
-    sortValue = "first_release_date";
-  } else if (filters?.sortBy === "popularity" || filters?.sortBy === "relevance") {
-    sortValue = "rating"; // IGDB rating as popularity proxy
+  if (filters?.sortBy && sortFieldMap[filters.sortBy]) {
+    const direction = filters.sortDirection || "desc"; // Default to desc for backward compatibility
+    queryBody += ` sort ${sortFieldMap[filters.sortBy]} ${direction};`;
   } else if (filters?.genre || filters?.platform) {
-    // When filtering by genre/platform, sort by rating (popularity proxy)
-    sortValue = "rating";
+    // Default to rating (popularity proxy) when filtering
+    queryBody += " sort rating desc;";
   } else {
-    // No filters: sort by release date (latest releases)
-    sortValue = "first_release_date";
+    // No filters: default to release date (latest first)
+    queryBody += " sort first_release_date desc;";
   }
-  
-  const direction = filters?.sortDirection || "desc"; // Default to desc for backward compatibility
-  queryBody += " sort " + sortValue + " " + direction + ";";
   
   // Add offset for pagination (20 per page)
   const offset = (page - 1) * 20;

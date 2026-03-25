@@ -227,12 +227,12 @@ export function DiscoverFiltersComponent({ type, filters, onChange }: DiscoverFi
       <div className="flex flex-wrap items-center justify-center gap-2">
         {/* Toggle Button */}
         <button
-          onClick={() => setIsOpen(!isOpen)}
+          disabled
           className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-medium transition-all duration-200 ${
             isOpen || hasActiveFilters
               ? "bg-amber-600 text-white shadow-lg shadow-amber-600/25"
-              : "bg-zinc-800/60 text-zinc-400 hover:bg-zinc-700 hover:text-white border border-zinc-700/50"
-          }`}
+              : "bg-zinc-800/60 text-zinc-400 border border-zinc-700/50"
+          } opacity-60 cursor-not-allowed`}
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
@@ -302,20 +302,18 @@ export function DiscoverFiltersComponent({ type, filters, onChange }: DiscoverFi
           options={sortOptions}
           value={filters.sortBy}
           onChange={(value) => {
-            // If selecting a new sort option (or toggling the same one)
             if (value) {
               if (filters.sortBy === value) {
-                // Same option selected -> toggle direction
+                // Toggle direction
                 updateFilter("sortDirection", filters.sortDirection === "asc" ? "desc" : "asc");
               } else {
-                // New option selected -> set asc as default
-                updateFilter("sortBy", value as DiscoverFilters["sortBy"]);
-                updateFilter("sortDirection", "asc");
+                // New option: update both sortBy and sortDirection in one go
+                onChange({ ...filters, sortBy: value as DiscoverFilters["sortBy"], sortDirection: "asc" });
               }
             } else {
-              // Deselecting (setting to undefined) -> clear sort
-              updateFilter("sortBy", undefined);
-              updateFilter("sortDirection", undefined);
+              // Clear both
+              const { sortBy, sortDirection, ...rest } = filters;
+              onChange(rest);
             }
           }}
           sortDirection={filters.sortDirection}

@@ -19,6 +19,7 @@ interface SearchFilters {
   // Games
   platform?: string;
   sortBy?: "relevance" | "rating" | "year" | "popularity";
+  sortDirection?: "asc" | "desc";
 }
 
 interface SearchParams {
@@ -72,8 +73,11 @@ async function getMovieProviders(movieId: number): Promise<{ id: number; name: s
       ...(providers.ads || []),
     ];
     
+    // Deduplicate by provider_id to avoid duplicate keys in UI
+    const uniqueProviders = Array.from(new Map(allProviders.map((p: any) => [p.provider_id, p])).values());
+    
     // Return top 5 providers with logos
-    return allProviders.slice(0, 5).map((p: any) => ({
+    return uniqueProviders.slice(0, 5).map((p: any) => ({
       id: p.provider_id,
       name: p.provider_name,
       logoUrl: p.logo_path ? `https://image.tmdb.org/t/p/original${p.logo_path}` : null,
@@ -191,8 +195,11 @@ async function getTvProviders(tvId: number): Promise<{ id: number; name: string;
       ...(providers.ads || []),
     ];
     
+    // Deduplicate by provider_id to avoid duplicate keys in UI
+    const uniqueProviders = Array.from(new Map(allProviders.map((p: any) => [p.provider_id, p])).values());
+    
     // Return top 5 providers with logos
-    return allProviders.slice(0, 5).map((p: any) => ({
+    return uniqueProviders.slice(0, 5).map((p: any) => ({
       id: p.provider_id,
       name: p.provider_name,
       logoUrl: p.logo_path ? `https://image.tmdb.org/t/p/original${p.logo_path}` : null,
@@ -312,13 +319,22 @@ async function searchGames(query: string, page: number = 1, filters?: SearchFilt
     whereClause = " where " + conditions.join(" & ");
   }
   
-  // Sorting
-  let sortClause = "";
-  if (filters?.sortBy === "rating") {
-    sortClause = " sort rating desc;";
-  } else if (filters?.sortBy === "year") {
-    sortClause = " sort first_release_date desc;";
-  }
+   // Sorting
+   let sortClause = "";
+   if (filters?.sortBy) {
+     const direction = filters.sortDirection || "desc";
+     let sortField: string;
+     if (filters.sortBy === "rating") {
+       sortField = "rating";
+     } else if (filters.sortBy === "year") {
+       sortField = "first_release_date";
+     } else if (filters.sortBy === "popularity" || filters.sortBy === "relevance") {
+       sortField = "rating"; // IGDB rating as popularity proxy
+     } else {
+       sortField = "rating"; // default
+     }
+     sortClause = ` sort ${sortField} ${direction};`;
+   }
   
   // IGDB query format: search "term"; fields ...; where ...; sort ...; offset ...; limit ...;
   // Request platforms with logo info
