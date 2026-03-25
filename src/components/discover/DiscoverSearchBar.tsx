@@ -43,7 +43,7 @@ export function DiscoverSearchBar({ initialQuery = "", onSearch }: SearchBarProp
   };
 
   return (
-    <div className="relative w-full max-w-2xl mx-auto">
+    <div className="relative w-full max-w-lg mx-auto sm:max-w-2xl">
       <div
         className={`
           relative flex items-center bg-zinc-900/80 backdrop-blur-xl
@@ -79,7 +79,8 @@ export function DiscoverSearchBar({ initialQuery = "", onSearch }: SearchBarProp
           onChange={handleChange}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setTimeout(() => setIsFocused(false), 200)}
-          placeholder="Buscar películas, series, juegos, usuarios..."
+          placeholder="Buscar..."
+          title="Buscar películas, series, juegos, usuarios..."
           className="flex-1 py-4 bg-transparent text-white placeholder-zinc-500 focus:outline-none text-lg"
         />
 

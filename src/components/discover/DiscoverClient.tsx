@@ -105,15 +105,15 @@ export function DiscoverClient() {
           {/* Search Bar */}
           <DiscoverSearchBar onSearch={handleSearch} />
 
-          {/* Type Chips - scrollable horizontal on mobile */}
-          <div className="mt-4 flex justify-center overflow-x-auto hide-scrollbar snap-x snap-mandatory">
+          {/* Type Chips - scrollable horizontal on mobile with side padding */}
+          <div className="mt-4 flex justify-center overflow-x-auto hide-scrollbar snap-x snap-mandatory px-4 sm:px-0">
             <div className="snap-start">
               <DiscoverTypeChips selected={selectedType} onChange={handleTypeChange} />
             </div>
           </div>
 
-          {/* Filters - scrollable horizontal on mobile */}
-          <div className="mt-2 flex justify-center overflow-x-auto hide-scrollbar">
+          {/* Filters - scrollable horizontal on mobile with side padding */}
+          <div className="mt-2 flex justify-center overflow-x-auto hide-scrollbar px-4 sm:px-0">
             <DiscoverFiltersComponent
                 type={selectedType}
                 filters={filters}
