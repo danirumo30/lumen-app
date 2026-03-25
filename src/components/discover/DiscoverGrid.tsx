@@ -48,16 +48,11 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
     setPage(prev => prev + 1);
   }, []);
 
-  // Helper: apply provider/accessType filters to a result array
+  // Helper: apply only accessType filter (providerIds is handled by backend)
   const applyStreamingFilters = useCallback((items: SearchResult[]) => {
     if (type !== "movie" && type !== "tv") return items;
-    const { providerIds, accessType } = filters;
+    const { accessType } = filters;
     return items.filter(item => {
-      if (providerIds && providerIds.length > 0) {
-        if (!item.providers?.some((p: any) => providerIds.includes(p.id))) {
-          return false;
-        }
-      }
       if (accessType && !item.providers?.some((p: any) => p.type === accessType)) {
         return false;
       }
@@ -84,14 +79,14 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
         }
 
         // Add filters if any
-        const filterParams: Record<string, string> = {};
+        const filterParams: Record<string, string | number[]> = {};
         if (filters.genre) filterParams.genre = filters.genre;
         if (filters.yearFrom) filterParams.yearFrom = String(filters.yearFrom);
         if (filters.yearTo) filterParams.yearTo = String(filters.yearTo);
         if (filters.minRating) filterParams.minRating = String(filters.minRating);
         if (filters.platform) filterParams.platform = filters.platform;
         if (filters.providerIds && filters.providerIds.length > 0) {
-          filterParams.providerIds = JSON.stringify(filters.providerIds);
+          filterParams.providerIds = filters.providerIds;
         }
         if (filters.accessType) filterParams.accessType = filters.accessType;
         if (filters.sortBy) {
@@ -104,10 +99,11 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
           params.set("filters", JSON.stringify(filterParams));
         }
 
-        console.log(`[DiscoverGrid] Fetching page ${page} with params:`, params.toString());
+        // Log reducido solo para debug
+        // console.log(`[DiscoverGrid] Fetching page ${page} with params:`, params.toString());
 
         const response = await fetch(`/api/discover?${params.toString()}`);
-        
+         
         if (cancelled) return;
 
         if (!response.ok) {
