@@ -78,7 +78,45 @@ async function getMovieProviders(movieId: number): Promise<{ id: number; name: s
 }
 
 // Get popular movies - uses trending endpoint when no filters (like home)
-async function getPopularMovies(filters?: SearchFilters, page: number = 1) {
+async function getPopularMovies(filters?: SearchFilters, page: number = 1, query?: string) {
+    // If search query provided, use search endpoint (ignores most filters)
+    if (query && query.trim().length > 0) {
+      console.log("[DEBUG] Using search endpoint for movies with query:", query);
+      let searchUrl = `${TMDB_BASE_URL}/search/movie?api_key=${TMDB_API_KEY}&language=es-ES&page=${page}&query=${encodeURIComponent(query)}`;
+      // Search only supports single year, not ranges
+      if (filters?.yearFrom) {
+        searchUrl += `&year=${filters.yearFrom}`;
+      }
+    
+    const response = await fetch(searchUrl, { headers: { "Cache-Control": "public, s-maxage=3600" } });
+    if (!response.ok) {
+      throw new Error(`TMDB search error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    const movies = data.results?.slice(0, 20).map((movie: {
+      id: number;
+      title: string;
+      poster_path: string | null;
+      vote_average: number;
+      release_date: string;
+      overview: string;
+    }) => ({
+      id: `tmdb_${movie.id}`,
+      type: "movie" as const,
+      title: movie.title,
+      posterUrl: movie.poster_path
+        ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+        : null,
+      voteAverage: Math.round(movie.vote_average * 10) / 10,
+      releaseDate: movie.release_date,
+      overview: movie.overview,
+      providers: [], // Search doesn't provide watch providers data
+    })) || [];
+    
+    return movies;
+  }
+
   // If no filters, use trending endpoint (same as home page)
   const hasFilters = filters?.genre || filters?.yearFrom || filters?.yearTo || filters?.minRating || filters?.sortBy || (filters?.providerIds && filters.providerIds.length > 0) || filters?.accessType;
   
@@ -269,7 +307,45 @@ async function getTvProviders(tvId: number): Promise<{ id: number; name: string;
 }
 
 // Get popular TV - uses trending endpoint when no filters (like home)
-async function getPopularTv(filters?: SearchFilters, page: number = 1) {
+async function getPopularTv(filters?: SearchFilters, page: number = 1, query?: string) {
+  // If search query provided, use search endpoint (ignores most filters)
+  if (query && query.trim().length > 0) {
+    console.log("[DEBUG] Using search endpoint for tv with query:", query);
+    let searchUrl = `${TMDB_BASE_URL}/search/tv?api_key=${TMDB_API_KEY}&language=es-ES&page=${page}&query=${encodeURIComponent(query)}`;
+    // Search only supports single year, not ranges
+    if (filters?.yearFrom) {
+      searchUrl += `&first_air_date_year=${filters.yearFrom}`;
+    }
+    
+    const response = await fetch(searchUrl, { headers: { "Cache-Control": "public, s-maxage=3600" } });
+    if (!response.ok) {
+      throw new Error(`TMDB search error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    const shows = data.results?.slice(0, 20).map((show: {
+      id: number;
+      name: string;
+      poster_path: string | null;
+      vote_average: number;
+      first_air_date: string;
+      overview: string;
+    }) => ({
+      id: `tmdb_${show.id}`,
+      type: "tv" as const,
+      title: show.name,
+      posterUrl: show.poster_path
+        ? `https://image.tmdb.org/t/p/w500${show.poster_path}`
+        : null,
+      voteAverage: Math.round(show.vote_average * 10) / 10,
+      releaseDate: show.first_air_date,
+      overview: show.overview,
+      providers: [], // Search doesn't provide watch providers data
+    })) || [];
+    
+    return shows;
+  }
+
   // If no filters, use trending endpoint (same as home page)
   const hasFilters = filters?.genre || filters?.yearFrom || filters?.yearTo || filters?.minRating || filters?.sortBy || (filters?.providerIds && filters.providerIds.length > 0) || filters?.accessType;
   
@@ -641,6 +717,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const type = (searchParams.get("type") || "all") as DiscoverType;
     const page = parseInt(searchParams.get("page") || "1");
+    const query = searchParams.get("q") || undefined; // Search query
     
     let filters: SearchFilters = {};
     const filtersStr = searchParams.get("filters");
@@ -654,6 +731,9 @@ export async function GET(request: Request) {
     if (filters.providerIds && filters.providerIds.length > 0) {
       console.log("[DEBUG] GET received filters:", JSON.stringify(filters));
     }
+    if (query) {
+      console.log("[DEBUG] GET received query:", query);
+    }
 
     // Only apply filters for the selected type
     const movieFilters = (type === "all" || type === "movie") ? filters : undefined;
@@ -661,8 +741,8 @@ export async function GET(request: Request) {
     const gameFilters = (type === "all" || type === "game") ? filters : undefined;
 
     const results = await Promise.allSettled([
-      type === "all" || type === "movie" ? getPopularMovies(movieFilters, page) : Promise.resolve([]),
-      type === "all" || type === "tv" ? getPopularTv(tvFilters, page) : Promise.resolve([]),
+      type === "all" || type === "movie" ? getPopularMovies(movieFilters, page, query) : Promise.resolve([]),
+      type === "all" || type === "tv" ? getPopularTv(tvFilters, page, query) : Promise.resolve([]),
       type === "all" || type === "game" ? getPopularGames(gameFilters, page) : Promise.resolve([]),
     ]);
 
