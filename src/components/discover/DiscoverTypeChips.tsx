@@ -61,7 +61,7 @@ export function DiscoverTypeChips({ selected, onChange }: TypeChipsProps) {
   const types: MediaType[] = ["all", "movie", "tv", "game", "user"];
 
   return (
-    <div className="flex gap-2 flex-wrap">
+    <div className="flex gap-2 flex-nowrap">
       {types.map((type) => {
         const config = typeConfig[type];
         const isSelected = selected === type;
@@ -72,7 +72,7 @@ export function DiscoverTypeChips({ selected, onChange }: TypeChipsProps) {
             onClick={() => onChange(type)}
             className={`
               inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium
-              border transition-all duration-200
+              border transition-all duration-200 flex-shrink-0
               ${isSelected 
                 ? `${config.color} shadow-lg shadow-${type === 'movie' ? 'amber' : type === 'tv' ? 'cyan' : type === 'game' ? 'violet' : type === 'user' ? 'emerald' : 'zinc'}-500/20` 
                 : "bg-zinc-800/50 text-zinc-400 border-zinc-700 hover:bg-zinc-800 hover:text-zinc-300"
