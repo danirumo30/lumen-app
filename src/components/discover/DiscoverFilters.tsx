@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { MediaType } from "./DiscoverTypeChips";
 
 export interface DiscoverFilters {
@@ -8,8 +8,10 @@ export interface DiscoverFilters {
   yearFrom?: number;
   yearTo?: number;
   platform?: string;
+  providerIds?: number[]; // Multiple streaming providers
+  accessType?: "subscription" | "free" | "ads" | "rent" | "buy";
   sortBy?: "relevance" | "rating" | "year" | "popularity";
-  sortDirection?: "asc" | "desc"; // Added for bidirectional sorting
+  sortDirection?: "asc" | "desc";
   minRating?: number;
 }
 
@@ -18,20 +20,31 @@ interface DiscoverFiltersProps {
   filters: DiscoverFilters;
   onChange: (filters: DiscoverFilters) => void;
   query?: string;
+  // Streaming provider filter props (for movies/tv only)
+  availableProviders?: Array<{ id: number; name: string; logoUrl: string | null }>;
+  isLoadingProviders?: boolean;
+  providersError?: string | null;
+  onProviderChange?: (providerIds: number[]) => void;
+  onAccessTypeChange?: (accessType: "subscription" | "free" | "ads" | "rent" | "buy" | null) => void;
+  availableAccessTypes?: ("subscription" | "free" | "ads" | "rent" | "buy")[];
 }
 
 // Dropdown props extension
 interface FilterDropdownProps {
   label: string;
-  options: { value: string; label: string }[];
-  value: string | undefined;
-  onChange: (value: string | undefined) => void;
+  options: { value: string; label: string; isCurrent?: boolean }[];
+  value: string | string[] | undefined;
+  onChange: (value: string | string[] | undefined) => void;
   icon?: React.ReactNode;
   scrollToValue?: string;
   sortDirection?: "asc" | "desc";
   onSortDirectionChange?: (direction: "asc" | "desc") => void;
   disabled?: boolean;
   title?: string;
+  dropdownId: string;
+  isOpen: boolean;
+  onOpenChange: (id: string, open: boolean) => void;
+  multiSelect?: boolean;
 }
 
 const genres = {
@@ -69,139 +82,280 @@ function getYearsForType(type: MediaType): number[] {
   }
 }
 
-// Dropdown component with chip-style selection (from franchise page)
-function FilterDropdown({
-  label,
-  options,
-  value,
-  onChange,
-  icon,
-  scrollToValue,
-  sortDirection,
-  onSortDirectionChange,
-  disabled = false,
-  title,
-}: {
-  label: string;
-  options: { value: string; label: string }[];
-  value: string | undefined;
-  onChange: (value: string | undefined) => void;
-  icon?: React.ReactNode;
-  scrollToValue?: string;
-  sortDirection?: "asc" | "desc";
-  onSortDirectionChange?: (direction: "asc" | "desc") => void;
-  disabled?: boolean;
-  title?: string;
-}) {
-  const [isOpen, setIsOpen] = useState(false);
+// FilterDropdown component - single, complete implementation with multiSelect support
+function FilterDropdown(props: FilterDropdownProps) {
+  const {
+    label,
+    options,
+    value,
+    onChange,
+    icon,
+    scrollToValue,
+    sortDirection,
+    onSortDirectionChange,
+    disabled = false,
+    title,
+    dropdownId,
+    isOpen,
+    onOpenChange,
+    multiSelect = false,
+  } = props;
+
   const dropdownRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
 
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
+  const handleToggle = () => {
+    if (!disabled) {
+      const newState = !isOpen;
+      if (dropdownId && onOpenChange) {
+        onOpenChange(dropdownId, newState);
       }
     }
+  };
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  // Calcular posición del menú cuando se abre
+  useEffect(() => {
+    if (isOpen && dropdownRef.current) {
+      const rect = dropdownRef.current.getBoundingClientRect();
+      setMenuStyle({
+        position: 'fixed' as const,
+        top: rect.bottom + 8,
+        left: rect.left,
+        width: '192px',
+        zIndex: 9999,
+      });
+    }
+  }, [isOpen]);
 
-  // Scroll to specific value when dropdown opens (e.g., current year)
+  // Cerrar al hacer scroll/resize
+  useEffect(() => {
+    if (!isOpen) return;
+    const closeOnScroll = () => {
+      if (dropdownId && onOpenChange) {
+        onOpenChange(dropdownId, false);
+      }
+    };
+    window.addEventListener('scroll', closeOnScroll, { passive: true });
+    window.addEventListener('resize', closeOnScroll);
+    return () => {
+      window.removeEventListener('scroll', closeOnScroll);
+      window.removeEventListener('resize', closeOnScroll);
+    };
+  }, [isOpen, dropdownId, onOpenChange]);
+
+   // Click fuera
+   useEffect(() => {
+     function handleClickOutside(event: MouseEvent | TouchEvent) {
+       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+         if (dropdownId && onOpenChange) {
+           onOpenChange(dropdownId, false);
+         }
+       }
+     }
+     document.addEventListener("mousedown", handleClickOutside);
+     document.addEventListener("touchstart", handleClickOutside);
+     return () => {
+       document.removeEventListener("mousedown", handleClickOutside);
+       document.removeEventListener("touchstart", handleClickOutside);
+     };
+   }, [dropdownId, onOpenChange]);
+
+  // Scroll a valor específico
   useEffect(() => {
     if (isOpen && scrollToValue && listRef.current) {
-      const element = listRef.current.querySelector(`[data-value="${scrollToValue}"]`);
-      if (element) {
-        element.scrollIntoView({ block: 'center', behavior: 'instant' });
-      }
+      setTimeout(() => {
+        const element = listRef.current?.querySelector(`[data-value="${scrollToValue}"]`);
+        if (element) {
+          element.scrollIntoView({ block: 'center', behavior: 'instant' });
+        }
+      }, 0);
     }
   }, [isOpen, scrollToValue]);
 
-  // Get display label
-  const selectedOption = options.find(o => o.value === value);
-  const displayLabel = selectedOption ? selectedOption.label : (label === "Ordenar" ? "Ordenar Por" : label); // "Ordenar Por" by default
+  // Get selected values as array for easy check
+  const selectedValues = useMemo(() => {
+    if (!value) return [];
+    return Array.isArray(value) ? value : [value];
+  }, [value]);
+
+  const handleOptionClick = (optionValue: string) => {
+    if (multiSelect) {
+      const currentArray = Array.isArray(value) ? value : (value ? [value] : []);
+      if (currentArray.includes(optionValue)) {
+        const newArray = currentArray.filter(v => v !== optionValue);
+        onChange(newArray.length > 0 ? newArray : undefined);
+      } else {
+        onChange([...currentArray, optionValue]);
+      }
+    } else {
+      onChange(optionValue);
+      if (dropdownId && onOpenChange) {
+        onOpenChange(dropdownId, false);
+      }
+    }
+  };
+
+  // Display label for button
+  const displayLabel = useMemo(() => {
+    if (multiSelect && selectedValues.length > 0) {
+      return `${label} (${selectedValues.length})`;
+    }
+    if (!multiSelect && value) {
+      const selected = options.find(o => o.value === value);
+      if (selected) return selected.label;
+    }
+    return label === "Ordenar" ? "Ordenar Por" : label;
+  }, [label, value, selectedValues, options]);
 
   // Get accent color based on type
-  const accentClass = label.includes("Género") 
-    ? "bg-amber-600 text-white shadow-lg shadow-amber-600/25" 
+  const accentClass = label.includes("Género")
+    ? "bg-amber-600 text-white shadow-lg shadow-amber-600/25"
     : label.includes("Plataforma")
     ? "bg-violet-600 text-white shadow-lg shadow-violet-600/25"
+    : label.includes("Ordenar")
+    ? "bg-cyan-600 text-white shadow-lg shadow-cyan-600/25"
     : "bg-zinc-700 text-white shadow-lg shadow-zinc-700/25";
 
-  // Determine SVG rotation for sorting icon
-  const sortIconRotationClass = (icon && label === "Ordenar" && sortDirection === "desc") ? "rotate-180" : "";
-
   return (
-    <div ref={dropdownRef} className="relative">
-      <button
-        onClick={() => !disabled && setIsOpen(!isOpen)}
-        disabled={disabled}
-        title={title}
-        className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-medium transition-all duration-200 ${
-          value && value !== ""
-            ? accentClass
-            : "bg-zinc-800/60 text-zinc-400 hover:bg-zinc-700 hover:text-white border border-zinc-700/50"
-        } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-      >
-        {icon && <span className={`w-4 h-4 ${sortIconRotationClass}`}>{icon}</span>}
-        <span>{displayLabel}</span>
-        <svg 
-          className={`w-4 h-4 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
-          fill="none" 
-          stroke="currentColor" 
-          viewBox="0 0 24 24"
+    <div ref={dropdownRef} className="relative z-20">
+        <button
+          onClick={handleToggle}
+          onTouchStart={(e) => e.stopPropagation()}
+          disabled={disabled}
+          title={title}
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+            value && (!Array.isArray(value) ? value : (value as string[]).length > 0)
+              ? accentClass
+              : "bg-zinc-800/60 text-zinc-400 hover:bg-zinc-700 hover:text-white border border-zinc-700/50"
+          } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
+          {icon && (
+            <span className={`w-4 h-4 ${sortDirection ? 'transition-transform duration-200' : ''} ${sortDirection === 'asc' ? 'rotate-180' : ''}`}>
+              {icon}
+            </span>
+          )}
+          <span>{displayLabel}</span>
+          <svg
+            className={`w-4 h-4 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
 
       {isOpen && (
-        <div ref={listRef} className="absolute top-full left-0 mt-2 w-48 py-2 bg-zinc-900/95 backdrop-blur-xl border border-zinc-700/50 rounded-xl shadow-2xl z-50 animate-dropdownIn overflow-y-auto" style={{ maxHeight: '220px' }}>
-          <style jsx>{`
-            div::-webkit-scrollbar {
-              width: 6px;
-            }
-            div::-webkit-scrollbar-track {
-              background: transparent;
-            }
-            div::-webkit-scrollbar-thumb {
-              background: rgba(255,255,255,0.2);
-              border-radius: 3px;
-            }
-            div::-webkit-scrollbar-thumb:hover {
-              background: rgba(255,255,255,0.3);
-            }
-          `}</style>
-          {options.map((option) => (
-            <button
-              key={option.value}
-              data-value={option.value}
-              onClick={() => {
-                onChange(option.value);
-                setIsOpen(false);
-              }}
-              className={`w-full px-4 py-2 text-left text-sm transition-all duration-150 ${
-                value === option.value
-                  ? "text-amber-400 bg-amber-600/10"
-                  : scrollToValue && option.value === scrollToValue
-                  ? "text-white bg-zinc-700/50 ring-1 ring-zinc-600 hover:bg-zinc-600 hover:ring-zinc-500"
-                  : "text-zinc-300 hover:bg-zinc-800 hover:text-white"
-              }`}
-            >
-              {option.label}
-            </button>
-          ))}
+        <div
+          ref={listRef}
+          onTouchStart={(e) => e.stopPropagation()}
+          className="fixed z-[9999] py-2 bg-emerald-900/98 backdrop-blur-xl border border-emerald-500/50 rounded-xl shadow-2xl animate-dropdownIn overflow-y-auto dropdown-scrollbar"
+          style={{
+            ...menuStyle,
+            maxHeight: '220px',
+            boxShadow: '0 0 20px rgba(52, 211, 153, 0.3)',
+            touchAction: 'pan-y',
+          }}
+        >
+          {options.map((option) => {
+            const isSelected = selectedValues.includes(option.value);
+            const isCurrent = (option as { isCurrent?: boolean }).isCurrent;
+            return (
+              <button
+                key={option.value}
+                data-value={option.value}
+                onClick={() => handleOptionClick(option.value)}
+                className={`w-full px-4 py-2 text-left text-sm transition-all duration-150 flex items-center gap-2 ${
+                  isSelected
+                    ? "text-amber-400 bg-amber-600/10"
+                    : isCurrent
+                    ? "text-emerald-400 bg-emerald-900/30 font-semibold"
+                    : "text-zinc-300 hover:bg-zinc-800 hover:text-white"
+                }`}
+              >
+                {multiSelect && (
+                  <span className={`w-4 h-4 rounded border flex items-center justify-center ${isSelected ? 'bg-amber-500 border-amber-500' : 'border-zinc-600'}`}>
+                    {isSelected && (
+                      <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </span>
+                )}
+                {option.label}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
   );
 }
 
-export function DiscoverFiltersComponent({ type, filters, onChange, query }: DiscoverFiltersProps) {
-  const [isOpen, setIsOpen] = useState(false);
+export function DiscoverFiltersComponent({
+  type,
+  filters,
+  onChange,
+  query,
+  availableProviders = [],
+  isLoadingProviders = false,
+  providersError = null,
+  onProviderChange,
+  onAccessTypeChange,
+  availableAccessTypes = [],
+}: DiscoverFiltersProps) {
+  // Estado para saber cuál dropdown está abierto (solo uno a la vez)
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
 
-  // Only show filters when a specific type is selected
+  // Handler para abrir/cerrar dropdowns - asegura que solo uno esté abierto
+  const handleDropdownToggle = (id: string, isOpen: boolean) => {
+    if (isOpen) {
+      // Al abrir un dropdown, cerrar cualquier otro
+      setOpenDropdownId(id);
+    } else {
+      // Si el que se cierra es el que está abierto, poner null
+      if (openDropdownId === id) {
+        setOpenDropdownId(null);
+      }
+    }
+  };
+
+  // Access type config (matching WatchProvidersSection)
+  const accessTypeConfig: Record<string, { label: string; bgActive: string; textActive: string; borderActive: string }> = {
+    subscription: {
+      label: "Suscripción",
+      bgActive: "bg-emerald-500",
+      textActive: "text-emerald-400",
+      borderActive: "border-emerald-500/50",
+    },
+    free: {
+      label: "Gratis",
+      bgActive: "bg-cyan-500",
+      textActive: "text-cyan-400",
+      borderActive: "border-cyan-500/50",
+    },
+    ads: {
+      label: "Con Ads",
+      bgActive: "bg-amber-500",
+      textActive: "text-amber-400",
+      borderActive: "border-amber-500/50",
+    },
+    rent: {
+      label: "Alquilar",
+      bgActive: "bg-violet-500",
+      textActive: "text-violet-400",
+      borderActive: "border-violet-500/50",
+    },
+    buy: {
+      label: "Comprar",
+      bgActive: "bg-rose-500",
+      textActive: "text-rose-400",
+      borderActive: "border-rose-500/50",
+    },
+  };
+
+  // Si el tipo es "all" o "user", no mostrar filtros (pero los hooks ya se ejecutaron)
   if (type === "all" || type === "user") {
     return null;
   }
@@ -242,166 +396,287 @@ export function DiscoverFiltersComponent({ type, filters, onChange, query }: Dis
 
   const yearFromOptions = [
     { value: "all", label: "Desde" },
-    ...typeYears.map(y => ({ value: String(y), label: String(y) }))
+    ...typeYears.map(y => ({ value: String(y), label: String(y), isCurrent: y === currentYear }))
   ];
 
   const yearToOptions = [
     { value: "all", label: "Hasta" },
-    ...typeYears.map(y => ({ value: String(y), label: String(y) }))
+    ...typeYears.map(y => ({ value: String(y), label: String(y), isCurrent: y === currentYear }))
   ];
 
-  const hasActiveFilters = filters.genre || filters.yearFrom || filters.yearTo || filters.platform || filters.sortBy;
+  const hasActiveFilters = filters.genre || filters.yearFrom || filters.yearTo || filters.platform || filters.sortBy || (filters.providerIds && filters.providerIds.length > 0) || filters.accessType;
 
   return (
-    <div className="w-full">
+    <div
+      className="w-full"
+    >
       {/* Filter Bar - Always visible like franchise page */}
-      <div className="flex flex-wrap items-center justify-center gap-2">
+      <div
+        className="flex sm:flex-wrap items-center justify-start sm:justify-center gap-2 overflow-x-auto sm:overflow-x-visible overflow-y-visible snap-x snap-mandatory -mx-1 px-1 pb-2 relative z-20 hide-scrollbar"
+        style={{
+          touchAction: openDropdownId ? 'pan-y' : 'auto', // Disable horizontal scroll when any dropdown open
+        }}
+      >
         {/* Toggle Button */}
-        <button
-          disabled
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-medium transition-all duration-200 ${
-            isOpen || hasActiveFilters
-              ? "bg-amber-600 text-white shadow-lg shadow-amber-600/25"
-              : "bg-zinc-800/60 text-zinc-400 border border-zinc-700/50"
-          } opacity-60 cursor-not-allowed`}
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-          </svg>
-          <span>Filtros</span>
-          {hasActiveFilters && (
-            <span className="w-2 h-2 bg-white rounded-full" />
-          )}
-        </button>
+        <div className="flex-shrink-0 snap-start">
+          <button
+            disabled
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+              openDropdownId !== null || hasActiveFilters
+                ? "bg-amber-600 text-white shadow-lg shadow-amber-600/25"
+                : "bg-zinc-800/60 text-zinc-400 border border-zinc-700/50"
+            } opacity-60 cursor-not-allowed`}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            </svg>
+            <span>Filtros</span>
+            {hasActiveFilters && (
+              <span className="w-2 h-2 bg-white rounded-full" />
+            )}
+          </button>
+        </div>
 
         {/* Genre Dropdown */}
         {typeGenres.length > 0 && (
-          <FilterDropdown
-            label="Género"
-            options={genreOptions}
-            value={filters.genre}
-            onChange={(value) => updateFilter("genre", !value || value === "all" ? undefined : value)}
-            disabled={isSearching && (type === "movie" || type === "tv")}
-            title={isSearching && (type === "movie" || type === "tv") ? "No disponible durante búsqueda" : undefined}
-            icon={
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-              </svg>
-            }
-          />
+          <div className="flex-shrink-0 snap-start">
+            <FilterDropdown
+              label="Género"
+              options={genreOptions}
+              value={filters.genre}
+              onChange={(value) => updateFilter("genre", !value || value === "all" ? undefined : (value as string))}
+              disabled={isGenreDisabled}
+              title={isGenreDisabled ? "No disponible durante búsqueda" : undefined}
+              dropdownId="genre"
+              isOpen={openDropdownId === "genre"}
+              onOpenChange={handleDropdownToggle}
+              icon={
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                </svg>
+              }
+            />
+          </div>
+        )}
+
+        {/* Streaming Provider Filter - only for movie/tv */}
+        {type !== "game" && (
+          <>
+            {/* Loading state */}
+            {isLoadingProviders && (
+              <div className="flex-shrink-0 px-3 py-1.5 rounded-xl bg-zinc-800 text-zinc-400 border border-zinc-700/50">
+                ⏳ Cargando proveedores...
+              </div>
+            )}
+
+            {/* Error state */}
+            {providersError && !isLoadingProviders && (
+              <div className="flex-shrink-0 px-3 py-1.5 rounded-xl bg-red-900/30 text-red-400 border border-red-700/50 max-w-xs">
+                ⚠️ Error: {providersError}
+              </div>
+            )}
+
+            {/* Empty state (no error, not loading, but empty) */}
+            {!isLoadingProviders && !providersError && availableProviders && availableProviders.length === 0 && (
+              <div className="flex-shrink-0 px-3 py-1.5 rounded-xl bg-zinc-800 text-zinc-500 italic border border-zinc-700/50">
+                No hay proveedores disponibles
+              </div>
+            )}
+
+            {/* Normal: providers exist */}
+            {!isLoadingProviders && !providersError && availableProviders && availableProviders.length > 0 && (
+              <>
+                {/* Provider dropdown */}
+                <div className="flex-shrink-0 snap-start">
+                <FilterDropdown
+                  label="Plataforma"
+                  options={[
+                    { value: "all", label: "Todas" },
+                    ...availableProviders.map(p => ({ value: String(p.id), label: p.name, isCurrent: false }))
+                  ]}
+                  value={filters.providerIds?.map(String) || undefined}
+                  onChange={(value) => {
+                    const ids = Array.isArray(value)
+                      ? value.map(v => parseInt(v)).filter(n => !isNaN(n))
+                      : (value && value !== "all") ? [parseInt(value)] : [];
+                    onProviderChange?.(ids);
+                  }}
+                  multiSelect={true}
+                  icon={
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                    }
+                    dropdownId="provider"
+                    isOpen={openDropdownId === "provider"}
+                    onOpenChange={handleDropdownToggle}
+                  />
+                </div>
+
+                {/* Access type pills - show when provider selected */}
+                {filters.providerIds && filters.providerIds.length > 0 && availableAccessTypes && availableAccessTypes.length > 0 && (
+                  <div className="flex-shrink-0 snap-start flex items-center gap-1">
+                    {availableAccessTypes.map(accessType => {
+                      const typeConf = accessTypeConfig[accessType];
+                      // Skip unknown access types
+                      if (!typeConf) return null;
+                      const isActive = filters.accessType === accessType;
+                      return (
+                        <button
+                          key={accessType}
+                          onClick={() => onAccessTypeChange?.(isActive ? null : accessType)}
+                          className={`
+                            px-2 py-1 rounded-full text-[10px] font-medium whitespace-nowrap
+                            transition-all duration-200
+                            ${isActive
+                              ? `${typeConf.bgActive}/20 ${typeConf.textActive} border ${typeConf.borderActive} shadow-sm`
+                              : "text-zinc-500 hover:text-zinc-300 hover:bg-white/5 border border-transparent"
+                            }
+                          `}
+                        >
+                          {typeConf.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
+            )}
+          </>
         )}
 
         {/* Platform Dropdown (for games) */}
         {type === "game" && typePlatforms.length > 0 && (
+          <div className="flex-shrink-0 snap-start">
+            <FilterDropdown
+              label="Plataforma"
+              options={platformOptions}
+              value={filters.platform}
+              onChange={(value) => updateFilter("platform", !value || value === "all" ? undefined : (value as string))}
+              dropdownId="platform"
+              isOpen={openDropdownId === "platform"}
+              onOpenChange={handleDropdownToggle}
+              icon={
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              }
+            />
+          </div>
+        )}
+
+        {/* Year filter: single dropdown for search in movies/tv; dual dropdowns otherwise */}
+        {isMovieOrTv && isSearching ? (
+          <div className="flex-shrink-0 snap-start">
+            <FilterDropdown
+              label="Año"
+              options={typeYears.map(y => ({ value: String(y), label: String(y), isCurrent: y === currentYear }))}
+              value={filters.yearFrom ? String(filters.yearFrom) : undefined}
+              onChange={(value) => {
+                updateFilter("yearFrom", !value || value === "all" ? undefined : parseInt(value as string));
+                // Clear yearTo to avoid mixing modes
+                if (filters.yearTo) {
+                  const { yearTo, ...rest } = filters;
+                  onChange(rest);
+                }
+              }}
+              scrollToValue={String(currentYear)}
+              dropdownId="yearSearch"
+              isOpen={openDropdownId === "yearSearch"}
+              onOpenChange={handleDropdownToggle}
+              icon={
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              }
+            />
+          </div>
+        ) : (
+          <>
+            {/* Year From */}
+            <div className="flex-shrink-0 snap-start">
+              <FilterDropdown
+                label="Desde"
+                options={yearFromOptions}
+                value={filters.yearFrom ? String(filters.yearFrom) : undefined}
+                onChange={(value) => updateFilter("yearFrom", !value || value === "all" ? undefined : parseInt(value as string))}
+                scrollToValue={String(currentYear)}
+                disabled={isYearDisabled}
+                title={isYearDisabled ? "No disponible durante búsqueda" : undefined}
+                dropdownId="yearFrom"
+                isOpen={openDropdownId === "yearFrom"}
+                onOpenChange={handleDropdownToggle}
+                icon={
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                }
+              />
+            </div>
+            {/* Year To */}
+            <div className="flex-shrink-0 snap-start">
+              <FilterDropdown
+                label="Hasta"
+                options={yearToOptions}
+                value={filters.yearTo ? String(filters.yearTo) : undefined}
+                onChange={(value) => updateFilter("yearTo", !value || value === "all" ? undefined : parseInt(value as string))}
+                scrollToValue={String(currentYear)}
+                disabled={isYearDisabled}
+                title={isYearDisabled ? "No disponible durante búsqueda" : undefined}
+                dropdownId="yearTo"
+                isOpen={openDropdownId === "yearTo"}
+                onOpenChange={handleDropdownToggle}
+              />
+            </div>
+          </>
+        )}
+
+        {/* Sort By */}
+        <div className="flex-shrink-0 snap-start">
           <FilterDropdown
-            label="Plataforma"
-            options={platformOptions}
-            value={filters.platform}
-            onChange={(value) => updateFilter("platform", !value || value === "all" ? undefined : value)}
+            label="Ordenar"
+            options={availableSortOptions}
+            value={filters.sortBy}
+            onChange={(value) => {
+              if (value) {
+                if (filters.sortBy === value) {
+                  // Toggle direction
+                  updateFilter("sortDirection", filters.sortDirection === "asc" ? "desc" : "asc");
+                } else {
+                  // New option: update both sortBy and sortDirection in one go
+                  onChange({ ...filters, sortBy: value as DiscoverFilters["sortBy"], sortDirection: "asc" });
+                }
+              } else {
+                // Clear both
+                const { sortBy, sortDirection, ...rest } = filters;
+                onChange(rest);
+              }
+            }}
+            sortDirection={filters.sortDirection}
+            onSortDirectionChange={(direction) => updateFilter("sortDirection", direction)}
+            disabled={isSearching && type === "game"}
+            title={isSearching && type === "game" ? "No disponible durante búsqueda (IGDB no soporta)" : undefined}
+            dropdownId="sort"
+            isOpen={openDropdownId === "sort"}
+            onOpenChange={handleDropdownToggle}
             icon={
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
               </svg>
             }
           />
-        )}
-
-         {/* Year filter: single dropdown for search in movies/tv; dual dropdowns otherwise */}
-         {isMovieOrTv && isSearching ? (
-           <FilterDropdown
-             label="Año"
-             options={typeYears.map(y => ({ value: String(y), label: String(y) }))}
-             value={filters.yearFrom ? String(filters.yearFrom) : undefined}
-             onChange={(value) => {
-               updateFilter("yearFrom", !value || value === "all" ? undefined : parseInt(value));
-               // Clear yearTo to avoid mixing modes
-               if (filters.yearTo) {
-                 const { yearTo, ...rest } = filters;
-                 onChange(rest);
-               }
-             }}
-             scrollToValue={String(currentYear)}
-             icon={
-               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-               </svg>
-             }
-           />
-         ) : (
-           <>
-             {/* Year From */}
-             <FilterDropdown
-               label="Desde"
-               options={yearFromOptions}
-               value={filters.yearFrom ? String(filters.yearFrom) : undefined}
-               onChange={(value) => updateFilter("yearFrom", !value || value === "all" ? undefined : parseInt(value))}
-               scrollToValue={String(currentYear)}
-               disabled={isYearDisabled}
-               title={isYearDisabled ? "No disponible durante búsqueda" : undefined}
-               icon={
-                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                 </svg>
-               }
-             />
-             {/* Year To */}
-             <FilterDropdown
-               label="Hasta"
-               options={yearToOptions}
-               value={filters.yearTo ? String(filters.yearTo) : undefined}
-               onChange={(value) => updateFilter("yearTo", !value || value === "all" ? undefined : parseInt(value))}
-               scrollToValue={String(currentYear)}
-               disabled={isYearDisabled}
-               title={isYearDisabled ? "No disponible durante búsqueda" : undefined}
-             />
-           </>
-         )}
-
-         {/* Sort By */}
-         <FilterDropdown
-           label="Ordenar"
-           options={availableSortOptions}
-           value={filters.sortBy}
-           onChange={(value) => {
-             if (value) {
-               if (filters.sortBy === value) {
-                 // Toggle direction
-                 updateFilter("sortDirection", filters.sortDirection === "asc" ? "desc" : "asc");
-               } else {
-                 // New option: update both sortBy and sortDirection in one go
-                 onChange({ ...filters, sortBy: value as DiscoverFilters["sortBy"], sortDirection: "asc" });
-               }
-             } else {
-               // Clear both
-               const { sortBy, sortDirection, ...rest } = filters;
-               onChange(rest);
-             }
-           }}
-           sortDirection={filters.sortDirection}
-           onSortDirectionChange={(direction) => updateFilter("sortDirection", direction)}
-           disabled={isSearching && type === "game"}
-           title={isSearching && type === "game" ? "No disponible durante búsqueda (IGDB no soporta)" : undefined}
-           icon={
-             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
-             </svg>
-           }
-         />
+        </div>
 
         {/* Clear Filters */}
         {hasActiveFilters && (
-      <button
-        onClick={() => !disabled && setIsOpen(!isOpen)}
-        disabled={disabled}
-        title={title}
-        className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-medium transition-all duration-200 ${
-          value && value !== ""
-            ? accentClass
-            : "bg-zinc-800/60 text-zinc-400 hover:bg-zinc-700 hover:text-white border border-zinc-700/50"
-        } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-      >
-            Limpiar
-          </button>
+          <div className="flex-shrink-0 snap-start">
+            <button
+              onClick={() => onChange({})}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-medium transition-all duration-200 bg-red-600/20 text-red-400 border border-red-600/30 hover:bg-red-600/30"
+            >
+              Limpiar
+            </button>
+          </div>
         )}
       </div>
     </div>

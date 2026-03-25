@@ -1,29 +1,101 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { DiscoverSearchBar } from "@/components/discover/DiscoverSearchBar";
 import { DiscoverTypeChips, MediaType } from "@/components/discover/DiscoverTypeChips";
 import { DiscoverFiltersComponent, DiscoverFilters } from "@/components/discover/DiscoverFilters";
 import { DiscoverGrid } from "@/components/discover/DiscoverGrid";
 
+interface StreamingProvider {
+  id: number;
+  name: string;
+  logoUrl: string | null;
+  types: ("subscription" | "free" | "ads" | "rent" | "buy")[];
+}
+
 export function DiscoverClient() {
   const [selectedType, setSelectedType] = useState<MediaType>("all");
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState<DiscoverFilters>({});
+  const [availableProviders, setAvailableProviders] = useState<StreamingProvider[]>([]);
+  const [isLoadingProviders, setIsLoadingProviders] = useState(true);
+  const [providersError, setProvidersError] = useState<string | null>(null);
 
-  const handleSearch = useCallback((newQuery: string, resetType = false) => {
+   // Load watch providers on mount
+   useEffect(() => {
+     console.log("[DiscoverClient] Loading watch providers...");
+     
+     // Detect browser region (e.g., "es-ES" -> "ES")
+     const detectRegion = () => {
+       if (typeof navigator === 'undefined') return 'ES';
+       const lang = navigator.language || 'en-US';
+       const regionPart = lang.split('-')[1];
+       return regionPart ? regionPart.toUpperCase() : 'ES';
+     };
+     
+     const region = detectRegion();
+     console.log("[DiscoverClient] Detected region:", region);
+     
+     fetch(`/api/watch-providers?region=${region}`)
+       .then(res => {
+         console.log("[DiscoverClient] Response status:", res.status);
+         return res.json();
+       })
+       .then(data => {
+         console.log("[DiscoverClient] Providers data:", data);
+         setAvailableProviders(data);
+         setIsLoadingProviders(false);
+         setProvidersError(null);
+       })
+       .catch(err => {
+         console.error("[DiscoverClient] Failed to load providers:", err);
+         setIsLoadingProviders(false);
+         setProvidersError(err.message || "Unknown error");
+       });
+   }, []);
+
+  const handleSearch = useCallback((newQuery: string) => {
     setQuery(newQuery);
-    if (resetType) {
+    if (newQuery && newQuery.trim().length > 0) {
       setSelectedType("all");
-      setFilters({}); // Clear all filters, including sortBy and sortDirection, when resetting type
     }
   }, []);
 
   // Clear filters when changing type
   const handleTypeChange = useCallback((newType: MediaType) => {
     setSelectedType(newType);
-    // setFilters({}); // Removed: keep filters when changing tabs for better UX
+    setFilters({});
   }, []);
+
+  // Multi-provider toggle
+  const handleProviderChange = useCallback((providerIds: number[]) => {
+    setFilters(prev => ({
+      ...prev,
+      providerIds: providerIds.length > 0 ? providerIds : undefined,
+      accessType: undefined,
+    }));
+  }, []);
+
+  const handleAccessTypeChange = useCallback((accessType: "subscription" | "free" | "ads" | "rent" | "buy" | null) => {
+    setFilters(prev => ({
+      ...prev,
+      accessType: accessType || undefined,
+    }));
+  }, []);
+
+  // Compute allowed access types for currently selected providers
+  const availableAccessTypes = useMemo(() => {
+    if (!filters.providerIds || filters.providerIds.length === 0) return [];
+    // Get union of all types from selected providers
+    const typesSet = new Set<string>();
+    filters.providerIds.forEach(id => {
+      const provider = availableProviders.find(p => p.id === id);
+      if (provider) {
+        provider.types.forEach(t => typesSet.add(t));
+      }
+    });
+    return Array.from(typesSet) as ("subscription" | "free" | "ads" | "rent" | "buy")[];
+  }, [filters.providerIds, availableProviders]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-zinc-950 to-black pt-16">
@@ -56,21 +128,31 @@ export function DiscoverClient() {
             <DiscoverTypeChips selected={selectedType} onChange={handleTypeChange} />
           </div>
 
-           {/* Filters */}
-           <div className="mt-4 flex justify-center">
-             <DiscoverFiltersComponent
+          {/* Filters */}
+          <div className="mt-4 flex justify-center">
+           <DiscoverFiltersComponent
                type={selectedType}
                filters={filters}
                onChange={setFilters}
                query={query}
+               availableProviders={selectedType !== "game" ? availableProviders : []}
+               isLoadingProviders={isLoadingProviders}
+               providersError={providersError}
+               onProviderChange={handleProviderChange}
+               onAccessTypeChange={handleAccessTypeChange}
+               availableAccessTypes={availableAccessTypes}
              />
-           </div>
+          </div>
         </div>
       </div>
 
       {/* Results Section */}
       <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-        <DiscoverGrid query={query} type={selectedType} filters={filters} />
+        <DiscoverGrid 
+          query={query} 
+          type={selectedType} 
+          filters={filters}
+        />
       </div>
     </div>
   );
