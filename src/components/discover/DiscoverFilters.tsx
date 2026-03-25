@@ -253,6 +253,8 @@ function FilterDropdown(props: FilterDropdownProps) {
             maxHeight: '50vh',
             boxShadow: '0 0 20px rgba(52, 211, 153, 0.3)',
             touchAction: 'pan-y',
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
           }}
         >
           {options.map((option) => {
@@ -351,10 +353,7 @@ export function DiscoverFiltersComponent({
     ...typeGenres.map(g => ({ value: g, label: g }))
   ];
 
-  const platformOptions = [
-    { value: "all", label: "Todas" },
-    ...typePlatforms.map(p => ({ value: p, label: p }))
-  ];
+  const platformOptions = typePlatforms.map(p => ({ value: p, label: p }));
 
   const yearFromOptions = [
     { value: "all", label: "Desde" },
