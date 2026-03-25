@@ -41,12 +41,14 @@ export function DiscoverClient() {
          console.log("[DiscoverClient] Response status:", res.status);
          return res.json();
        })
-       .then(data => {
-         console.log("[DiscoverClient] Providers data:", data);
-         setAvailableProviders(data);
-         setIsLoadingProviders(false);
-         setProvidersError(null);
-       })
+        .then(data => {
+          console.log("[DiscoverClient] Providers data:", data);
+          console.log("[DEBUG] Netflix provider:", data.find((p: any) => p.name === "Netflix"));
+          console.log("[DEBUG] Amazon Prime provider:", data.find((p: any) => p.name === "Amazon Prime Video"));
+          setAvailableProviders(data);
+          setIsLoadingProviders(false);
+          setProvidersError(null);
+        })
        .catch(err => {
          console.error("[DiscoverClient] Failed to load providers:", err);
          setIsLoadingProviders(false);
