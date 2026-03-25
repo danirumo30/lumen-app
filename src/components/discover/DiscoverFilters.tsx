@@ -10,7 +10,6 @@ export interface DiscoverFilters {
   minRating?: number;
   platform?: string;
   providerIds?: number[]; // Streaming platform IDs (Netflix, Amazon, etc.)
-  accessType?: ("subscription" | "free" | "ads" | "rent" | "buy")[]; // Multiple access types (OR)
   sortBy?: "relevance" | "rating" | "year" | "popularity";
   sortDirection?: "asc" | "desc";
 }
@@ -25,7 +24,6 @@ interface DiscoverFiltersProps {
   isLoadingProviders?: boolean;
   providersError?: string | null;
   onProviderChange?: (providerIds: number[]) => void;
-  onAccessTypeChange?: (accessType: ("subscription" | "free" | "ads" | "rent" | "buy")[] | null) => void;
 }
 
 // Dropdown props extension
@@ -301,7 +299,6 @@ export function DiscoverFiltersComponent({
    isLoadingProviders = false,
    providersError = null,
    onProviderChange,
-   onAccessTypeChange,
  }: DiscoverFiltersProps) {
   // Estado para saber cuál dropdown está abierto (solo uno a la vez)
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
@@ -369,7 +366,7 @@ export function DiscoverFiltersComponent({
     ...typeYears.map(y => ({ value: String(y), label: String(y), isCurrent: y === currentYear }))
   ];
 
-  const hasActiveFilters = filters.genre || filters.yearFrom || filters.yearTo || filters.platform || filters.sortBy || (filters.providerIds && filters.providerIds.length > 0) || filters.accessType;
+  const hasActiveFilters = filters.genre || filters.yearFrom || filters.yearTo || filters.platform || filters.sortBy || (filters.providerIds && filters.providerIds.length > 0);
 
   return (
     <div
@@ -478,40 +475,6 @@ export function DiscoverFiltersComponent({
                      onOpenChange={handleDropdownToggle}
                    />
                  </div>
-
-                 {/* Access Type Dropdown - multi-select, OR logic */}
-                 {filters.providerIds && filters.providerIds.length > 0 && (
-                   <div className="flex-shrink-0 snap-start">
-                     <FilterDropdown
-                       label="Tipo de acceso"
-                       options={[
-                         { value: "subscription", label: "Suscripción" },
-                         { value: "free", label: "Gratis" },
-                         { value: "ads", label: "Con Ads" },
-                         { value: "rent", label: "Alquilar" },
-                         { value: "buy", label: "Comprar" },
-                       ]}
-                       value={filters.accessType || undefined}
-                       onChange={(value) => {
-                         // value is string[] | undefined (multiSelect)
-                         if (!value || value.length === 0) {
-                           onAccessTypeChange?.(null);
-                         } else {
-                           onAccessTypeChange?.(value as ("subscription" | "free" | "ads" | "rent" | "buy")[]);
-                         }
-                       }}
-                       multiSelect={true}
-                       icon={
-                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                         </svg>
-                       }
-                       dropdownId="accessType"
-                       isOpen={openDropdownId === "accessType"}
-                       onOpenChange={handleDropdownToggle}
-                     />
-                   </div>
-                 )}
                </>
              )}
            </>
