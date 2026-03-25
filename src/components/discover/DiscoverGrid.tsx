@@ -76,7 +76,7 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
         if (filters.providerIds && filters.providerIds.length > 0) {
           filterParams.providerIds = filters.providerIds;
         }
-        if (filters.accessType) filterParams.accessType = filters.accessType;
+        // accessType removed - not used
         if (filters.sortBy) {
           filterParams.sortBy = filters.sortBy;
           if (filters.sortDirection) filterParams.sortDirection = filters.sortDirection;
@@ -133,7 +133,7 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
         }
 
         // If we got less than 20 items, likely no more pages
-        setHasMore(filteredResults.length >= 20);
+        setHasMore(newResults.length >= 20);
 
         setIsLoading(false);
       } catch (err) {
@@ -149,7 +149,7 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
       clearTimeout(timer);
       cancelled = true;
     };
-  }, [query, type, filters, page, applyStreamingFilters]);
+   }, [query, type, filters, page]);
 
   if (isLoading && results.length === 0) {
     return <DiscoverSkeleton />;
