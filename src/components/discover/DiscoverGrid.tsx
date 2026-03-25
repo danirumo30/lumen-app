@@ -48,27 +48,6 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
     setPage(prev => prev + 1);
   }, []);
 
-  // Helper: apply only accessType filter (providerIds is handled by backend)
-  const applyStreamingFilters = useCallback((items: SearchResult[]) => {
-    if (type !== "movie" && type !== "tv") return items;
-    const { accessType } = filters;
-    // accessType is now an array of UI types (subscription, free, ads, rent, buy)
-    // p.type from providers is TMDB type (flatrate, free, ads, rent, buy)
-    if (accessType && accessType.length > 0) {
-      return items.filter(item => {
-        return item.providers?.some((p: any) => {
-          const ptype = p.type; // 'flatrate' | 'free' | 'ads' | 'rent' | 'buy'
-          // Map UI to TMDB: subscription -> flatrate, others match directly
-          return accessType.some(uiType => {
-            if (uiType === 'subscription') return ptype === 'flatrate';
-            return ptype === uiType;
-          });
-        });
-      });
-    }
-    return items;
-  }, [type, filters]);
-
   // Fetch results
   useEffect(() => {
     let cancelled = false;
@@ -127,7 +106,7 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
           users: data.users?.length || 0,
         });
 
-        // Combine results based on type
+        // Combine results based on type (no client-side filtering needed, backend handles providerIds)
         let newResults: SearchResult[] = [];
         if (type === "all") {
           // When showing "All", limit to 10 per type and include users
@@ -146,14 +125,11 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
         }
         // Note: type "user" is not a selectable tab, only appears in "all"
 
-        // Apply streaming filters (provider/accessType)
-        const filteredResults = applyStreamingFilters(newResults);
-        console.log(`[DiscoverGrid] After streaming filters: ${filteredResults.length} items`);
-
+        // Directly use results (already filtered by backend)
         if (page === 1) {
-          setResults(filteredResults);
+          setResults(newResults);
         } else {
-          setResults(prev => [...prev, ...filteredResults]);
+          setResults(prev => [...prev, ...newResults]);
         }
 
         // If we got less than 20 items, likely no more pages

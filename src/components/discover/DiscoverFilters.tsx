@@ -252,7 +252,7 @@ function FilterDropdown(props: FilterDropdownProps) {
           className="fixed z-[9999] py-2 bg-emerald-900/98 backdrop-blur-xl border border-emerald-500/50 rounded-xl shadow-2xl animate-dropdownIn overflow-y-auto dropdown-scrollbar"
           style={{
             ...menuStyle,
-            maxHeight: '220px',
+            maxHeight: '50vh',
             boxShadow: '0 0 20px rgba(52, 211, 153, 0.3)',
             touchAction: 'pan-y',
           }}
@@ -456,7 +456,6 @@ export function DiscoverFiltersComponent({
                  <FilterDropdown
                    label="Plataforma"
                    options={[
-                     { value: "all", label: "Todas" },
                      ...availableProviders.map(p => ({ value: String(p.id), label: p.name, isCurrent: false }))
                    ]}
                    value={filters.providerIds?.map(String) || undefined}

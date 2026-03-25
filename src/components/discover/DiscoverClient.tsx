@@ -74,14 +74,6 @@ export function DiscoverClient() {
     setFilters(prev => ({
       ...prev,
       providerIds: providerIds.length > 0 ? providerIds : undefined,
-      accessType: undefined,
-    }));
-  }, []);
-
-  const handleAccessTypeChange = useCallback((accessType: ("subscription" | "free" | "ads" | "rent" | "buy")[] | null) => {
-    setFilters(prev => ({
-      ...prev,
-      accessType: accessType && accessType.length > 0 ? accessType : undefined,
     }));
   }, []);
 
@@ -113,30 +105,31 @@ export function DiscoverClient() {
           {/* Search Bar */}
           <DiscoverSearchBar onSearch={handleSearch} />
 
-          {/* Type Chips */}
-          <div className="mt-8 flex justify-center">
-            <DiscoverTypeChips selected={selectedType} onChange={handleTypeChange} />
+          {/* Type Chips - scrollable horizontal on mobile */}
+          <div className="mt-4 flex justify-center overflow-x-auto hide-scrollbar snap-x snap-mandatory">
+            <div className="snap-start">
+              <DiscoverTypeChips selected={selectedType} onChange={handleTypeChange} />
+            </div>
           </div>
 
-          {/* Filters */}
-          <div className="mt-4 flex justify-center">
-           <DiscoverFiltersComponent
-               type={selectedType}
-               filters={filters}
-               onChange={setFilters}
-               query={query}
-               availableProviders={selectedType !== "game" ? availableProviders : []}
-               isLoadingProviders={isLoadingProviders}
-               providersError={providersError}
+          {/* Filters - already scrollable, just adjust margin */}
+          <div className="mt-2 flex justify-center">
+            <DiscoverFiltersComponent
+                type={selectedType}
+                filters={filters}
+                onChange={setFilters}
+                query={query}
+                availableProviders={selectedType !== "game" ? availableProviders : []}
+                isLoadingProviders={isLoadingProviders}
+                providersError={providersError}
                 onProviderChange={handleProviderChange}
-                onAccessTypeChange={handleAccessTypeChange}
               />
           </div>
         </div>
       </div>
 
       {/* Results Section */}
-      <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
         <DiscoverGrid 
           query={query} 
           type={selectedType} 
