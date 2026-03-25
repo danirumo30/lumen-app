@@ -15,6 +15,8 @@ interface SearchFilters {
   yearTo?: number;
   minRating?: number;
   platform?: string;
+  providerIds?: number[]; // Streaming platform IDs (Netflix, Amazon, etc.)
+  accessType?: "subscription" | "free" | "ads" | "rent" | "buy";
   sortBy?: "relevance" | "rating" | "year" | "popularity";
   sortDirection?: "asc" | "desc";
 }
@@ -127,45 +129,49 @@ async function getPopularMovies(filters?: SearchFilters, page: number = 1) {
     return moviesWithProviders;
   }
   
-  // Use discover/movie for filtered queries
-  let url = `${TMDB_BASE_URL}/discover/movie?api_key=${TMDB_API_KEY}&page=${page}&language=es-ES`;
-  
-  if (filters?.genre) {
-    // TMDB movie genres - complete list with correct IDs
-    const genreMap: Record<string, number> = {
-      "Acción": 28,
-      "Animación": 16,
-      "Aventura": 12,
-      "Bélica": 10752,
-      "Ciencia ficción": 878,
-      "Comedia": 35,
-      "Crimen": 80,
-      "Documental": 99,
-      "Drama": 18,
-      "Familia": 10751,
-      "Fantasía": 14,
-      "Historia": 36,
-      "Misterio": 9648,
-      "Música": 10402,
-      "Película de TV": 10770,
-      "Romance": 10749,
-      "Suspense": 53,
-      "Terror": 27,
-      "Western": 37
-    };
-    if (genreMap[filters.genre]) {
-      url += `&with_genres=${genreMap[filters.genre]}`;
-    }
-  }
-  if (filters?.yearFrom) {
-    url += `&primary_release_date.gte=${filters.yearFrom}-01-01`;
-  }
-  if (filters?.yearTo) {
-    url += `&primary_release_date.lte=${filters.yearTo}-12-31`;
-  }
-  if (filters?.minRating) {
-    url += `&vote_average.gte=${filters.minRating}`;
-  }
+   // Use discover/movie for filtered queries
+   let url = `${TMDB_BASE_URL}/discover/movie?api_key=${TMDB_API_KEY}&page=${page}&language=es-ES`;
+
+   if (filters?.genre) {
+     // TMDB movie genres - complete list with correct IDs
+     const genreMap: Record<string, number> = {
+       "Acción": 28,
+       "Animación": 16,
+       "Aventura": 12,
+       "Bélica": 10752,
+       "Ciencia ficción": 878,
+       "Comedia": 35,
+       "Crimen": 80,
+       "Documental": 99,
+       "Drama": 18,
+       "Familia": 10751,
+       "Fantasía": 14,
+       "Historia": 36,
+       "Misterio": 9648,
+       "Música": 10402,
+       "Película de TV": 10770,
+       "Romance": 10749,
+       "Suspense": 53,
+       "Terror": 27,
+       "Western": 37
+     };
+     if (genreMap[filters.genre]) {
+       url += `&with_genres=${genreMap[filters.genre]}`;
+     }
+   }
+   if (filters?.providerIds && filters.providerIds.length > 0) {
+     // TMDB expects comma-separated provider IDs
+     url += `&with_watch_providers=${filters.providerIds.join(',')}`;
+   }
+   if (filters?.yearFrom) {
+     url += `&primary_release_date.gte=${filters.yearFrom}-01-01`;
+   }
+   if (filters?.yearTo) {
+     url += `&primary_release_date.lte=${filters.yearTo}-12-31`;
+   }
+   if (filters?.minRating) {
+     url += `&vote_average.gte=${filters.minRating}`;
+   }
   
   // Add sorting - default to popularity when filtering by genre/platform
   const sortFieldMap: Record<string, string> = {
@@ -310,43 +316,45 @@ async function getPopularTv(filters?: SearchFilters, page: number = 1) {
     return showsWithProviders;
   }
   
-  // Use discover/tv for filtered queries
-  let url = `${TMDB_BASE_URL}/discover/tv?api_key=${TMDB_API_KEY}&page=${page}&language=es-ES`;
-  
-  if (filters?.genre) {
-    // TMDB TV genres - correct IDs for TV shows
-    // TMDB TV genres - complete list with correct IDs (in Spanish)
-    const genreMap: Record<string, number> = {
-      "Acción": 10759,
-      "Animación": 16,
-      "Comedia": 35,
-      "Crimen": 80,
-      "Documental": 99,
-      "Drama": 18,
-      "Familia": 10751,
-      "Kids": 10762,
-      "Misterio & Terror": 9648, // Maps to Mystery which includes horror
-      "News": 10763,
-      "Reality": 10764,
-      "Sci-Fi & Fantasía": 10765,
-      "Soap": 10766,
-      "Talk": 10767,
-      "Guerra y política": 10768,
-      "Western": 37
-    };
-    if (genreMap[filters.genre]) {
-      url += `&with_genres=${genreMap[filters.genre]}`;
-    }
-  }
-  if (filters?.yearFrom) {
-    url += `&first_air_date.gte=${filters.yearFrom}-01-01`;
-  }
-  if (filters?.yearTo) {
-    url += `&first_air_date.lte=${filters.yearTo}-12-31`;
-  }
-  if (filters?.minRating) {
-    url += `&vote_average.gte=${filters.minRating}`;
-  }
+   // Use discover/tv for filtered queries
+   let url = `${TMDB_BASE_URL}/discover/tv?api_key=${TMDB_API_KEY}&page=${page}&language=es-ES`;
+
+   if (filters?.genre) {
+     // TMDB TV genres - correct IDs for TV shows
+     const genreMap: Record<string, number> = {
+       "Acción": 10759,
+       "Animación": 16,
+       "Comedia": 35,
+       "Crimen": 80,
+       "Documental": 99,
+       "Drama": 18,
+       "Familia": 10751,
+       "Kids": 10762,
+       "Misterio & Terror": 9648, // Maps to Mystery which includes horror
+       "News": 10763,
+       "Reality": 10764,
+       "Sci-Fi & Fantasía": 10765,
+       "Soap": 10766,
+       "Talk": 10767,
+       "Guerra y política": 10768,
+       "Western": 37
+     };
+     if (genreMap[filters.genre]) {
+       url += `&with_genres=${genreMap[filters.genre]}`;
+     }
+   }
+   if (filters?.providerIds && filters.providerIds.length > 0) {
+     url += `&with_watch_providers=${filters.providerIds.join(',')}`;
+   }
+   if (filters?.yearFrom) {
+     url += `&first_air_date.gte=${filters.yearFrom}-01-01`;
+   }
+   if (filters?.yearTo) {
+     url += `&first_air_date.lte=${filters.yearTo}-12-31`;
+   }
+   if (filters?.minRating) {
+     url += `&vote_average.gte=${filters.minRating}`;
+   }
   
   // Add sorting - default to popularity when filtering by genre/platform
   const sortFieldMap: Record<string, string> = {

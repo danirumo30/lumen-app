@@ -39,6 +39,7 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
   useEffect(() => {
     setPage(1);
     setHasMore(false);
+    setResults([]);
     setIsLoading(true);
   }, [query, type, filters]);
 
@@ -52,7 +53,6 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
     if (type !== "movie" && type !== "tv") return items;
     const { providerIds, accessType } = filters;
     return items.filter(item => {
-      // Si hay providerIds seleccionados, el item debe coincidir con al menos uno
       if (providerIds && providerIds.length > 0) {
         if (!item.providers?.some((p: any) => providerIds.includes(p.id))) {
           return false;
@@ -65,139 +65,96 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
     });
   }, [type, filters]);
 
-  // Debounced fetch
+  // Fetch results
   useEffect(() => {
     let cancelled = false;
     const timer = setTimeout(async () => {
+      if (cancelled) return;
+      
       setIsLoading(true);
       setError(null);
+      
       try {
         const params = new URLSearchParams();
         params.set("type", type);
+        params.set("page", String(page));
 
         if (query && query.trim().length >= 2) {
           params.set("q", query);
         }
 
-        if (filters) {
-          params.set("filters", JSON.stringify(filters));
+        // Add filters if any
+        const filterParams: Record<string, string> = {};
+        if (filters.genre) filterParams.genre = filters.genre;
+        if (filters.yearFrom) filterParams.yearFrom = String(filters.yearFrom);
+        if (filters.yearTo) filterParams.yearTo = String(filters.yearTo);
+        if (filters.minRating) filterParams.minRating = String(filters.minRating);
+        if (filters.platform) filterParams.platform = filters.platform;
+        if (filters.providerIds && filters.providerIds.length > 0) {
+          filterParams.providerIds = JSON.stringify(filters.providerIds);
+        }
+        if (filters.accessType) filterParams.accessType = filters.accessType;
+        if (filters.sortBy) {
+          filterParams.sortBy = filters.sortBy;
+          if (filters.sortDirection) filterParams.sortDirection = filters.sortDirection;
         }
 
-        if (type === "all") {
-          const hasQuery = query && query.trim().length >= 2;
-          const searchParams = new URLSearchParams();
-          if (hasQuery) searchParams.set("q", query);
-          const filtersParams = new URLSearchParams();
-          if (filters) filtersParams.set("filters", JSON.stringify(filters));
-
-          const useDiscover = !hasQuery && filters;
-          const endpointPrefix = useDiscover ? "/api/discover" : "/api/search";
-          let moviesUrl = `${endpointPrefix}?type=movie`;
-          let tvUrl = `${endpointPrefix}?type=tv`;
-          let gamesUrl = `${endpointPrefix}?type=game`;
-          if (hasQuery) {
-            moviesUrl += `&${searchParams.toString()}`;
-            tvUrl += `&${searchParams.toString()}`;
-            gamesUrl += `&${searchParams.toString()}`;
-          }
-          const filtersString = filtersParams.toString();
-          if (filtersString) {
-            moviesUrl += `&${filtersString}`;
-            tvUrl += `&${filtersString}`;
-            gamesUrl += `&${filtersString}`;
-          }
-
-          const [moviesRes, tvRes, gamesRes, usersRes] = await Promise.all([
-            fetch(moviesUrl),
-            fetch(tvUrl),
-            fetch(gamesUrl),
-            fetch(`/api/search?type=user&${searchParams.toString()}`)
-          ]);
-
-          if (cancelled) return;
-
-          const [moviesData, tvData, gamesData, usersData] = await Promise.all([
-            moviesRes.json(),
-            tvRes.json(),
-            gamesRes.json(),
-            usersRes.json(),
-          ]);
-
-          const combined = [
-            ...applyStreamingFilters(moviesData.movies || []).slice(0, 10),
-            ...applyStreamingFilters(tvData.tv || []).slice(0, 10),
-            ...(gamesData.games || []).slice(0, 10),
-            ...(usersData.users || []).slice(0, 10),
-          ];
-
-          setResults(combined);
-          setHasMore(false);
-          return;
+        const hasFilters = Object.keys(filterParams).length > 0;
+        if (hasFilters) {
+          params.set("filters", JSON.stringify(filterParams));
         }
 
-        const hasQuery = query && query.trim().length >= 2;
-        const isUserOnly = type === "user";
-        params.set("page", page.toString());
-        const useSearch = hasQuery || isUserOnly;
-        const endpoint = useSearch ? "/api/search" : "/api/discover";
-        const url = `${endpoint}?${params.toString()}`;
+        console.log(`[DiscoverGrid] Fetching page ${page} with params:`, params.toString());
 
-        const response = await fetch(url);
-        const data = await response.json();
-
+        const response = await fetch(`/api/discover?${params.toString()}`);
+        
         if (cancelled) return;
 
         if (!response.ok) {
-          throw new Error(data.error || "Failed to fetch");
+          throw new Error(`Discover error: ${response.status}`);
         }
 
+        const data = await response.json();
+        console.log(`[DiscoverGrid] Page ${page} returned:`, {
+          movies: data.movies?.length || 0,
+          tv: data.tv?.length || 0,
+          games: data.games?.length || 0,
+        });
+
+        // Combine results based on type
         let newResults: SearchResult[] = [];
-        if (type === "movie") {
-          newResults = applyStreamingFilters(data.movies || []);
-        } else if (type === "tv") {
-          newResults = applyStreamingFilters(data.tv || []);
-        } else if (type === "game") {
-          newResults = data.games || [];
-        } else if (type === "user") {
-          newResults = data.users || [];
+        if (type === "all" || type === "movie") {
+          newResults = [...newResults, ...(data.movies || [])];
+        }
+        if (type === "all" || type === "tv") {
+          newResults = [...newResults, ...(data.tv || [])];
+        }
+        if (type === "all" || type === "game") {
+          newResults = [...newResults, ...(data.games || [])];
         }
 
-        // Client-side fallback sorting for movie/tv when TMDB may not honor sort_by during search
-        if (hasQuery && filters.sortBy && (type === "movie" || type === "tv")) {
-          const direction = filters.sortDirection === "asc" ? 1 : -1;
-          newResults.sort((a, b) => {
-            switch (filters.sortBy) {
-              case "popularity":
-              case "rating":
-                return ((a.voteAverage || 0) - (b.voteAverage || 0)) * direction;
-              case "year":
-                const aYear = a.releaseDate ? new Date(a.releaseDate).getFullYear() : 0;
-                const bYear = b.releaseDate ? new Date(b.releaseDate).getFullYear() : 0;
-                return (aYear - bYear) * direction;
-              default:
-                return 0;
-            }
-          });
-        }
+        // Apply streaming filters (provider/accessType)
+        const filteredResults = applyStreamingFilters(newResults);
+        console.log(`[DiscoverGrid] After streaming filters: ${filteredResults.length} items`);
 
         if (page === 1) {
-          setResults(newResults);
+          setResults(filteredResults);
         } else {
-          setResults(prev => [...prev, ...newResults]);
+          setResults(prev => [...prev, ...filteredResults]);
         }
 
-        setHasMore(newResults.length > 0);
+        // If we got less than 20 items, likely no more pages
+        setHasMore(filteredResults.length >= 20);
+
+        setIsLoading(false);
       } catch (err) {
         if (!cancelled) {
-          console.error("Fetch error:", err);
-          setError(err instanceof Error ? err.message : "Something went wrong");
-        }
-      } finally {
-        if (!cancelled) {
+          console.error("[DiscoverGrid] Error:", err);
+          setError(err instanceof Error ? err.message : "Error cargando resultados");
           setIsLoading(false);
         }
       }
-    }, 150);
+    }, 300);
 
     return () => {
       clearTimeout(timer);
@@ -257,7 +214,7 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
               platforms={result.platforms}
               username={result.username}
               avatarUrl={result.avatarUrl}
-              providers={result.providers as any} // cast para evitar conflicto de tipos
+              providers={result.providers as any}
               platformLogos={result.platformLogos}
             />
           </div>
