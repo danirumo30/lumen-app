@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY!;
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
@@ -497,10 +498,74 @@ async function getPopularTv(filters?: SearchFilters, page: number = 1, query?: s
   return showsWithProviders;
 }
 
-// Get popular games
-async function getPopularGames(filters?: SearchFilters, page: number = 1) {
+// Get popular games (or search if query provided)
+async function getPopularGames(filters?: SearchFilters, page: number = 1, query?: string) {
   const token = await getIgdbToken();
 
+  // If search query provided, use IGDB search
+  if (query && query.trim().length > 0) {
+    console.log("[DEBUG] Using IGDB search for games with query:", query);
+    const searchQuery = `search "${query}";`;
+    const limit = 20;
+    const offset = (page - 1) * 20;
+    
+    const queryBody = `
+      fields id, name, cover.url, first_release_date, rating, genres.name, platforms.id, platforms.name, platforms.platform_logo.image_id;
+      ${searchQuery}
+      limit ${limit};
+      offset ${offset};
+    `;
+    
+    const response = await fetch("https://api.igdb.com/v4/games", {
+      method: "POST",
+      headers: {
+        "Client-ID": IGDB_CLIENT_ID,
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "text/plain",
+      },
+      body: queryBody.trim(),
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("IGDB search error:", response.status, errorText);
+      return [];
+    }
+    
+    const data = await response.json();
+    return data.map((game: {
+      id: number;
+      name: string;
+      cover?: { url: string };
+      first_release_date?: number;
+      rating?: number;
+      genres?: { name: string }[];
+      platforms?: { id: number; name: string; platform_logo?: { image_id: string } }[];
+    }) => ({
+      id: `igdb_${game.id}`,
+      type: "game" as const,
+      title: game.name,
+      posterUrl: game.cover?.url
+        ? `https:${game.cover.url.replace("t_thumb", "t_cover_big")}`
+        : null,
+      releaseDate: game.first_release_date
+        ? new Date(game.first_release_date * 1000).toISOString().split("T")[0]
+        : null,
+      voteAverage: game.rating ? Math.round(game.rating) / 10 : null,
+      genres: game.genres?.map((g: { name: string }) => g.name) || [],
+      platforms: game.platforms?.map((p: { name: string }) => p.name) || [],
+      platformLogos: game.platforms?.map((p: { id: number; name: string; platform_logo?: { image_id: string } }) => ({
+        id: p.id,
+        name: p.name,
+        platformName: p.name,
+        logoUrl: p.platform_logo?.image_id 
+          ? `https://images.igdb.com/igdb/image/upload/t_micro/${p.platform_logo.image_id}.png`
+          : null,
+      })).filter((p: { logoUrl: string | null }) => p.logoUrl) || [],
+    }));
+  }
+
+  // Regular filtered query
   let queryBody = "fields id, name, cover.url, first_release_date, rating, genres.name, platforms.id, platforms.name, platforms.platform_logo.image_id;";
   
   // Genre ID mapping for IGDB - CORRECTED from official IGDB genres
@@ -706,11 +771,38 @@ async function getPopularGames(filters?: SearchFilters, page: number = 1) {
           : null,
       })).filter((p: { logoUrl: string | null }) => p.logoUrl) || [],
     }));
-   } catch (error) {
-     // console.error("Error fetching games from IGDB:", error);
-     return [];
-   }
- }
+    } catch (error) {
+      // console.error("Error fetching games from IGDB:", error);
+      return [];
+    }
+  }
+
+// Get trending users (random public profiles)
+async function getTrendingUsers() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+  const supabase = createClient(supabaseUrl, supabaseKey);
+  
+  const { data: profiles, error } = await supabase
+    .from("user_profiles")
+    .select("id, username, avatar_url")
+    .eq("is_public", true)
+    .limit(50);
+    
+  if (error || !profiles) {
+    console.error("Error fetching profiles:", error);
+    return [];
+  }
+  
+  // Shuffle and take 20
+  const shuffled = [...profiles].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, 20).map((user: any) => ({
+    id: user.id,
+    type: "user" as const,
+    title: user.username, // Use title for consistency with SearchResult
+    avatarUrl: user.avatar_url,
+  }));
+}
 
 export async function GET(request: Request) {
   try {
@@ -743,25 +835,29 @@ export async function GET(request: Request) {
     const results = await Promise.allSettled([
       type === "all" || type === "movie" ? getPopularMovies(movieFilters, page, query) : Promise.resolve([]),
       type === "all" || type === "tv" ? getPopularTv(tvFilters, page, query) : Promise.resolve([]),
-      type === "all" || type === "game" ? getPopularGames(gameFilters, page) : Promise.resolve([]),
+      type === "all" || type === "game" ? getPopularGames(gameFilters, page, query) : Promise.resolve([]),
+      type === "all" ? getTrendingUsers() : Promise.resolve([]),
     ]);
 
-    const movies = results[0].status === "fulfilled" ? results[0].value : [];
-    const tv = results[1].status === "fulfilled" ? results[1].value : [];
-    const games = results[2].status === "fulfilled" ? results[2].value : [];
+     const movies = results[0].status === "fulfilled" ? results[0].value : [];
+     const tv = results[1].status === "fulfilled" ? results[1].value : [];
+     const games = results[2].status === "fulfilled" ? results[2].value : [];
+     const users = results[3].status === "fulfilled" ? results[3].value : [];
 
-    return NextResponse.json({
-      movies,
-      tv,
-      games,
-      total: movies.length + tv.length + games.length,
-      // Return pagination info from TMDB (movies and TV)
-      pagination: {
-        moviesTotal: movies.length,
-        tvTotal: tv.length,
-        gamesTotal: games.length,
-      }
-    });
+     return NextResponse.json({
+       movies,
+       tv,
+       games,
+       users,
+       total: movies.length + tv.length + games.length + users.length,
+       // Return pagination info
+       pagination: {
+         moviesTotal: movies.length,
+         tvTotal: tv.length,
+         gamesTotal: games.length,
+         usersTotal: users.length,
+       }
+     });
   } catch (error) {
     console.error("Discover error:", error);
     return NextResponse.json(

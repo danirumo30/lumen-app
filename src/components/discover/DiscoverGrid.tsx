@@ -115,19 +115,27 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
           movies: data.movies?.length || 0,
           tv: data.tv?.length || 0,
           games: data.games?.length || 0,
+          users: data.users?.length || 0,
         });
 
         // Combine results based on type
         let newResults: SearchResult[] = [];
-        if (type === "all" || type === "movie") {
-          newResults = [...newResults, ...(data.movies || [])];
+        if (type === "all") {
+          // When showing "All", limit to 10 per type and include users
+          newResults = [
+            ...(data.movies?.slice(0, 10) || []),
+            ...(data.tv?.slice(0, 10) || []),
+            ...(data.games?.slice(0, 10) || []),
+            ...(data.users?.slice(0, 10) || []),
+          ];
+        } else if (type === "movie") {
+          newResults = data.movies || [];
+        } else if (type === "tv") {
+          newResults = data.tv || [];
+        } else if (type === "game") {
+          newResults = data.games || [];
         }
-        if (type === "all" || type === "tv") {
-          newResults = [...newResults, ...(data.tv || [])];
-        }
-        if (type === "all" || type === "game") {
-          newResults = [...newResults, ...(data.games || [])];
-        }
+        // Note: type "user" is not a selectable tab, only appears in "all"
 
         // Apply streaming filters (provider/accessType)
         const filteredResults = applyStreamingFilters(newResults);
