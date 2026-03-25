@@ -86,12 +86,20 @@ export function DiscoverClient() {
   // Compute allowed access types for currently selected providers
   const availableAccessTypes = useMemo(() => {
     if (!filters.providerIds || filters.providerIds.length === 0) return [];
-    // Get union of all types from selected providers
+    // Get union of all types from selected providers, mapping TMDB types to UI types
     const typesSet = new Set<string>();
     filters.providerIds.forEach(id => {
       const provider = availableProviders.find(p => p.id === id);
       if (provider) {
-        provider.types.forEach(t => typesSet.add(t));
+        provider.types.forEach(t => {
+          // Map TMDB type to UI accessType
+          if (t === "flatrate") {
+            typesSet.add("subscription");
+          } else if (t === "free" || t === "ads" || t === "rent" || t === "buy") {
+            typesSet.add(t);
+          }
+          // Ignore other types
+        });
       }
     });
     return Array.from(typesSet) as ("subscription" | "free" | "ads" | "rent" | "buy")[];
