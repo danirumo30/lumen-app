@@ -95,13 +95,12 @@ export async function GET(request: Request) {
       }
     }
 
-    // Deduplicate by provider_id, collecting all types and keeping lowest display_priority
+    // Deduplicate by provider_id, collecting all types
     interface ProviderWithPriority {
       id: number;
       name: string;
       logoUrl: string | null;
       types: string[];
-      displayPriority: number;
     }
 
     const providerMap = new Map<number, ProviderWithPriority>();
@@ -112,24 +111,106 @@ export async function GET(request: Request) {
         if (!existing.types.includes(p.type)) {
           existing.types.push(p.type);
         }
-        // Keep the lowest display_priority (most important)
-        if (p.display_priority !== undefined && p.display_priority < existing.displayPriority) {
-          existing.displayPriority = p.display_priority;
-        }
       } else {
         providerMap.set(p.provider_id, {
           id: p.provider_id,
           name: p.provider_name,
           logoUrl: p.logo_path ? `https://image.tmdb.org/t/p/original${p.logo_path}` : null,
           types: [p.type],
-          displayPriority: p.display_priority ?? 999, // Default high priority for missing values
         });
       }
     });
 
-    // Convert to array, sort by display_priority ascending (0, 1, 2, ...)
-    const sortedProviders: ProviderWithPriority[] = Array.from(providerMap.values())
-      .sort((a, b) => a.displayPriority - b.displayPriority);
+    // Custom priority order for Spain (ES)
+    const spainProviderOrder = [
+      'Netflix',
+      'Amazon Prime Video',
+      'Disney Plus',
+      'Movistar Plus+',
+      'HBO Max',
+      'SkyShowtime',
+      'Apple TV',
+      'Crunchyroll',
+      'Atres Player',
+      'RTVE Play',
+      'DAZN',
+      'YouTube Premium',
+      'Google Play Movies',
+      'Pluto TV',
+      'Filmin',
+      'Rakuten TV',
+      'FlixOlé',
+      'Plex',
+      'MUBI',
+      'HBO Max Amazon Channel',
+      'Crunchyroll Amazon Channel',
+      'AMC+ Amazon Channel',
+      'FlixOlé Amazon Channel',
+      'Pash Amazon Channel',
+      'Planet Horror Amazon Channel',
+      'Dizi Amazon Channel',
+      'Acontra Plus Amazon Channel',
+      'MGM Plus Amazon Channel',
+      'OUTtv Amazon Channel',
+      'Historia y Actualidad Amazon Channel',
+      'Hayu Amazon Channel',
+      'Love Nature Amazon Channel',
+      'Shadowz Amazon Channel',
+      'Lionsgate+ Amazon Channels',
+      'AMC Channels Amazon Channel',
+      'AcornTV Amazon Channel',
+      'MUBI Amazon Channel',
+      'AMC Plus Apple TV Channel ',
+      'Apple TV Store',
+      'Movistar Plus+ Ficción Total ',
+      'fuboTV',
+      'rtve',
+      'Filmin Plus',
+      'JustWatch TV',
+      'Hayu',
+      'Amazon Video',
+      'Arte',
+      'Acontra Plus',
+      'Sun Nxt',
+      'Curiosity Stream',
+      'Tivify',
+      'GuideDoc',
+      '3Cat',
+      'Dekkoo',
+      'AGalega',
+      'Rakuten Viki',
+      'DOCSVILLE',
+      'WOW Presents Plus',
+      'Magellan TV',
+      'BroadwayHD',
+      'Kocowa',
+      'Bloodstream',
+      'MovieMe',
+      'KableOne',
+      'CaixaForum+',
+      'Artiflix',
+      'Artify'
+    ];
+
+    // Convert to array and sort by custom priority: first providers in the list (in order), then alphabetically
+    const sortedProviders = Array.from(providerMap.values()).sort((a, b) => {
+      const aIndex = spainProviderOrder.indexOf(a.name);
+      const bIndex = spainProviderOrder.indexOf(b.name);
+      
+      if (aIndex !== -1 && bIndex !== -1) {
+        // Both in list: sort by list order
+        return aIndex - bIndex;
+      } else if (aIndex !== -1) {
+        // Only a in list: a comes first
+        return -1;
+      } else if (bIndex !== -1) {
+        // Only b in list: b comes first
+        return 1;
+      } else {
+        // Neither in list: alphabetical
+        return a.name.localeCompare(b.name);
+      }
+    });
 
     const result = sortedProviders.map(p => ({
       id: p.id,
@@ -138,7 +219,7 @@ export async function GET(request: Request) {
       types: p.types as ("subscription" | "free" | "ads" | "rent" | "buy")[],
     }));
 
-    console.log("[watch-providers] Final sorted providers (by display_priority):", sortedProviders.map(p => ({ name: p.name, priority: p.displayPriority })));
+    console.log("[watch-providers] Sorted providers for ES (custom priority):", result.map(p => p.name));
     return NextResponse.json(result);
   } catch (error) {
     console.error("Error fetching watch providers:", error);
