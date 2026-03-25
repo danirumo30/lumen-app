@@ -41,12 +41,12 @@ export async function GET(request: Request) {
     console.log("[watch-providers] TV providers count:", tvProviders.length);
     
     // Combine both arrays (they are already filtered by region)
-    const allProviders = [...movieProviders, ...tvProviders];
+    let allProviders = [...movieProviders, ...tvProviders];
     console.log("[watch-providers] Combined total (before dedup):", allProviders.length);
 
+    // If no providers found for region, try US fallback
     if (allProviders.length === 0) {
       console.log("[watch-providers] No providers found for region, trying US fallback");
-      // Try US as fallback
       const usResponse = await fetch(
         `${TMDB_BASE_URL}/watch/providers/movie?api_key=${TMDB_API_KEY}&language=es-ES&watch_region=US`,
         { headers: { "Cache-Control": "public, s-maxage=86400" } }
@@ -59,64 +59,40 @@ export async function GET(request: Request) {
       if (usResponse.ok && usTvResponse.ok) {
         const usMovie = await usResponse.json();
         const usTv = await usTvResponse.json();
-        const usProviders = [...usMovie, ...usTv];
-        console.log("[watch-providers] US fallback total:", usProviders.length);
-        
-        if (usProviders.length === 0) {
-          return NextResponse.json([]);
-        }
-        
-        // Deduplicate US providers
-        const providerMap = new Map<number, { id: number; name: string; logoUrl: string | null; types: string[] }>();
-        usProviders.forEach(p => {
-          const existing = providerMap.get(p.provider_id);
-          if (existing) {
-            if (!existing.types.includes(p.type)) {
-              existing.types.push(p.type);
-            }
-          } else {
-            providerMap.set(p.provider_id, {
-              id: p.provider_id,
-              name: p.provider_name,
-              logoUrl: p.logo_path ? `https://image.tmdb.org/t/p/original${p.logo_path}` : null,
-              types: [p.type],
-            });
-          }
-        });
-        
-        const result = Array.from(providerMap.values()).map(p => ({
-          id: p.id,
-          name: p.name,
-          logoUrl: p.logoUrl,
-          types: p.types as ("subscription" | "free" | "ads" | "rent" | "buy")[],
-        }));
-        
-        return NextResponse.json(result);
+        allProviders = [...usMovie, ...usTv];
+        console.log("[watch-providers] US fallback total:", allProviders.length);
       }
     }
 
-    // Deduplicate by provider_id, collecting all types
-    interface ProviderWithPriority {
+    if (allProviders.length === 0) {
+      return NextResponse.json([]);
+    }
+
+    // Deduplicate by provider_id, collecting all unique types (using Set)
+    interface ProviderEntry {
       id: number;
       name: string;
       logoUrl: string | null;
-      types: string[];
+      types: Set<string>;
     }
 
-    const providerMap = new Map<number, ProviderWithPriority>();
+    const providerMap = new Map<number, ProviderEntry>();
 
     allProviders.forEach(p => {
-      const existing = providerMap.get(p.provider_id);
+      const id = p.provider_id;
+      const name = p.provider_name;
+      const logoUrl = p.logo_path ? `https://image.tmdb.org/t/p/original${p.logo_path}` : null;
+      const type = p.type; // 'flatrate', 'rent', 'buy', 'ads', 'free'
+
+      const existing = providerMap.get(id);
       if (existing) {
-        if (!existing.types.includes(p.type)) {
-          existing.types.push(p.type);
-        }
+        if (type) existing.types.add(type);
       } else {
-        providerMap.set(p.provider_id, {
-          id: p.provider_id,
-          name: p.provider_name,
-          logoUrl: p.logo_path ? `https://image.tmdb.org/t/p/original${p.logo_path}` : null,
-          types: [p.type],
+        providerMap.set(id, {
+          id,
+          name,
+          logoUrl,
+          types: new Set(type ? [type] : []),
         });
       }
     });
@@ -216,10 +192,11 @@ export async function GET(request: Request) {
       id: p.id,
       name: p.name,
       logoUrl: p.logoUrl,
-      types: p.types as ("subscription" | "free" | "ads" | "rent" | "buy")[],
+      types: Array.from(p.types), // Convert Set<string> to string[]
     }));
 
     console.log("[watch-providers] Sorted providers for ES (custom priority):", result.map(p => p.name));
+    console.log("[watch-providers] Providers with types:", result.map(p => ({name: p.name, types: p.types})));
     return NextResponse.json(result);
   } catch (error) {
     console.error("Error fetching watch providers:", error);
