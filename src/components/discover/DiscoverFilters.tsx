@@ -377,32 +377,13 @@ export function DiscoverFiltersComponent({
     <div
       className="flex-shrink-0"
     >
-      {/* Filter Bar - Always visible like franchise page */}
-      <div
-        className="flex sm:flex-wrap items-center justify-start sm:justify-center gap-2 overflow-x-auto sm:overflow-x-visible overflow-y-visible snap-x snap-mandatory pb-2 relative z-20 hide-scrollbar"
-        style={{
-          touchAction: openDropdownId ? 'pan-y' : 'auto', // Disable horizontal scroll when any dropdown open
-        }}
-      >
-         {/* Toggle Button */}
-         <div className="flex-shrink-0 snap-start">
-           <button
-             disabled
-             className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-300 border ${
-               hasActiveFilters
-                 ? "bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg border-transparent"
-                 : "bg-zinc-900/60 text-zinc-400 border border-zinc-800 opacity-50"
-             } cursor-not-allowed`}
-           >
-             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-             </svg>
-             <span>Filtros</span>
-             {hasActiveFilters && (
-               <span className="w-2 h-2 bg-white rounded-full" />
-             )}
-           </button>
-         </div>
+       {/* Filter Bar - Always visible */}
+       <div
+         className="flex items-center justify-start gap-2 overflow-x-auto hide-scrollbar snap-x snap-mandatory relative z-20"
+         style={{
+           touchAction: openDropdownId ? 'pan-y' : 'auto',
+         }}
+       >
 
         {/* Genre Dropdown */}
         {typeGenres.length > 0 && (
