@@ -19,6 +19,7 @@ interface SearchFilters {
   providerIds?: number[]; // Streaming platform IDs (Netflix, Amazon, etc.)
   sortBy?: "relevance" | "rating" | "year" | "popularity";
   sortDirection?: "asc" | "desc";
+  accessType?: string;
 }
 
 // Get IGDB access token
@@ -59,12 +60,12 @@ async function getMovieProviders(movieId: number): Promise<{ id: number; name: s
     if (!providers) return [];
     
     // Build array with type information
-    const allProviders = [
-      ...(providers.flatrate || []).map(p => ({ ...p, type: 'flatrate' })),
-      ...(providers.free || []).map(p => ({ ...p, type: 'free' })),
-      ...(providers.ads || []).map(p => ({ ...p, type: 'ads' })),
-      ...(providers.rent || []).map(p => ({ ...p, type: 'rent' })),
-      ...(providers.buy || []).map(p => ({ ...p, type: 'buy' })),
+    const allProviders: any[] = [
+      ...(providers.flatrate || []).map((p: any) => ({ ...p, type: 'flatrate' })),
+      ...(providers.free || []).map((p: any) => ({ ...p, type: 'free' })),
+      ...(providers.ads || []).map((p: any) => ({ ...p, type: 'ads' })),
+      ...(providers.rent || []).map((p: any) => ({ ...p, type: 'rent' })),
+      ...(providers.buy || []).map((p: any) => ({ ...p, type: 'buy' })),
     ];
     
     // Deduplicate by provider_id to avoid duplicate keys in UI
@@ -91,6 +92,7 @@ async function getPopularMovies(filters?: SearchFilters, page: number = 1, query
       if (filters?.yearFrom) {
         searchUrl += `&year=${filters.yearFrom}`;
       }
+      // Note: genre, sortBy, minRating, etc. are disabled when searching (TMDB search endpoint limitation)
     
     const response = await fetch(searchUrl, { headers: { "Cache-Control": "public, s-maxage=3600" } });
     if (!response.ok) {
@@ -293,12 +295,12 @@ async function getTvProviders(tvId: number): Promise<{ id: number; name: string;
     if (!providers) return [];
     
     // Build array with type information
-    const allProviders = [
-      ...(providers.flatrate || []).map(p => ({ ...p, type: 'flatrate' })),
-      ...(providers.free || []).map(p => ({ ...p, type: 'free' })),
-      ...(providers.ads || []).map(p => ({ ...p, type: 'ads' })),
-      ...(providers.rent || []).map(p => ({ ...p, type: 'rent' })),
-      ...(providers.buy || []).map(p => ({ ...p, type: 'buy' })),
+    const allProviders: any[] = [
+      ...(providers.flatrate || []).map((p: any) => ({ ...p, type: 'flatrate' })),
+      ...(providers.free || []).map((p: any) => ({ ...p, type: 'free' })),
+      ...(providers.ads || []).map((p: any) => ({ ...p, type: 'ads' })),
+      ...(providers.rent || []).map((p: any) => ({ ...p, type: 'rent' })),
+      ...(providers.buy || []).map((p: any) => ({ ...p, type: 'buy' })),
     ];
     
     // Deduplicate by provider_id to avoid duplicate keys in UI
@@ -325,6 +327,7 @@ async function getPopularTv(filters?: SearchFilters, page: number = 1, query?: s
     if (filters?.yearFrom) {
       searchUrl += `&first_air_date_year=${filters.yearFrom}`;
     }
+    // Note: genre, sortBy, minRating, etc. are disabled when searching (TMDB search endpoint limitation)
     
     const response = await fetch(searchUrl, { headers: { "Cache-Control": "public, s-maxage=3600" } });
     if (!response.ok) {

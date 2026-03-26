@@ -29,6 +29,20 @@ interface UserResult {
 
 type SearchResult = MediaResult | UserResult;
 
+interface SearchResponse {
+  movies: MediaResult[];
+  tv: MediaResult[];
+  games: MediaResult[];
+  users: UserResult[];
+  totalResults: number;
+  hasMore: {
+    movies: boolean;
+    tv: boolean;
+    games: boolean;
+    users: boolean;
+  };
+}
+
 // Icons
 function Film({ className }: { className?: string }) {
   return (
@@ -118,13 +132,25 @@ function MediaCard({ media, accentColor }: { media: MediaResult; accentColor: st
       </div>
       {/* Info (right) */}
       <div className="flex-1 min-w-0">
-        <p className={`font-medium truncate transition-colors ${
-          accentColor === "from-amber-500 to-orange-600" ? "text-amber-400 group-hover:text-amber-300" :
-          accentColor === "from-violet-500 to-fuchsia-600" ? "text-violet-400 group-hover:text-violet-300" :
-          "text-indigo-400 group-hover:text-indigo-300"
-        }`}>
-          {media.title}
-        </p>
+        <div className="flex items-center gap-2">
+          {/* Type badge */}
+          {(media.type === "movie" || media.type === "tv") && (
+            <span className={`text-xs px-1.5 py-0.5 rounded ${
+              media.type === "movie" 
+                ? "bg-amber-500/20 text-amber-400" 
+                : "bg-emerald-500/20 text-emerald-400"
+            }`}>
+              {media.type === "movie" ? "Película" : "Serie"}
+            </span>
+          )}
+          <p className={`font-medium truncate transition-colors ${
+            accentColor === "from-amber-500 to-orange-600" ? "text-amber-400 group-hover:text-amber-300" :
+            accentColor === "from-violet-500 to-fuchsia-600" ? "text-violet-400 group-hover:text-violet-300" :
+            "text-indigo-400 group-hover:text-indigo-300"
+          }`}>
+            {media.title}
+          </p>
+        </div>
         <div className="flex items-center gap-2 mt-1 text-xs text-zinc-500">
           <span>{media.releaseDate ? new Date(media.releaseDate).getFullYear() : "Desconocido"}</span>
           {media.voteAverage && (
@@ -148,8 +174,12 @@ function SearchContent() {
   const [query, setQuery] = useState(initialQuery);
   const [activeTab, setActiveTab] = useState<TabType>(initialTab);
   const [results, setResults] = useState<SearchResult[]>([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState({ movies: true, tv: true, games: true, users: true });
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   const updateURL = useCallback((newQuery: string, newTab: TabType) => {
     const params = new URLSearchParams();
@@ -162,18 +192,21 @@ function SearchContent() {
     if (activeTab !== tab) {
       setActiveTab(tab);
       setResults([]);
+      setPage(1);
+      setHasMore({ movies: true, tv: true, games: true, users: true });
       updateURL(query, tab);
     }
   };
 
-  const performSearch = async (searchQuery: string, tab: TabType) => {
+  const performSearch = async (searchQuery: string, tab: TabType, pageNum: number = 1) => {
     if (abortControllerRef.current) abortControllerRef.current.abort();
     abortControllerRef.current = new AbortController();
 
-    setIsLoading(true);
+    setIsLoading(pageNum === 1);
+    if (pageNum > 1) setIsLoadingMore(true);
     try {
       const typeParam = tab === "content" ? "all" : tab === "games" ? "game" : "user";
-      const response = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}&type=${typeParam}`, {
+      const response = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}&type=${typeParam}&page=${pageNum}`, {
         signal: abortControllerRef.current.signal,
       });
       const data: SearchResponse = await response.json();
@@ -187,14 +220,31 @@ function SearchContent() {
       } else if (tab === "users" && data.users) {
         data.users.forEach(u => combined.push({ ...u, type: "user" as const }));
       }
-      setResults(combined);
+      
+      // Update hasMore from response
+      if (data.hasMore) {
+        setHasMore(data.hasMore);
+      }
+      
+      // Append results if loading more, replace if first page
+      // Deduplicate by ID to avoid duplicates from API
+      if (pageNum === 1) {
+        setResults(combined);
+      } else {
+        setResults(prev => {
+          const existingIds = new Set(prev.map(r => r.id));
+          const newUniqueResults = combined.filter(r => !existingIds.has(r.id));
+          return [...prev, ...newUniqueResults];
+        });
+      }
     } catch (err) {
       if ((err as Error).name !== "AbortError") {
         console.error("Search error:", err);
-        setResults([]);
+        if (pageNum === 1) setResults([]);
       }
     } finally {
       setIsLoading(false);
+      setIsLoadingMore(false);
     }
   };
 
@@ -233,15 +283,57 @@ function SearchContent() {
     }
   }, [initialQuery]);
 
+  // Reset page when query or tab changes
+  useEffect(() => {
+    setPage(1);
+  }, [query, activeTab]);
+
    useEffect(() => {
      const timeout = setTimeout(() => {
-       performSearch(query, activeTab);
+       performSearch(query, activeTab, 1);
      }, 300);
      return () => {
        clearTimeout(timeout);
        if (abortControllerRef.current) abortControllerRef.current.abort();
      };
    }, [query, activeTab]);
+
+  // Intersection Observer for infinite scroll
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry.isIntersecting && !isLoading && !isLoadingMore) {
+          // Determine if there's more content for current tab
+          const currentHasMore = activeTab === "content" 
+            ? hasMore.movies || hasMore.tv 
+            : activeTab === "games" 
+              ? hasMore.games 
+              : hasMore.users;
+          
+          // Load more if there's more content and we're not already at the limit
+          // For search: need query (at least 2 chars) OR we have trending content to load more of
+          // For trending: page starts at 1, so we can load page 2 if hasMore is true
+          const shouldLoadMore = (currentHasMore && query.trim().length >= 2) || 
+                                  (currentHasMore && page === 1 && query.trim() === "");
+          
+          if (shouldLoadMore) {
+            const nextPage = page + 1;
+            console.log("[Search] Loading more - current page:", page, "next page:", nextPage, "hasMore:", currentHasMore, "query:", query);
+            setPage(nextPage);
+            performSearch(query, activeTab, nextPage);
+          }
+        }
+      },
+      { rootMargin: "100px" }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [isLoading, isLoadingMore, hasMore, activeTab, query, page]);
 
   const getAccentColor = () => {
     switch (activeTab) {
@@ -293,7 +385,18 @@ function SearchContent() {
               className="flex-1 bg-transparent py-3 px-4 text-white placeholder-zinc-500 focus:outline-none text-base"
               autoFocus
             />
-            {isLoading && (
+            {/* Clear button - show when there's text */}
+            {query.trim() !== "" && (
+              <button
+                onClick={() => setQuery("")}
+                className="pr-4 text-zinc-500 hover:text-white transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+            {isLoading && query.trim() !== "" && (
               <div className="pr-4">
                 <div className={`w-5 h-5 border-2 border-t-transparent rounded-full animate-spin ${
                   activeTab === "content" ? "border-amber-500" :
@@ -337,6 +440,19 @@ function SearchContent() {
                 return <MediaCard key={item.id} media={item} accentColor={accent} />;
               }
             })}
+            
+            {/* Sentinel for infinite scroll */}
+            <div ref={sentinelRef} className="h-4" />
+            
+            {/* Loading more indicator */}
+            {isLoadingMore && (
+              <div className="flex justify-center py-4">
+                <div className={`w-6 h-6 border-2 border-t-transparent rounded-full animate-spin ${
+                  activeTab === "content" ? "border-amber-500" :
+                  activeTab === "games" ? "border-violet-500" : "border-indigo-500"
+                }`} />
+              </div>
+            )}
           </div>
         )}
 

@@ -334,6 +334,7 @@ export function DiscoverFiltersComponent({
    const isGenreDisabled = isSearching && isMovieOrTv;
    const isYearDisabled = isSearching && isMovieOrTv;
    const isPlatformDisabled = isSearching && isMovieOrTv;
+   const isSortDisabled = isSearching && (isMovieOrTv || type === "game");
 
   const typeGenres = genres[type as keyof typeof genres] || [];
   const typePlatforms = platforms[type as keyof typeof platforms] || [];
@@ -575,8 +576,8 @@ export function DiscoverFiltersComponent({
             }}
             sortDirection={filters.sortDirection}
             onSortDirectionChange={(direction) => updateFilter("sortDirection", direction)}
-            disabled={isSearching && type === "game"}
-            title={isSearching && type === "game" ? "No disponible durante búsqueda (IGDB no soporta)" : undefined}
+            disabled={isSortDisabled}
+            title={isSortDisabled ? "No disponible durante búsqueda" : undefined}
             dropdownId="sort"
             isOpen={openDropdownId === "sort"}
             onOpenChange={handleDropdownToggle}

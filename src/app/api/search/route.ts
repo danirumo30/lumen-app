@@ -251,6 +251,11 @@ async function searchTv(query: string, page = 1, filters?: SearchFilters) {
   const hasQuery = query && query.trim().length >= 2;
   let url = `${TMDB_BASE_URL}/search/tv?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}&page=${page}&language=es-ES`;
 
+  // When searching (has query), sort by year (most recent first)
+  if (hasQuery) {
+    url += "&sort_by=first_air_date.desc";
+  }
+
   // Genre filter: only for discover (no search)
   if (!hasQuery && filters?.genre) {
     const genreMap: Record<string, number> = {
@@ -428,12 +433,21 @@ async function searchGames(query: string, page: number = 1, filters?: SearchFilt
      sortClause = ` sort ${sortField} ${direction};`;
    }
    
-   // IGDB query format: search "term"; fields ...; where ...; sort ...; offset ...; limit ...;
-   // Request platforms with logo info
-   const offset = (page - 1) * 20;
-   const offsetClause = offset > 0 ? ` offset ${offset};` : "";
-   const queryBody = `search "${escapedQuery}"; fields id, name, cover.url, first_release_date, rating, genres.name, platforms.id, platforms.name, platforms.platform_logo.image_id;${whereClause}${sortClause}${offsetClause} limit 20;`;
-   console.log("[searchGames] queryBody:", queryBody);
+     // IGDB query format: search "term"; fields ...; where ...; sort ...; offset ...; limit ...;
+    // Request platforms with logo info
+    const offset = (page - 1) * 20;
+    const offsetClause = offset > 0 ? ` offset ${offset};` : "";
+    
+    let queryBody = "";
+    if (query && query.trim().length >= 2) {
+      // Use search with offset - IGDB supports this in newer API versions
+      // If it returns duplicates, we rely on frontend deduplication
+      queryBody = `search "${escapedQuery}"; fields id, name, cover.url, first_release_date, rating, genres.name, platforms.id, platforms.name, platforms.platform_logo.image_id; limit 20;${offsetClause}`;
+    } else {
+      // No query - use trending logic with offset for pagination
+      queryBody = `fields id, name, cover.url, first_release_date, rating, genres.name, platforms.id, platforms.name, platforms.platform_logo.image_id;${whereClause}${sortClause}${offsetClause} limit 20;`;
+    }
+    console.log("[searchGames] queryBody:", queryBody);
 
   const response = await fetch("https://api.igdb.com/v4/games", {
     method: "POST",
@@ -799,6 +813,9 @@ async function getTrendingGames(filters?: SearchFilters, limit: number = 10) {
   }
 }
 
+// In-memory cache for total_pages (persists across requests in the same instance)
+const pageCache = new Map<string, { moviePageCount: number; tvPageCount: number }>();
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -838,25 +855,55 @@ export async function GET(request: Request) {
     
     console.log("[SEARCH] query:", query, "type:", type, "hasQuery:", hasQuery, "isAll:", isAll, "needsTrendingUsers:", needsTrendingUsers, "needsTrendingContent:", needsTrendingContent);
 
-    // Fetch data - search or trending depending on query
-    let movies: any[] = [];
-    let tv: any[] = [];
-    let games: any[] = [];
-    let users: any[] = [];
-    
-    if (hasQuery) {
-      // Search mode
-      const results = await Promise.allSettled([
-        (type === "all" || type === "movie") ? searchMovies(query, page, movieFilters) : Promise.resolve([]),
-        (type === "all" || type === "tv") ? searchTv(query, page, tvFilters) : Promise.resolve([]),
-        (type === "all" || type === "game") ? searchGames(query, page, gameFilters) : Promise.resolve([]),
-        (type === "all" || type === "user") ? searchUsers(query, supabaseUrl, supabaseKey, page) : Promise.resolve([]),
-      ]);
+  const cacheKey = `${query}_${type}`;
+  const cached = pageCache.get(cacheKey);
+  
+  // Fetch data - search or trending depending on query
+  let movies: any[] = [];
+  let tv: any[] = [];
+  let games: any[] = [];
+  let users: any[] = [];
+  let moviePageCount = cached?.moviePageCount || 1;
+  let tvPageCount = cached?.tvPageCount || 1;
+  
+  if (hasQuery) {
+    // Search mode
+    const results = await Promise.allSettled([
+      (type === "all" || type === "movie") ? searchMovies(query, page, movieFilters) : Promise.resolve([]),
+      (type === "all" || type === "tv") ? searchTv(query, page, tvFilters) : Promise.resolve([]),
+      (type === "all" || type === "game") ? searchGames(query, page, gameFilters) : Promise.resolve([]),
+      (type === "all" || type === "user") ? searchUsers(query, supabaseUrl, supabaseKey, page) : Promise.resolve([]),
+    ]);
 
-      movies = results[0].status === "fulfilled" ? results[0].value : [];
-      tv = results[1].status === "fulfilled" ? results[1].value : [];
-      games = results[2].status === "fulfilled" ? results[2].value : [];
-      users = results[3].status === "fulfilled" ? results[3].value : [];
+    movies = results[0].status === "fulfilled" ? results[0].value : [];
+    tv = results[1].status === "fulfilled" ? results[1].value : [];
+    games = results[2].status === "fulfilled" ? results[2].value : [];
+    users = results[3].status === "fulfilled" ? results[3].value : [];
+
+    // Get total pages from TMDB for pagination
+    // Only fetch on first page, then use cache for subsequent pages
+    if (page === 1) {
+      if (type === "all" || type === "movie") {
+        const movieUrl = `${TMDB_BASE_URL}/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}&page=1&language=es-ES`;
+        try {
+          const movieRes = await fetch(movieUrl, { headers: { "Cache-Control": "public, s-maxage=600" } });
+          const movieData = await movieRes.json();
+          moviePageCount = movieData.total_pages || 1;
+          // Cache for subsequent requests
+          pageCache.set(cacheKey, { moviePageCount, tvPageCount: cached?.tvPageCount || tvPageCount });
+        } catch {}
+      }
+      if (type === "all" || type === "tv") {
+        const tvUrl = `${TMDB_BASE_URL}/search/tv?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}&page=1&language=es-ES`;
+        try {
+          const tvRes = await fetch(tvUrl, { headers: { "Cache-Control": "public, s-maxage=600" } });
+          const tvData = await tvRes.json();
+          tvPageCount = tvData.total_pages || 1;
+          // Cache for subsequent requests
+          pageCache.set(cacheKey, { moviePageCount: cached?.moviePageCount || moviePageCount, tvPageCount });
+        } catch {}
+      }
+    }
     } else {
       // Trending mode - get 10 of each type (with filters if provided)
       console.log("[SEARCH] Fetching trending content with filters:", !!filters);
@@ -878,12 +925,24 @@ export async function GET(request: Request) {
 
     const totalResults = movies.length + tv.length + games.length + users.length;
 
+    // Calculate hasMore for each type
+    // For movies/TV: use total_pages from TMDB response
+    // For games: use length < 20 as "no more" proxy
+    // For users: use length < 20 as "no more" proxy
+    const hasMore = {
+      movies: (type === "all" || type === "movie") ? page < moviePageCount : false,
+      tv: (type === "all" || type === "tv") ? page < tvPageCount : false,
+      games: (type === "all" || type === "game") ? games.length >= 20 : false,
+      users: (type === "all" || type === "user") ? users.length >= 20 : false,
+    };
+
     return NextResponse.json({
       movies,
       tv,
       games,
       users,
       totalResults,
+      hasMore,
     });
   } catch (error) {
     console.error("Search error:", error);
