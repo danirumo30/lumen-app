@@ -23,7 +23,6 @@ export class SignInUseCase {
   constructor(private readonly authRepository: AuthRepository) {}
 
   async execute(dto: SignInDTO): Promise<AuthResult> {
-    // Validation
     if (!dto.email || !dto.password) {
       return { user: null, error: 'Email y contraseña son requeridos' };
     }
@@ -36,7 +35,6 @@ export class SignUpUseCase {
   constructor(private readonly authRepository: AuthRepository) {}
 
   async execute(dto: SignUpDTO): Promise<AuthResult> {
-    // Validation
     if (!dto.email || !dto.password || !dto.username) {
       return { user: null, error: 'Todos los campos son requeridos' };
     }
@@ -64,3 +62,4 @@ export class GetSessionUseCase {
     return this.authRepository.getSession();
   }
 }
+

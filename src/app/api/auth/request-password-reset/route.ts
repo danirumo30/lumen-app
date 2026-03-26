@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { 
@@ -38,7 +39,6 @@ export async function POST(request: Request) {
     
     if (!user || !user.email) {
       // Por seguridad, no revelamos si el email existe o no
-      // Simulamos el envío exitoso
       return NextResponse.json({
         success: true,
         message: 'Si el email existe, recibirás un enlace para restablecer tu contraseña.',
@@ -50,9 +50,7 @@ export async function POST(request: Request) {
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos
 
     // 3. Guardar token en tabla (asumiendo que existe una tabla password_resets)
-    // Si no existe, podríamos usar user_metadata o crear la tabla.
     // Por ahora, usaremos user_metadata para simplicidad o asumiremos que la tabla existe.
-    // Dado que no tengo info sobre la tabla, intentaré actualizar user_metadata.
     // NOTA: Esto es un workaround. Lo ideal es una tabla `password_resets`.
     
     // Intentemos crear la tabla si no existe? No, no puedo hacer DDL via API facilmente.
@@ -62,7 +60,6 @@ export async function POST(request: Request) {
     // O crear la tabla via SQL si no existe.
     
     // Voy a asumir que existe una tabla `password_resets` con columnas user_id, token, expires_at.
-    // Si no existe, esto fallará.
     
     try {
         const { error: insertError } = await supabaseAdmin
@@ -76,7 +73,7 @@ export async function POST(request: Request) {
         if (insertError) throw insertError;
     } catch (e) {
         // Fallback: usar user_metadata si la tabla no existe
-        console.warn("Tabla password_resets no encontrada, usando user_metadata como fallback");
+        logger.warn("Tabla password_resets no encontrada, usando user_metadata como fallback");
         // Esto no es persistente en el tiempo lo suficiente para multi-dispositivo,
         // pero sirve para el flujo actual.
         // Por ahora, asumiremos que la tabla existe y reportaremos error si no.
@@ -86,7 +83,6 @@ export async function POST(request: Request) {
         );
     }
 
-    // 4. Construir URL (usa la URL de la petición en Vercel o local)
     const baseUrl = getBaseUrl(request);
     const resetUrl = `${baseUrl}/auth/reset-password?token=${resetToken}&email=${encodeURIComponent(user.email)}`;
 
@@ -112,13 +108,13 @@ export async function POST(request: Request) {
           html: emailHtml,
           text: emailText,
         });
-        console.log(`Email de restablecimiento enviado a ${user.email}`);
+        logger.debug(`Email de restablecimiento enviado a ${user.email}`);
       } catch (emailError) {
-        console.error('Error enviando email de restablecimiento:', emailError);
+        logger.error('Error enviando email de restablecimiento:', emailError);
         // No fallamos la solicitud si el email falla, solo logueamos
       }
     } else {
-      console.log(`[DEVELOPMENT] Email no enviado. URL: ${resetUrl}`);
+      logger.debug(`[DEVELOPMENT] Email no enviado. URL: ${resetUrl}`);
     }
 
     return NextResponse.json({
@@ -127,10 +123,11 @@ export async function POST(request: Request) {
     });
 
   } catch (error) {
-    console.error('Error en request-password-reset:', error);
+    logger.error('Error en request-password-reset:', error);
     return NextResponse.json(
       { error: 'Error interno del servidor' },
       { status: 500 }
     );
   }
 }
+

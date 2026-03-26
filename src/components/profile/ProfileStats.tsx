@@ -6,7 +6,6 @@ interface ProfileStatsProps {
   stats: UserProfileWithStats;
 }
 
-// Formatea minutos en formato dinámico: H/M/S, D/H/M, o A/M/D
 const formatTime = (minutes: number): string => {
   const minutesInHour = 60;
   const minutesInDay = 60 * 24; // 1440
@@ -14,7 +13,6 @@ const formatTime = (minutes: number): string => {
   const minutesInYear = 60 * 24 * 365; // 525600
 
   if (minutes >= minutesInYear) {
-    // Años / Meses / Días
     const years = Math.floor(minutes / minutesInYear);
     const remainingAfterYears = minutes % minutesInYear;
     const months = Math.floor(remainingAfterYears / minutesInMonth);
@@ -29,7 +27,6 @@ const formatTime = (minutes: number): string => {
       return `${years}a`;
     }
   } else if (minutes >= minutesInDay) {
-    // Días / Horas / Minutos
     const days = Math.floor(minutes / minutesInDay);
     const remainingAfterDays = minutes % minutesInDay;
     const hours = Math.floor(remainingAfterDays / minutesInHour);
@@ -58,7 +55,6 @@ const formatTime = (minutes: number): string => {
   }
 };
 
-// Mapeo estático de colores (Tailwind no soporta bg-${variable})
 const colorStyles = {
   indigo: "bg-indigo-500/10",
   cyan: "bg-cyan-500/10",
@@ -204,3 +200,4 @@ export function ProfileStats({ stats }: ProfileStatsProps) {
     </div>
   );
 }
+

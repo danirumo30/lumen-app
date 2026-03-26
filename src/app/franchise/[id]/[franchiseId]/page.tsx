@@ -35,7 +35,6 @@ interface FilterOption {
   label: string;
 }
 
-// Spinner component
 function Spinner() {
   return (
     <div className="flex items-center justify-center py-20">
@@ -124,7 +123,6 @@ function FilterDropdown({
   );
 }
 
-// Search input component
 function SearchInput({ 
   value, 
   onChange 
@@ -196,7 +194,6 @@ export default function FranchisePage({ params }: { params: Promise<{ id: string
     { value: "name_asc", label: "A-Z" },
   ];
 
-  // Fetch basic game data
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -216,7 +213,6 @@ export default function FranchisePage({ params }: { params: Promise<{ id: string
     fetchData();
   }, [franchiseId]);
 
-  // Fetch detailed data (type + platforms) when filters need it
   const fetchGameDetails = useCallback(async () => {
     if (filterType !== "all" || filterPlatform !== "all") {
       setIsLoadingDetails(true);
@@ -241,23 +237,19 @@ export default function FranchisePage({ params }: { params: Promise<{ id: string
     }
   }, [franchiseId, filterType, filterPlatform]);
 
-  // Fetch details when type or platform filter changes
   useEffect(() => {
     fetchGameDetails();
   }, [fetchGameDetails]);
 
-  // Apply filters and sorting
   useEffect(() => {
     let result = [...games];
 
-    // Search filter
     if (searchQuery) {
       result = result.filter(game => 
         game.name.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
-    // Type filter
     if (filterType !== "all" && gameDetails.size > 0) {
       result = result.filter(game => {
         const detail = gameDetails.get(game.id);
@@ -265,7 +257,6 @@ export default function FranchisePage({ params }: { params: Promise<{ id: string
       });
     }
 
-    // Platform filter
     if (filterPlatform !== "all" && gameDetails.size > 0) {
       result = result.filter(game => {
         const detail = gameDetails.get(game.id);
@@ -274,7 +265,6 @@ export default function FranchisePage({ params }: { params: Promise<{ id: string
       });
     }
 
-    // Sort
     switch (sortBy) {
       case "release_desc":
         result.sort((a, b) => (b.releaseYear || 0) - (a.releaseYear || 0));
@@ -485,3 +475,4 @@ export default function FranchisePage({ params }: { params: Promise<{ id: string
     </div>
   );
 }
+

@@ -67,37 +67,30 @@ const defaultPlatformIcon = (
 function getPlatformIconPath(platform: string): string | null {
   const lowerPlatform = platform.toLowerCase();
 
-  // Try exact match first
   if (platformIcons[platform]) {
     return platformIcons[platform];
   }
 
-  // Try partial matches for PlayStation
   if (lowerPlatform.includes("playstation") || lowerPlatform === "ps5" || lowerPlatform === "ps4" || lowerPlatform === "ps3" || lowerPlatform === "ps2" || lowerPlatform === "ps") {
     return platformIcons["PlayStation 5"];
   }
 
-  // Try partial matches for Xbox
   if (lowerPlatform.includes("xbox")) {
     return platformIcons["Xbox"];
   }
 
-  // Try partial matches for Nintendo
   if (lowerPlatform.includes("nintendo") || lowerPlatform.includes("switch")) {
     return platformIcons["Nintendo Switch"];
   }
 
-  // Try partial matches for PC
   if (lowerPlatform.includes("pc") || lowerPlatform.includes("windows")) {
     return platformIcons["PC"];
   }
 
-  // macOS
   if (lowerPlatform.includes("mac") || lowerPlatform.includes("os x")) {
     return platformIcons["macOS"];
   }
 
-  // Try partial matches for mobile
   if (lowerPlatform.includes("ios") || lowerPlatform.includes("iphone") || lowerPlatform.includes("ipad")) {
     return platformIcons["iOS"];
   }
@@ -105,7 +98,6 @@ function getPlatformIconPath(platform: string): string | null {
     return platformIcons["Android"];
   }
 
-  // Try partial matches for web
   if (lowerPlatform.includes("web") || lowerPlatform.includes("browser")) {
     return platformIcons["Web"];
   }
@@ -202,7 +194,6 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
     return `${hours}h ${mins}m`;
   };
 
-  // Handle play status (playing, completed, dropped, planned) - mutually exclusive
   const handlePlayStatusClick = async (status: string | null) => {
     if (!user) {
       setShowLoginPrompt(true);
@@ -247,7 +238,6 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
     }
   };
 
-  // Handle favorite - independent of play status
   const handleFavoriteClick = async () => {
     if (!user) {
       setShowLoginPrompt(true);
@@ -288,7 +278,6 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
     }
   };
 
-  // Handle platinum trophy toggle
   const handlePlatinumClick = async () => {
     if (!user) {
       setShowLoginPrompt(true);
@@ -300,7 +289,6 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
       const { data: { session } } = await supabase.auth.getSession();
       const newPlatinum = !hasPlatinum;
 
-      // Ensure igdbId is a number
       const igdbId = typeof game.igdbId === 'number' ? game.igdbId : parseInt(game.igdbId);
 
       const response = await fetch("/api/user/game-status", {
@@ -350,7 +338,6 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
     try {
       const { data: { session } } = await supabase.auth.getSession();
 
-      // Ensure igdbId is a number
       const igdbId = typeof game.igdbId === 'number' ? game.igdbId : parseInt(game.igdbId);
       console.log("[GameInfo] Sending request with igdbId:", igdbId);
 
@@ -797,3 +784,4 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
     </div>
   );
 }
+

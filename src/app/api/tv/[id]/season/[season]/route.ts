@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { NextResponse } from "next/server";
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY!;
@@ -70,7 +71,7 @@ export async function GET(
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error("Error fetching TV season details:", error);
+    logger.error("Error fetching TV season details:", error);
     return NextResponse.json(
       { error: "Failed to fetch TV season details" },
       { status: 500 }

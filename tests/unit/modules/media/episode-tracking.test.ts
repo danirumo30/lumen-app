@@ -277,12 +277,10 @@ describe('Chaining Logic', () => {
   it('should cascade: unmark episode -> series no longer complete', () => {
     let watched = new Set<EpisodeKey>();
     
-    // Mark all
     for (const ep of allEpisodes) {
       watched = toggleEpisode(watched, ep.seasonNumber, ep.episodeNumber, true);
     }
     
-    // Unmark one
     watched = toggleEpisode(watched, 1, 1, false);
     
     expect(isSeriesComplete(allEpisodes, watched)).toBe(false);
@@ -293,12 +291,10 @@ describe('Chaining Logic', () => {
   it('should cascade: unmark season -> series no longer complete', () => {
     let watched = new Set<EpisodeKey>();
     
-    // Mark all
     for (const ep of allEpisodes) {
       watched = toggleEpisode(watched, ep.seasonNumber, ep.episodeNumber, true);
     }
     
-    // Unwatch all in season 2
     for (const ep of allEpisodes.filter(ep => ep.seasonNumber === 2)) {
       watched = toggleEpisode(watched, ep.seasonNumber, ep.episodeNumber, false);
     }
@@ -311,10 +307,10 @@ describe('Chaining Logic', () => {
   it('should handle edge: unwatch last episode in series', () => {
     let watched = new Set<EpisodeKey>();
     
-    // Only one episode watched
     watched = toggleEpisode(watched, 1, 1, true);
     
     expect(isSeriesComplete(allEpisodes, watched)).toBe(false);
     expect(getCompletionPercentage(allEpisodes.length, watched)).toBe(25);
   });
 });
+

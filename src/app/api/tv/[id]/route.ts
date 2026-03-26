@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { NextResponse } from "next/server";
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY!;
@@ -14,7 +15,6 @@ export async function GET(
     // Remove 'tv_' or 'tmdb_' prefix if present
     const tmdbId = id.replace(/^(tv_|tmdb_)/, '');
 
-    // Get country from query param or default to ES
     const url = new URL(request.url);
     const country = url.searchParams.get("country") || "ES";
 
@@ -39,7 +39,6 @@ export async function GET(
 
     const tv = await tvResponse.json();
 
-    // Get certification from content_ratings
     let certification = null;
     if (tv.content_ratings?.results) {
       const usRating = tv.content_ratings.results.find((r: any) => r.iso_3166_1 === "US");
@@ -48,14 +47,12 @@ export async function GET(
       }
     }
 
-    // Get watch providers for the specified country
     let watchProviders: any = null;
     if (watchProvidersResponse.ok) {
       const providersData = await watchProvidersResponse.json();
       watchProviders = providersData.results?.[country] || null;
     }
 
-    // Transform watch providers to a cleaner format
     const formattedWatchProviders = watchProviders ? {
       link: watchProviders.link,
       providers: [
@@ -72,7 +69,6 @@ export async function GET(
       })),
     } : null;
 
-    // Get seasons overview (without episodes to reduce payload)
     const seasons = tv.seasons?.map((season: any) => ({
       seasonNumber: season.season_number,
       name: season.name,
@@ -84,7 +80,6 @@ export async function GET(
         : null,
     })) || [];
 
-    // Get top cast (first 20)
     const cast = tv.aggregate_credits?.cast?.slice(0, 20).map((person: any) => ({
       id: person.id,
       name: person.name,
@@ -128,10 +123,11 @@ export async function GET(
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error("Error fetching TV show details:", error);
+    logger.error("Error fetching TV show details:", error);
     return NextResponse.json(
       { error: "Failed to fetch TV show details" },
       { status: 500 }
     );
   }
 }
+

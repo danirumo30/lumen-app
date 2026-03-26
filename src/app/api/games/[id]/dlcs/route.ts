@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { NextResponse } from "next/server";
 import { mapGenresToSpanish } from "@/lib/translate";
 
@@ -6,7 +7,6 @@ const IGDB_CLIENT_ID = process.env.TWITCH_CLIENT_ID || "";
 
 export const runtime = "nodejs";
 
-// Cache for DLCs
 const dlcsCache = new Map<string, { data: any; timestamp: number }>();
 const CACHE_TTL = 1000 * 60 * 30; // 30 minutes
 
@@ -69,7 +69,6 @@ export async function GET(
       return NextResponse.json({ error: "Invalid IGDB ID" }, { status: 400 });
     }
 
-    // Check cache
     const cacheKey = `dlcs_${igdbId}`;
     const cached = dlcsCache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
@@ -90,7 +89,6 @@ export async function GET(
     const games = await gameRes.json();
     const game = games[0];
 
-    // Collect all content IDs
     const contentIds = [
       ...(game.dlcs || []),
       ...(game.expansions || []),
@@ -124,7 +122,6 @@ export async function GET(
     // We want DLCs and standalone expansions
     const formattedDlcs = allContent
       .filter((g: any) => {
-        // Exclude the main game itself
         if (g.id === igdbId) return false;
         // Include DLCs (category 1), Expansions (category 2/8), or items in dlcs/expansions/standalone_expansions/bundles arrays
         const isDlc = g.category === 1 || g.category === 2 || g.category === 8;
@@ -153,10 +150,11 @@ export async function GET(
     dlcsCache.set(cacheKey, { data: result, timestamp: Date.now() });
     return NextResponse.json(result);
   } catch (error) {
-    console.error("Error fetching additional content:", error);
+    logger.error("Error fetching additional content:", error);
     return NextResponse.json(
       { error: "Failed to fetch additional content", dlcs: [] },
       { status: 500 }
     );
   }
 }
+

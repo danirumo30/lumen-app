@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { NextResponse } from "next/server";
 
 const IGDB_ACCESS_TOKEN = process.env.IGDB_ACCESS_TOKEN || "";
@@ -5,7 +6,6 @@ const IGDB_CLIENT_ID = process.env.TWITCH_CLIENT_ID || "";
 
 export const runtime = "nodejs";
 
-// Cache for videos
 const videosCache = new Map<string, { data: any; timestamp: number }>();
 const CACHE_TTL = 1000 * 60 * 30; // 30 minutes
 
@@ -67,7 +67,6 @@ export async function GET(
       return NextResponse.json({ error: "Invalid IGDB ID" }, { status: 400 });
     }
 
-    // Check cache
     const cacheKey = `videos_${igdbId}`;
     const cached = videosCache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
@@ -82,13 +81,10 @@ export async function GET(
 
     const videos = await videosRes.json();
 
-    // Format videos - IGDB video_id is usually a YouTube video ID
     const formattedVideos = videos.map((v: { video_id: string; name: string }) => ({
       id: v.video_id,
       name: v.name,
-      // YouTube thumbnail URL
       thumbnailUrl: `https://img.youtube.com/vi/${v.video_id}/hqdefault.jpg`,
-      // YouTube embed URL for modal
       videoUrl: `https://www.youtube.com/embed/${v.video_id}?autoplay=1`,
     }));
 
@@ -96,10 +92,11 @@ export async function GET(
     videosCache.set(cacheKey, { data: result, timestamp: Date.now() });
     return NextResponse.json(result);
   } catch (error) {
-    console.error("Error fetching game videos:", error);
+    logger.error("Error fetching game videos:", error);
     return NextResponse.json(
       { error: "Failed to fetch game videos", videos: [] },
       { status: 500 }
     );
   }
 }
+

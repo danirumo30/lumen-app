@@ -39,7 +39,6 @@ export default function ProfilePage() {
   // Merge stats into a single profile object
   const profile: UserProfileWithStats | null = profileStats ?? null;
 
-  // Load profile data function
   const loadProfile = useCallback(async () => {
     try {
       const supabase = getSupabaseClient();
@@ -60,14 +59,12 @@ export default function ProfilePage() {
 
       setProfileUserId(profileData.id);
 
-      // Check if current user is following this profile
       let isFollowingUser = false;
       if (user && user.id !== profileData.id) {
         isFollowingUser = await repository.isFollowing(user.id, profileData.id);
         setIsFollowing(isFollowingUser);
       }
 
-      // Load content
       const contentData = await repository.getProfileContent({
         userId: profileData.id,
         includeFavorites: true,
@@ -75,7 +72,6 @@ export default function ProfilePage() {
         mediaTypes: ["movie", "tv", "game"],
       });
 
-      // Get follower counts
       const [followersCount, followingCount] = await Promise.all([
         repository.getFollowersCount(profileData.id),
         repository.getFollowingCount(profileData.id),
@@ -105,7 +101,6 @@ export default function ProfilePage() {
     }
   }, [username]);
 
-  // Initial load
   useEffect(() => {
     loadProfile();
   }, [loadProfile]);
@@ -113,7 +108,6 @@ export default function ProfilePage() {
   // Listen for episode sync events to trigger refresh
   useEffect(() => {
     const handleSyncSuccess = async () => {
-      // Invalidate React Query cache
       invalidate();
       
       // Reload profile data manually for immediate update
@@ -143,11 +137,9 @@ export default function ProfilePage() {
       if (!user || !profile) return;
 
       if (isFollowing) {
-        // Unfollow
         await repository.unfollowUser(user.id, profile.id);
         setIsFollowing(false);
         
-        // Update counts
         if (content) {
           setContent({
             ...content,
@@ -156,14 +148,11 @@ export default function ProfilePage() {
           });
         }
         
-        // Update followers list
         setFollowers(prev => prev.filter(f => f.id !== user.id));
       } else {
-        // Follow
         await repository.followUser(user.id, profile.id);
         setIsFollowing(true);
         
-        // Update counts
         if (content) {
           setContent({
             ...content,
@@ -172,7 +161,6 @@ export default function ProfilePage() {
           });
         }
         
-        // Add to followers list
         const currentUser = await repository.getProfileById(user.id);
         if (currentUser) {
           setFollowers(prev => [...prev, currentUser]);
@@ -201,7 +189,6 @@ export default function ProfilePage() {
     return null;
   }
 
-  // Check if viewing own profile
   const isOwnProfile = currentUserId === profile.id;
 
   return (
@@ -237,3 +224,4 @@ export default function ProfilePage() {
     </div>
   );
 }
+

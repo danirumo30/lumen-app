@@ -3,12 +3,10 @@ import type { AuthRepository } from '@/modules/auth/domain/auth.repository';
 import { User } from '@/modules/auth/domain/user.entity';
 import { UserMapper } from '@/modules/auth/infrastructure/mappers/user.mapper';
 
-// Environment
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-// Client
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: { autoRefreshToken: true, persistSession: true },
 });
@@ -41,7 +39,6 @@ export class SupabaseAuthRepository implements AuthRepository {
         return { user: null, error: 'Usuario no encontrado o eliminado' };
       }
 
-      // Check email verification
       if (!supabaseUser.email_confirmed_at) {
         await supabase.auth.signOut();
         return { user: null, error: 'Por favor, verifica tu correo electrónico' };
@@ -126,3 +123,4 @@ export class SupabaseAuthRepository implements AuthRepository {
     return isValid ? user : null;
   }
 }
+

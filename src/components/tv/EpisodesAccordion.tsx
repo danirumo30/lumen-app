@@ -105,7 +105,6 @@ export function EpisodesAccordion({
   const getEpisodeKey = (season: number, episode: number) => `tv_${tvTmdId}_s${season}_e${episode}`;
   const isEpisodeWatched = (season: number, episode: number) => watchedEpisodes.has(getEpisodeKey(season, episode));
 
-  // Filter out specials season if there are other seasons
   const displaySeasons = seasons.filter(s => {
     if (s.seasonNumber === 0 && seasons.length > 1) return false;
     return true;
@@ -466,3 +465,4 @@ export function EpisodesAccordion({
     </div>
   );
 }
+

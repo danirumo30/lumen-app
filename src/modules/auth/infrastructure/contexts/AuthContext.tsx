@@ -5,11 +5,9 @@ import { createClient, type User as SupabaseUser } from '@supabase/supabase-js';
 import { User } from '@/modules/auth/domain/user.entity';
 import { SupabaseAuthRepository } from '@/modules/auth/infrastructure/repositories/supabase-auth.repository';
 
-// Environment constants
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-// Types
 interface AuthState {
   user: User | null;
   isLoading: boolean;
@@ -37,7 +35,6 @@ const initialState: AuthState = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Repository instance
 const authRepository = new SupabaseAuthRepository();
 
 // Helper: Fetch user profile from database
@@ -71,14 +68,12 @@ const buildUserFromSupabase = async (supabaseUser: SupabaseUser | null): Promise
   );
 };
 
-// Provider
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, setState] = useState<ExtendedAuthState>({
     ...initialState,
     requiresVerification: false,
   });
 
-  // Check session on mount and listen for auth changes
   useEffect(() => {
     const initSession = async () => {
       setState(prev => ({ ...prev, isLoading: true }));
@@ -163,7 +158,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-// Custom hook
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -171,3 +165,4 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
+

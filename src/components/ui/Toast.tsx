@@ -44,7 +44,6 @@ export function ErrorToast({
   const [isExiting, setIsExiting] = useState(false);
 
   useEffect(() => {
-    // Trigger entrance animation
     requestAnimationFrame(() => {
       setIsVisible(true);
     });
@@ -201,3 +200,4 @@ export function useToasts() {
 
   return { toasts, showToast, dismissToast };
 }
+

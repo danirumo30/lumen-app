@@ -55,7 +55,6 @@ export function useWatchedEpisodes(tmdbId: number | null) {
     // Always refetch on mount to get fresh data
     refetchOnMount: true,
     
-    // Retry configuration
     retry: 1,
     
     // Don't refetch on window focus (we invalidate manually)
@@ -66,20 +65,6 @@ export function useWatchedEpisodes(tmdbId: number | null) {
   });
 }
 
-/**
- * Hook to get watched episodes as a Set of media_ids for O(1) lookup
- * 
- * @param tmdbId - The TMDB ID of the TV show
- * @returns A Set containing media_ids like "tv_123_s1_e5" for watched episodes
- * 
- * @example
- * ```tsx
- * const watchedSet = useWatchedEpisodeSet(12345);
- * 
- * // O(1) lookup instead of O(n)
- * const isWatched = watchedSet.has("tv_12345_s1_e5");
- * ```
- */
 export function useWatchedEpisodeSet(tmdbId: number | null) {
   const { data, ...rest } = useWatchedEpisodes(tmdbId);
   
@@ -162,5 +147,6 @@ export function useUpdateWatchedEpisodesCache() {
   };
 }
 
-// Need React for useMemo
 import React from "react";
+
+

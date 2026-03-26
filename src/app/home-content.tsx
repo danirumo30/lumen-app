@@ -93,7 +93,6 @@ export default function HomePage() {
         <div className="relative max-w-7xl mx-auto px-6 py-16">
           <div className="max-w-2xl">
             {user ? (
-              // Logged in view
               <>
                 <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 tracking-tight">
                   Bienvenido de nuevo,
@@ -121,7 +120,6 @@ export default function HomePage() {
                 </div>
               </>
             ) : (
-              // Logged out view
               <>
                 <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 tracking-tight">
                   Tu universo,
@@ -244,3 +242,4 @@ export default function HomePage() {
     </div>
   );
 }
+

@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { NextResponse } from "next/server";
 import { mapGenresToSpanish } from "@/lib/translate";
 
@@ -6,7 +7,6 @@ const IGDB_CLIENT_ID = process.env.TWITCH_CLIENT_ID || "";
 
 export const runtime = "nodejs";
 
-// Cache for similar games
 const similarCache = new Map<string, { data: any; timestamp: number }>();
 const CACHE_TTL = 1000 * 60 * 30; // 30 minutes
 
@@ -69,7 +69,6 @@ export async function GET(
       return NextResponse.json({ error: "Invalid IGDB ID" }, { status: 400 });
     }
 
-    // Check cache
     const cacheKey = `similar_${igdbId}`;
     const cached = similarCache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
@@ -90,7 +89,6 @@ export async function GET(
     const games = await gameRes.json();
     const currentGame = games[0];
 
-    // Collect similar game IDs
     const similarIds = currentGame.similar_games || [];
     // Remove the current game from similar
     const filteredSimilarIds = similarIds.filter((id: number) => id !== igdbId);
@@ -163,10 +161,11 @@ export async function GET(
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error("Error fetching similar games:", error);
+    logger.error("Error fetching similar games:", error);
     return NextResponse.json(
       { error: "Failed to fetch similar games", games: [] },
       { status: 500 }
     );
   }
 }
+

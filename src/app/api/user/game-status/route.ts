@@ -8,7 +8,6 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-// Create client with user token (for reading)
 function createUserClient(token: string) {
   return createClient(supabaseUrl, supabaseAnonKey, {
     global: { headers: { Authorization: `Bearer ${token}` } },
@@ -16,7 +15,6 @@ function createUserClient(token: string) {
   });
 }
 
-// Create admin client (bypasses RLS) for writes
 function createAdminClient() {
   return createClient(supabaseUrl, supabaseServiceKey, {
     auth: { autoRefreshToken: false, persistSession: false },
@@ -25,7 +23,6 @@ function createAdminClient() {
 
 type GameStatus = "favorite" | "playing" | "completed" | "dropped" | "planned" | null;
 
-// Get user's game status
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -35,7 +32,6 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "igdbId required" }, { status: 400 });
     }
 
-    // Get token from Authorization header
     const authHeader = request.headers.get("Authorization");
     const token = authHeader?.replace("Bearer ", "");
     
@@ -64,7 +60,6 @@ export async function GET(request: Request) {
     
     const mediaId = `igdb_${igdbId}`;
     
-    // Check user_media_tracking for game status
     const { data, error } = await supabase
       .from("user_media_tracking")
       .select("is_watched, is_favorite, is_planned, progress_minutes, has_platinum, updated_at, created_at")
@@ -93,7 +88,6 @@ export async function GET(request: Request) {
         // Has progress but not planned/watched = dropped
         playStatus = "dropped";
       }
-      // If progress_minutes === 0 and not planned/watched, no status (null)
     }
 
     return NextResponse.json({
@@ -113,20 +107,16 @@ export async function GET(request: Request) {
   }
 }
 
-// Update game status
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { igdbId, status, isFavorite, playtimeMinutes, hasPlatinum, gameData } = body;
 
-// DEBUG REMOVED:     logger.debug("[game-status POST] Received:", { igdbId, status, isFavorite, playtimeMinutes, hasPlatinum, gameData });
 
     if (!igdbId) {
-// DEBUG REMOVED:       logger.debug("[game-status POST] Missing igdbId");
       return NextResponse.json({ error: "igdbId required" }, { status: 400 });
     }
 
-    // Get token from Authorization header
     const authHeader = request.headers.get("Authorization");
     const token = authHeader?.replace("Bearer ", "");
     
@@ -134,7 +124,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // User client for reading
     const userClient = createUserClient(token);
     // Admin client for writing (bypasses RLS)
     const adminClient = createAdminClient();
@@ -145,11 +134,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Ensure igdbId is a number
     const numericIgdbId = typeof igdbId === 'number' ? igdbId : parseInt(igdbId);
     const mediaId = `igdb_${numericIgdbId}`;
 
-    // Get existing record
     const { data: existing } = await userClient
       .from("user_media_tracking")
       .select("is_favorite, is_watched, is_planned, progress_minutes, has_platinum")
@@ -157,7 +144,6 @@ export async function POST(request: Request) {
       .eq("media_id", mediaId)
       .single();
 
-    // Handle "remove" status - delete the record
     if (status === "remove" || status === null) {
       if (existing) {
         await adminClient
@@ -169,17 +155,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, isFavorite: false, playStatus: null });
     }
 
-    // Build update object - only update fields that are explicitly provided
     const updateFields: Record<string, any> = {
       updated_at: new Date().toISOString(),
     };
 
-    // Handle favorite update (independent of play status)
     if (isFavorite !== undefined) {
       updateFields.is_favorite = isFavorite;
     }
 
-    // Handle play status update
     if (status !== undefined && status !== null) {
       // Clear any existing play status first
       updateFields.is_watched = false;
@@ -200,7 +183,6 @@ export async function POST(request: Request) {
           updateFields.progress_minutes = 0; // Reset progress for planned
           break;
         case "dropped":
-          // Keep existing progress
           break;
         case "favorite":
           // Just favorite, don't touch play status
@@ -208,7 +190,6 @@ export async function POST(request: Request) {
       }
     }
 
-    // Handle playtime update
     if (playtimeMinutes !== undefined && playtimeMinutes > 0) {
       // REPLACE, not add
       updateFields.progress_minutes = playtimeMinutes;
@@ -218,14 +199,11 @@ export async function POST(request: Request) {
       }
     }
 
-    // Handle platinum trophy update
     if (hasPlatinum !== undefined) {
       updateFields.has_platinum = hasPlatinum;
     }
 
-// DEBUG REMOVED:     logger.debug("[game-status POST] Update fields:", updateFields);
 
-    // Check if we need to upsert media first
     if (gameData && (Object.keys(updateFields).length > 1 || !existing)) {
       // Extract just the IGDB path portion
       let posterPath: string | null = null;
@@ -247,14 +225,12 @@ export async function POST(request: Request) {
     }
 
     if (existing) {
-      // Update existing record
       await adminClient
         .from("user_media_tracking")
         .update(updateFields)
         .eq("user_id", user.id)
         .eq("media_id", mediaId);
     } else {
-      // Create new record with default values
       const newRecord = {
         user_id: user.id,
         media_id: mediaId,
@@ -266,14 +242,12 @@ export async function POST(request: Request) {
         has_platinum: updateFields.has_platinum ?? false,
       };
       
-// DEBUG REMOVED:       logger.debug("[game-status POST] Inserting new record:", newRecord);
       
       await adminClient
         .from("user_media_tracking")
         .insert(newRecord);
     }
 
-    // Return the new state
     const newIsFavorite = updateFields.is_favorite ?? existing?.is_favorite ?? false;
     let newPlayStatus: GameStatus = null;
     if (updateFields.is_watched) {
@@ -301,4 +275,6 @@ export async function POST(request: Request) {
     );
   }
 }
+
+
 

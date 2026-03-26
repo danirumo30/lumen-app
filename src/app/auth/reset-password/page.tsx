@@ -143,7 +143,6 @@ function ResetPasswordContent() {
         router.push(redirectUrl);
       } else {
         setMessage(data.error || 'Error al restablecer la contraseña');
-        // Permitir reintentar después del error
         setCanSubmit(true);
         setSubmitTimer(0);
       }
@@ -241,3 +240,4 @@ export default function ResetPasswordPage() {
     </Suspense>
   );
 }
+

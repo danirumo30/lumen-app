@@ -40,7 +40,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Generar token de verificación e insertar en la tabla email_verifications
     const verificationToken = randomUUID();
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 horas
 
@@ -60,11 +59,9 @@ export async function POST(request: Request) {
       );
     }
 
-    // Construir URL de verificación (usa la URL de la petición en Vercel o local)
     const baseUrl = getBaseUrl(request);
     const verificationUrl = `${baseUrl}/api/auth/confirm-email?token=${verificationToken}`;
 
-    // Preparar contenido del email
     const emailHtml = generateVerificationEmailHtml({
       userName: user.email.split('@')[0],
       verificationUrl,
@@ -80,7 +77,6 @@ export async function POST(request: Request) {
     const sendInDevelopment = process.env.SMTP_SEND_IN_DEVELOPMENT === 'true';
     
     if (!isDevelopment || sendInDevelopment) {
-      // En producción o desarrollo con envío habilitado, enviar email con Nodemailer
       try {
         await sendEmail({
           to: user.email,
@@ -95,7 +91,6 @@ export async function POST(request: Request) {
       }
     } else {
       logger.debug(`[DEVELOPMENT] Email no enviado (simulado). Para enviar emails reales en desarrollo, configura SMTP_SEND_IN_DEVELOPMENT=true en .env.local`);
-// DEBUG REMOVED:       logger.debug(`[DEVELOPMENT] URL de verificación: ${verificationUrl}`);
     }
     
     return NextResponse.json({
@@ -115,3 +110,5 @@ export async function POST(request: Request) {
     );
   }
 }
+
+

@@ -1,17 +1,13 @@
 // Translation utility using LibreTranslate API (free, no API key required)
-// Handles long texts by splitting into chunks
 
-// Try multiple LibreTranslate public instances
 const LIBRE_TRANSLATE_APIS = [
   "https://libretranslate.com/translate",
   "https://translate.argosopentech.com/translate",
   "https://translate.terraprint.co/translate",
 ];
 
-// Fallback to MyMemory
 const MYMEMORY_API = "https://api.mymemory.translated.net/get";
 
-// Maximum characters per request
 const MAX_CHUNK_SIZE = 500;
 
 // Helper to split text into chunks while preserving sentence boundaries
@@ -26,11 +22,9 @@ function splitIntoChunks(text: string, maxSize: number): string[] {
     if (currentChunk.length + sentence.length <= maxSize) {
       currentChunk += sentence;
     } else {
-      // If current chunk is not empty, save it
       if (currentChunk.trim()) {
         chunks.push(currentChunk.trim());
       }
-      // If single sentence is too long, split by words
       if (sentence.length > maxSize) {
         const words = sentence.split(" ");
         currentChunk = "";
@@ -61,15 +55,12 @@ function splitIntoChunks(text: string, maxSize: number): string[] {
 export async function translateText(text: string, targetLang: string = "es"): Promise<string> {
   if (!text || text.trim() === "") return text;
   
-  // If target is English, no need to translate
   if (targetLang === "en") return text;
   
-  // For short texts, translate directly
   if (text.length <= MAX_CHUNK_SIZE) {
     return translateSingle(text, targetLang);
   }
   
-  // For long texts, split and translate in chunks
   const chunks = splitIntoChunks(text, MAX_CHUNK_SIZE);
   console.log(`[translate] Splitting long text (${text.length} chars) into ${chunks.length} chunks`);
   
@@ -78,7 +69,6 @@ export async function translateText(text: string, targetLang: string = "es"): Pr
   for (const chunk of chunks) {
     const translated = await translateSingle(chunk, targetLang);
     translatedChunks.push(translated);
-    // Small delay between chunks
     if (chunks.indexOf(chunk) < chunks.length - 1) {
       await sleep(300);
     }
@@ -89,7 +79,6 @@ export async function translateText(text: string, targetLang: string = "es"): Pr
 }
 
 async function translateSingle(text: string, targetLang: string): Promise<string> {
-  // Try LibreTranslate first (try each instance)
   for (const api of LIBRE_TRANSLATE_APIS) {
     try {
       const response = await fetch(api, {
@@ -110,12 +99,10 @@ async function translateSingle(text: string, targetLang: string): Promise<string
         }
       }
     } catch (error) {
-      // Try next instance
       continue;
     }
   }
 
-  // Fallback to MyMemory
   return translateWithMyMemory(text, targetLang);
 }
 
@@ -137,7 +124,6 @@ async function translateWithMyMemory(text: string, targetLang: string): Promise<
 
       const data = await response.json();
 
-      // Check for quota exceeded
       if (data.responseStatus === 429 || data.responseDetails?.includes("QUOTA")) {
         console.log(`[translate/mymemory] Quota exceeded`);
         return text; // Just return original text instead of failing
@@ -182,7 +168,6 @@ export async function translateArray(items: string[], targetLang: string = "es")
   return translated;
 }
 
-// Map English genres to Spanish
 const genreMap: Record<string, string> = {
   "Role-playing (RPG)": "Rol",
   "Adventure": "Aventura",
@@ -244,12 +229,10 @@ export function mapGenreToSpanish(genre: string): string {
   return genreMap[genre] || genre;
 }
 
-// Map multiple genres to Spanish
 export function mapGenresToSpanish(genres: string[]): string[] {
   return genres.map(g => mapGenreToSpanish(g));
 }
 
-// Game mode translations
 const gameModeMap: Record<string, string> = {
   "Single player": "Un jugador",
   "Multiplayer": "Multijugador",
@@ -280,3 +263,4 @@ export function mapGameModeToSpanish(mode: string): string {
 export function mapGameModesToSpanish(modes: string[]): string[] {
   return modes.map(m => mapGameModeToSpanish(m));
 }
+

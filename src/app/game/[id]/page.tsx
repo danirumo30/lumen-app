@@ -114,16 +114,13 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Get session for auth headers
         const { data: { session } } = await supabase.auth.getSession();
         const authHeaders = {
           "Authorization": `Bearer ${session?.access_token || ""}`,
         };
 
-        // Extract IGDB ID for API calls
         const igdbId = extractIgdbId(id) || id;
         
-        // Fetch all data in parallel
         const [gameRes, statusRes, mediaRes, videosRes, similarRes, franchiseRes, dlcsRes] = await Promise.all([
           fetch(`/api/games/${igdbId}`),
           session?.access_token 
@@ -265,3 +262,4 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
     </div>
   );
 }
+

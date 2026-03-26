@@ -59,7 +59,6 @@ const typeConfig: Record<WatchProvider["type"], {
   },
 };
 
-// Hide scrollbar utility
 const hideScrollbar = "[&::-webkit-scrollbar]:hidden [&::-webkit-scrollbar]:display-none [-ms-overflow-style:none] [scrollbar-width:none]";
 
 export function WatchProvidersSection({ providers, link, className = "" }: WatchProvidersSectionProps) {
@@ -69,7 +68,6 @@ export function WatchProvidersSection({ providers, link, className = "" }: Watch
     return null;
   }
 
-  // Group providers by type
   const grouped = providers.reduce((acc, provider) => {
     if (!acc[provider.type]) {
       acc[provider.type] = [];
@@ -78,10 +76,8 @@ export function WatchProvidersSection({ providers, link, className = "" }: Watch
     return acc;
   }, {} as Record<string, WatchProvider[]>);
 
-  // Get available types (only those with providers)
   const availableTypes = Object.keys(grouped) as WatchProvider["type"][];
   
-  // If current selected type has no providers, switch to first available
   if (!grouped[selectedType] && availableTypes.length > 0) {
     setSelectedType(availableTypes[0]);
     return null; // Will re-render with correct type
@@ -90,7 +86,6 @@ export function WatchProvidersSection({ providers, link, className = "" }: Watch
   const currentProviders = grouped[selectedType] || [];
   const config = typeConfig[selectedType];
 
-  // Provider logos component
   const ProviderLogos = ({ size = "normal" }: { size?: "normal" | "small" }) => (
     <div className={`flex gap-2 overflow-x-auto ${hideScrollbar}`}>
       {currentProviders.map((provider) => (
@@ -248,3 +243,4 @@ export function WatchProvidersSection({ providers, link, className = "" }: Watch
     </div>
   );
 }
+

@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { NextResponse } from "next/server";
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY!;
@@ -26,7 +27,6 @@ export async function GET(
 
     const data = await response.json();
 
-    // Get top 20 cast members
     const cast = data.cast?.slice(0, 20).map((person: any) => ({
       id: person.id,
       name: person.name,
@@ -37,7 +37,6 @@ export async function GET(
       order: person.order,
     })) || [];
 
-    // Get directors and writers
     const crew = data.crew || [];
     const directors = crew
       .filter((c: any) => c.job === "Director")
@@ -49,10 +48,11 @@ export async function GET(
 
     return NextResponse.json({ cast, directors, writers });
   } catch (error) {
-    console.error("Error fetching movie credits:", error);
+    logger.error("Error fetching movie credits:", error);
     return NextResponse.json(
       { error: "Failed to fetch movie credits" },
       { status: 500 }
     );
   }
 }
+

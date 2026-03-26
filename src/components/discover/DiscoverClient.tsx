@@ -21,7 +21,6 @@ export function DiscoverClient() {
   const [isLoadingProviders, setIsLoadingProviders] = useState(true);
   const [providersError, setProvidersError] = useState<string | null>(null);
 
-   // Load watch providers on mount
    useEffect(() => {
      console.log("[DiscoverClient] Loading watch providers...");
      
@@ -148,3 +147,4 @@ export function DiscoverClient() {
     </div>
   );
 }
+

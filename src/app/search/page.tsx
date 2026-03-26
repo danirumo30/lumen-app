@@ -44,7 +44,6 @@ interface SearchResponse {
   };
 }
 
-// Icons
 function Film({ className }: { className?: string }) {
   return (
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.75 4.5h16.5m-16.5 9h16.5m-16.5 9h16.5M3.75 4.5v15a2.25 2.25 0 002.25 2.25h15a2.25 2.25 0 002.25-2.25V4.5m-16.5 0V4.5m16.5 0V4.5m0 0V3.75m0 0A2.25 2.25 0 0119.5 1.5h-15A2.25 2.25 0 012.25 3.75m16.5 0z" /></svg>
@@ -235,7 +234,6 @@ function SearchContent() {
         data.users.forEach(u => combined.push({ ...u, type: "user" as const }));
       }
       
-      // Update hasMore from response
       if (data.hasMore) {
         setHasMore(data.hasMore);
       }
@@ -329,8 +327,6 @@ function SearchContent() {
               : hasMore.users;
           
           // Load more if there's more content and we're not already at the limit
-          // For search: need query (at least 2 chars) OR we have trending content to load more of
-          // For trending: page starts at 1, so we can load page 2 if hasMore is true
           const shouldLoadMore = (currentHasMore && query.trim().length >= 2) || 
                                   (currentHasMore && page === 1 && query.trim() === "");
           
@@ -499,3 +495,4 @@ export default function SearchPage() {
     </Suspense>
   );
 }
+

@@ -106,7 +106,6 @@ export function useSimpleDragScroll(): UseSimpleDragScrollReturn {
     hasDragged.current = false;
   }, []);
 
-  // Cancelar clicks fantasma a nivel de documento después de drag
   useEffect(() => {
     const handleGlobalClick = (e: MouseEvent) => {
       const timeSinceDrag = Date.now() - lastDragTime.current;
@@ -135,3 +134,4 @@ export function useSimpleDragScroll(): UseSimpleDragScrollReturn {
     },
   };
 }
+

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import type { TmdbWatchProvidersByCountry, TmdbWatchProvider } from '@/types/tmdb';
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY!;
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
@@ -22,7 +23,6 @@ interface SearchFilters {
   accessType?: string;
 }
 
-// Get IGDB access token
 async function getIgdbToken(): Promise<string> {
   if (!IGDB_ACCESS_TOKEN) {
     const tokenResponse = await fetch("https://id.twitch.tv/oauth2/token", {
@@ -44,8 +44,14 @@ async function getIgdbToken(): Promise<string> {
   return IGDB_ACCESS_TOKEN;
 }
 
-// Get streaming providers for a movie
-async function getMovieProviders(movieId: number): Promise<{ id: number; name: string; logoUrl: string; type: string }[]> {
+interface ProviderWithType {
+  provider_id: number;
+  provider_name: string;
+  logo_path?: string;
+  type: 'flatrate' | 'free' | 'ads' | 'rent' | 'buy';
+}
+
+async function getMovieProviders(movieId: number): Promise<{ id: number; name: string; logoUrl: string | null; type: string }[]> {
   try {
     const response = await fetch(
       `${TMDB_BASE_URL}/movie/${movieId}/watch/providers?api_key=${TMDB_API_KEY}`,
@@ -53,38 +59,36 @@ async function getMovieProviders(movieId: number): Promise<{ id: number; name: s
     );
     if (!response.ok) return [];
     
-    const data = await response.json();
+    const data = await response.json() as { results: { [country: string]: TmdbWatchProvidersByCountry } };
     const country = "ES";
     const providers = data.results?.[country];
     
     if (!providers) return [];
     
-    // Build array with type information
-    const allProviders: any[] = [
-      ...(providers.flatrate || []).map((p: any) => ({ ...p, type: 'flatrate' })),
-      ...(providers.free || []).map((p: any) => ({ ...p, type: 'free' })),
-      ...(providers.ads || []).map((p: any) => ({ ...p, type: 'ads' })),
-      ...(providers.rent || []).map((p: any) => ({ ...p, type: 'rent' })),
-      ...(providers.buy || []).map((p: any) => ({ ...p, type: 'buy' })),
+    // Build array with all provider types
+    const allProviders: ProviderWithType[] = [
+      ...(providers.flatrate || []).map((p: TmdbWatchProvider): ProviderWithType => ({ ...p, type: 'flatrate' })),
+      ...(providers.free || []).map((p: TmdbWatchProvider): ProviderWithType => ({ ...p, type: 'free' })),
+      ...(providers.ads || []).map((p: TmdbWatchProvider): ProviderWithType => ({ ...p, type: 'ads' })),
+      ...(providers.rent || []).map((p: TmdbWatchProvider): ProviderWithType => ({ ...p, type: 'rent' })),
+      ...(providers.buy || []).map((p: TmdbWatchProvider): ProviderWithType => ({ ...p, type: 'buy' })),
     ];
     
-    // Deduplicate by provider_id to avoid duplicate keys in UI
-    const uniqueProviders = Array.from(new Map(allProviders.map((p: any) => [p.provider_id, p])).values());
+    // Deduplicate by provider_id
+    const uniqueProviders = Array.from(new Map(allProviders.map(p => [p.provider_id, p])).values());
     
-    return uniqueProviders.slice(0, 5).map((p: any) => ({
+    return uniqueProviders.slice(0, 5).map(p => ({
       id: p.provider_id,
       name: p.provider_name,
       logoUrl: p.logo_path ? `https://image.tmdb.org/t/p/original${p.logo_path}` : null,
       type: p.type,
-    })).filter((p: { logoUrl: string | null; type: string }): p is { id: number; name: string; logoUrl: string; type: string } => Boolean(p.logoUrl));
+    }));
   } catch {
     return [];
   }
 }
 
-// Get popular movies - uses trending endpoint when no filters (like home)
 async function getPopularMovies(filters?: SearchFilters, page: number = 1, query?: string) {
-    // If search query provided, use search endpoint (ignores most filters)
     if (query && query.trim().length > 0) {
       console.log("[DEBUG] Using search endpoint for movies with query:", query);
       let searchUrl = `${TMDB_BASE_URL}/search/movie?api_key=${TMDB_API_KEY}&language=es-ES&page=${page}&query=${encodeURIComponent(query)}`;
@@ -123,7 +127,6 @@ async function getPopularMovies(filters?: SearchFilters, page: number = 1, query
     return movies;
   }
 
-  // If no filters, use trending endpoint (same as home page)
   const hasFilters = filters?.genre || filters?.yearFrom || filters?.yearTo || filters?.minRating || filters?.sortBy || (filters?.providerIds && filters.providerIds.length > 0) || filters?.accessType;
   
   if (filters?.providerIds && filters.providerIds.length > 0) {
@@ -162,7 +165,6 @@ async function getPopularMovies(filters?: SearchFilters, page: number = 1, query
       overview: movie.overview,
     })) || [];
     
-    // Fetch providers for first 10 movies, return all 20
     const moviesWithProviders = await Promise.all(
       movies.map(async (movie: any, index: number) => {
         if (index < 10) {
@@ -237,7 +239,6 @@ async function getPopularMovies(filters?: SearchFilters, page: number = 1, query
     const direction = filters.sortDirection || "desc"; // Default to desc for backward compatibility
     url += `&sort_by=${sortFieldMap[filters.sortBy]}.${direction}`;
   } else if (filters?.genre || filters?.platform) {
-    // Default to popularity when filtering
     url += "&sort_by=popularity.desc";
   }
 
@@ -267,7 +268,6 @@ async function getPopularMovies(filters?: SearchFilters, page: number = 1, query
     overview: movie.overview,
   })) || [];
 
-   // Fetch providers for ALL 20 movies (concurrent, may be slow but complete)
    const moviesWithProviders = await Promise.all(
      movies.map(async (movie: any) => {
        const tmdbId = movie.id.replace("tmdb_", "");
@@ -279,8 +279,7 @@ async function getPopularMovies(filters?: SearchFilters, page: number = 1, query
   return moviesWithProviders;
 }
 
-// Get streaming providers for a TV show
-async function getTvProviders(tvId: number): Promise<{ id: number; name: string; logoUrl: string; type: string }[]> {
+async function getTvProviders(tvId: number): Promise<{ id: number; name: string; logoUrl: string | null; type: string }[]> {
   try {
     const response = await fetch(
       `${TMDB_BASE_URL}/tv/${tvId}/watch/providers?api_key=${TMDB_API_KEY}`,
@@ -288,38 +287,34 @@ async function getTvProviders(tvId: number): Promise<{ id: number; name: string;
     );
     if (!response.ok) return [];
     
-    const data = await response.json();
+    const data = await response.json() as { results: { [country: string]: TmdbWatchProvidersByCountry } };
     const country = "ES";
     const providers = data.results?.[country];
     
     if (!providers) return [];
     
-    // Build array with type information
-    const allProviders: any[] = [
-      ...(providers.flatrate || []).map((p: any) => ({ ...p, type: 'flatrate' })),
-      ...(providers.free || []).map((p: any) => ({ ...p, type: 'free' })),
-      ...(providers.ads || []).map((p: any) => ({ ...p, type: 'ads' })),
-      ...(providers.rent || []).map((p: any) => ({ ...p, type: 'rent' })),
-      ...(providers.buy || []).map((p: any) => ({ ...p, type: 'buy' })),
+    const allProviders: ProviderWithType[] = [
+      ...(providers.flatrate || []).map((p: TmdbWatchProvider): ProviderWithType => ({ ...p, type: 'flatrate' })),
+      ...(providers.free || []).map((p: TmdbWatchProvider): ProviderWithType => ({ ...p, type: 'free' })),
+      ...(providers.ads || []).map((p: TmdbWatchProvider): ProviderWithType => ({ ...p, type: 'ads' })),
+      ...(providers.rent || []).map((p: TmdbWatchProvider): ProviderWithType => ({ ...p, type: 'rent' })),
+      ...(providers.buy || []).map((p: TmdbWatchProvider): ProviderWithType => ({ ...p, type: 'buy' })),
     ];
     
-    // Deduplicate by provider_id to avoid duplicate keys in UI
-    const uniqueProviders = Array.from(new Map(allProviders.map((p: any) => [p.provider_id, p])).values());
+    const uniqueProviders = Array.from(new Map(allProviders.map(p => [p.provider_id, p])).values());
     
-    return uniqueProviders.slice(0, 5).map((p: any) => ({
+    return uniqueProviders.slice(0, 5).map(p => ({
       id: p.provider_id,
       name: p.provider_name,
       logoUrl: p.logo_path ? `https://image.tmdb.org/t/p/original${p.logo_path}` : null,
       type: p.type,
-    })).filter((p: { logoUrl: string | null; type: string }): p is { id: number; name: string; logoUrl: string; type: string } => Boolean(p.logoUrl));
+    }));
   } catch {
     return [];
   }
 }
 
-// Get popular TV - uses trending endpoint when no filters (like home)
 async function getPopularTv(filters?: SearchFilters, page: number = 1, query?: string) {
-  // If search query provided, use search endpoint (ignores most filters)
   if (query && query.trim().length > 0) {
     console.log("[DEBUG] Using search endpoint for tv with query:", query);
     let searchUrl = `${TMDB_BASE_URL}/search/tv?api_key=${TMDB_API_KEY}&language=es-ES&page=${page}&query=${encodeURIComponent(query)}`;
@@ -358,7 +353,6 @@ async function getPopularTv(filters?: SearchFilters, page: number = 1, query?: s
     return shows;
   }
 
-   // If no filters, use trending endpoint (same as home page)
    const hasFilters = filters?.genre || filters?.yearFrom || filters?.yearTo || filters?.minRating || filters?.sortBy || (filters?.providerIds && filters.providerIds.length > 0);
    
    if (filters?.providerIds && filters.providerIds.length > 0) {
@@ -397,7 +391,6 @@ async function getPopularTv(filters?: SearchFilters, page: number = 1, query?: s
       overview: show.overview,
     })) || [];
     
-    // Fetch providers for first 10 TV shows, return all 20
     const showsWithProviders = await Promise.all(
       shows.map(async (show: any, index: number) => {
         if (index < 10) {
@@ -446,7 +439,6 @@ async function getPopularTv(filters?: SearchFilters, page: number = 1, query?: s
       console.log("[DEBUG] Added with_watch_providers:", providerIdsStr);
     }
     if (filters?.accessType) {
-      // Map UI accessType to TMDB monetization type
       const monetizationMap: Record<string, string> = {
         subscription: "flatrate",
         free: "free",
@@ -482,7 +474,6 @@ async function getPopularTv(filters?: SearchFilters, page: number = 1, query?: s
     const direction = filters.sortDirection || "desc"; // Default to desc for backward compatibility
     url += `&sort_by=${sortFieldMap[filters.sortBy]}.${direction}`;
   } else if (filters?.genre || filters?.platform) {
-    // Default to popularity when filtering
     url += "&sort_by=popularity.desc";
   }
 
@@ -512,7 +503,6 @@ async function getPopularTv(filters?: SearchFilters, page: number = 1, query?: s
     overview: show.overview,
   })) || [];
 
-   // Fetch providers for ALL 20 TV shows
    const showsWithProviders = await Promise.all(
      shows.map(async (show: any) => {
        const tmdbId = show.id.replace("tmdb_", "");
@@ -524,11 +514,9 @@ async function getPopularTv(filters?: SearchFilters, page: number = 1, query?: s
   return showsWithProviders;
 }
 
-// Get popular games (or search if query provided)
 async function getPopularGames(filters?: SearchFilters, page: number = 1, query?: string) {
   const token = await getIgdbToken();
 
-  // If search query provided, use IGDB search
   if (query && query.trim().length > 0) {
     console.log("[DEBUG] Using IGDB search for games with query:", query);
     const searchQuery = `search "${query}";`;
@@ -591,7 +579,6 @@ async function getPopularGames(filters?: SearchFilters, page: number = 1, query?
     }));
   }
 
-  // Regular filtered query
   let queryBody = "fields id, name, cover.url, first_release_date, rating, genres.name, platforms.id, platforms.name, platforms.platform_logo.image_id;";
   
   // Genre ID mapping for IGDB - CORRECTED from official IGDB genres
@@ -652,13 +639,11 @@ async function getPopularGames(filters?: SearchFilters, page: number = 1, query?
     "Android": 34
   };
   
-  // Build where clause - IGDB syntax
   const conditions: string[] = [];
   
   // Always filter out games without release date for better UX
   conditions.push("first_release_date != null");
   
-  // When filtering by genre/platform: show games from last 5 years
   if (filters?.genre || filters?.platform) {
     const fiveYearsAgo = new Date();
     fiveYearsAgo.setFullYear(fiveYearsAgo.getFullYear() - 5);
@@ -696,12 +681,10 @@ async function getPopularGames(filters?: SearchFilters, page: number = 1, query?
     }
   }
   if (filters?.yearFrom) {
-    // Convert year to Unix timestamp (start of year)
     const fromTimestamp = Math.floor(new Date(`${filters.yearFrom}-01-01`).getTime() / 1000);
     conditions.push(`first_release_date >= ${fromTimestamp}`);
   }
   if (filters?.yearTo) {
-    // Convert year to Unix timestamp (end of year)
     const toTimestamp = Math.floor(new Date(`${filters.yearTo}-12-31`).getTime() / 1000);
     conditions.push(`first_release_date <= ${toTimestamp}`);
   }
@@ -726,7 +709,6 @@ async function getPopularGames(filters?: SearchFilters, page: number = 1, query?
     const direction = filters.sortDirection || "desc"; // Default to desc for backward compatibility
     queryBody += ` sort ${sortFieldMap[filters.sortBy]} ${direction};`;
   } else if (filters?.genre || filters?.platform) {
-    // Default to rating (popularity proxy) when filtering
     queryBody += " sort rating desc;";
   } else {
     // No filters: default to release date (latest first)
@@ -741,9 +723,6 @@ async function getPopularGames(filters?: SearchFilters, page: number = 1, query?
 
    queryBody += " limit 20;";
    
-   // console.log("IGDB query:", queryBody);
-   // console.log("IGDB token exists:", !!token);
-   // console.log("IGDB client ID exists:", !!IGDB_CLIENT_ID);
 
    try {
     const response = await fetch("https://api.igdb.com/v4/games", {
@@ -764,7 +743,6 @@ async function getPopularGames(filters?: SearchFilters, page: number = 1, query?
     }
 
      const data = await response.json();
-     // console.log(`IGDB returned ${data.length} games`);
      
      return data.map((game: {
       id: number;
@@ -798,12 +776,10 @@ async function getPopularGames(filters?: SearchFilters, page: number = 1, query?
       })).filter((p: { logoUrl: string | null }) => p.logoUrl) || [],
     }));
     } catch (error) {
-      // console.error("Error fetching games from IGDB:", error);
       return [];
     }
   }
 
-// Get trending users (random public profiles)
 async function getTrendingUsers() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -820,7 +796,6 @@ async function getTrendingUsers() {
     return [];
   }
   
-  // Shuffle and take 20
   const shuffled = [...profiles].sort(() => Math.random() - 0.5);
   return shuffled.slice(0, 20).map((user: any) => ({
     id: user.id,
@@ -876,7 +851,6 @@ export async function GET(request: Request) {
        games,
        users,
        total: movies.length + tv.length + games.length + users.length,
-       // Return pagination info
        pagination: {
          moviesTotal: movies.length,
          tvTotal: tv.length,
@@ -892,3 +866,5 @@ export async function GET(request: Request) {
     );
   }
 }
+
+

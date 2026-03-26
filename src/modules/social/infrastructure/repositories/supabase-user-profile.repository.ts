@@ -43,7 +43,6 @@ async function fetchAndUpdatePosterPath(
     const movie = await response.json();
 
     if (movie.poster_path) {
-      // Update the media record with the poster_path
       await client
         .from("media")
         .update({ poster_path: movie.poster_path })
@@ -77,7 +76,6 @@ interface UserGlobalStatsRow {
   total_tv_minutes: number;
   total_game_minutes: number;
   total_minutes: number;
-  // Counts
   total_episodes_watched: number;
   total_movies_watched: number;
   total_games_played: number;
@@ -160,8 +158,6 @@ export class SupabaseUserProfileRepository implements UserProfileRepository {
       throw new Error("Profile not found");
     }
 
-    // Fetch user media tracking data
-    // IMPORTANT: Exclude individual episodes (tv_{tmdbId}_s{season}_e{episode}) from the start
     // Only fetch series, movies, and games - NOT episode-level records
     let mediaQuery = this.client
       .from("user_media_tracking")
@@ -197,7 +193,6 @@ export class SupabaseUserProfileRepository implements UserProfileRepository {
         allMediaIds.add(row.media_id);
       });
 
-      // Filter out episode IDs (tv_{tmdbId}_s{season}_e{episode})
       const mediaIds = new Set<string>();
       for (const id of allMediaIds) {
         if (!/^tv_\d+_s\d+_e\d+$/.test(id)) {
@@ -207,7 +202,6 @@ export class SupabaseUserProfileRepository implements UserProfileRepository {
 
       console.log("[getProfileContent] filtered mediaIds count:", mediaIds.size);
 
-      // Fetch media details only for non-episode IDs
       if (mediaIds.size > 0) {
         const { data: mediaData, error: mediaError } = await this.client
           .from("media")
@@ -226,14 +220,12 @@ export class SupabaseUserProfileRepository implements UserProfileRepository {
           // Find media items missing poster_path
           const missingPosters = mediaData.filter((m: MediaRow) => !m.poster_path && m.type === "movie");
           
-          // Fetch missing posters from TMDB
           await Promise.all(
             missingPosters.map(async (media: MediaRow) => {
               const tmdbId = extractTmdbId(media.id);
               if (tmdbId) {
                 const posterPath = await fetchAndUpdatePosterPath(this.client, media.id, tmdbId);
                 if (posterPath) {
-                  // Update local reference for the mediaMap
                   media.poster_path = posterPath;
                 }
               }
@@ -312,7 +304,6 @@ export class SupabaseUserProfileRepository implements UserProfileRepository {
             }
           }
 
-          // For games, include playing (progress), planned, completed
           if (row.media_type === "game") {
             if (row.is_watched || isPlayedOrPlanned) {
               watchedGames.push(media);
@@ -527,7 +518,6 @@ export class SupabaseUserProfileRepository implements UserProfileRepository {
       totalTvMinutes: statsRow?.total_tv_minutes ?? 0,
       totalGameMinutes: statsRow?.total_game_minutes ?? 0,
       totalMinutes: statsRow?.total_minutes ?? 0,
-      // Counts
       totalEpisodesWatched: statsRow?.total_episodes_watched ?? 0,
       totalMoviesWatched: statsRow?.total_movies_watched ?? 0,
       totalGamesPlayed: statsRow?.total_games_played ?? 0,
@@ -535,3 +525,4 @@ export class SupabaseUserProfileRepository implements UserProfileRepository {
     };
   }
 }
+

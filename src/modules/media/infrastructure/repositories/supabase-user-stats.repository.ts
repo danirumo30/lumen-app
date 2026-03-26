@@ -8,7 +8,6 @@ interface UserGlobalStatsRow {
   total_tv_minutes: number;
   total_game_minutes: number;
   total_minutes: number;
-  // Counts
   total_episodes_watched: number;
   total_movies_watched: number;
   total_games_played: number;
@@ -39,7 +38,6 @@ export class SupabaseUserStatsRepository {
       totalTvMinutes: data.total_tv_minutes,
       totalGameMinutes: data.total_game_minutes,
       totalMinutes: data.total_minutes,
-      // Counts
       totalEpisodesWatched: data.total_episodes_watched ?? 0,
       totalMoviesWatched: data.total_movies_watched ?? 0,
       totalGamesPlayed: data.total_games_played ?? 0,
@@ -47,4 +45,5 @@ export class SupabaseUserStatsRepository {
     };
   }
 }
+
 

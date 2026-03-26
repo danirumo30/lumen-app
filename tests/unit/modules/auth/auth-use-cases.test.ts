@@ -1,7 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { SignInUseCase, SignUpUseCase } from '@/modules/auth/application/use-cases';
 
-// Mock repository
 const createMockRepository = () => ({
   signIn: vi.fn(),
   signUp: vi.fn(),
@@ -78,3 +77,4 @@ describe('SignUpUseCase', () => {
     expect(result.requiresVerification).toBe(true);
   });
 });
+

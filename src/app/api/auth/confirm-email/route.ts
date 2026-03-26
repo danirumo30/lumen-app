@@ -30,8 +30,6 @@ export async function GET(request: Request) {
     }
 
     // 1. Buscar el token en la tabla email_verifications
-    // Nota: La tabla puede no tener columna 'used', la verificación de "ya usado" 
-    // puede requerir otra lógica (ej. borrar el token tras uso)
     const { data: tokenData, error: tokenError } = await supabaseAdmin
       .from('email_verifications')
       .select('user_id, expires_at')
@@ -53,8 +51,6 @@ export async function GET(request: Request) {
     }
 
     // 3. Marcar el email como verificado en email_verifications
-    // Según la estructura de la tabla, establecemos confirmed_at.
-    // Esto debería activar cualquier trigger o política en Supabase para actualizar auth.users.
     const confirmedAt = new Date().toISOString();
     const { error: confirmError } = await supabaseAdmin
       .from('email_verifications')
@@ -63,13 +59,10 @@ export async function GET(request: Request) {
 
     if (confirmError) {
       logger.error('Error marcando email como verificado:', confirmError);
-      // No bloqueamos si falla la actualización, pero logueamos
     } else {
       logger.debug(`Email verificado para usuario ${tokenData.user_id}.`);
     }
 
-    // 4. Eliminar el token para evitar reutilización
-    // (Opcional, pero buena práctica. Si la tabla se limpia sola, no es necesario)
     const { error: deleteError } = await supabaseAdmin
       .from('email_verifications')
       .delete()
@@ -77,12 +70,10 @@ export async function GET(request: Request) {
 
     if (deleteError) {
       logger.error('Error eliminando token:', deleteError);
-      // No bloqueamos la verificación si falla eliminar el token, pero logueamos
     }
 
     // 5. Confirmar el email en auth.users
     try {
-// DEBUG REMOVED:       logger.debug(`Intentando confirmar usuario ${tokenData.user_id} en auth.users...`);
       const { error: confirmUserError } = await supabaseAdmin.auth.admin.updateUserById(tokenData.user_id, {
         email_confirm: true,
       });
@@ -100,7 +91,6 @@ export async function GET(request: Request) {
     try {
       const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(tokenData.user_id);
       
-// DEBUG REMOVED: // DEBUG REMOVED:       logger.debug(`[Debug] userData:`, JSON.stringify(userData, null, 2));
       
       if (userError || !userData) {
         logger.error('Error obteniendo usuario:', userError);
@@ -108,9 +98,7 @@ export async function GET(request: Request) {
         return NextResponse.redirect(new URL('/login', request.url));
       }
 
-      // userData es { user: User, ... } según la API de Supabase
       const userEmail = userData.user?.email;
-// DEBUG REMOVED:       logger.debug(`[Debug] userEmail: ${userEmail}`);
 
       // 7. Eliminar el token usado
       await supabaseAdmin
@@ -118,12 +106,11 @@ export async function GET(request: Request) {
         .delete()
         .eq('token', token);
 
-      // 8. Redirigir a la página de login con el email pre-llenado
       const loginUrl = new URL('/login', request.url);
       if (userEmail) {
         loginUrl.searchParams.set('email', userEmail);
       }
-      loginUrl.searchParams.set('verified', 'true'); // Para mostrar mensaje de éxito
+      loginUrl.searchParams.set('verified', 'true');
       
       return NextResponse.redirect(loginUrl);
 
@@ -136,4 +123,5 @@ export async function GET(request: Request) {
     return NextResponse.redirect(new URL('/?error=server_error', request.url));
   }
 }
+
 

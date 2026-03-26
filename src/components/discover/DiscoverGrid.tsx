@@ -43,12 +43,10 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
     setIsLoading(true);
   }, [query, type, filters]);
 
-  // Load more handler
   const loadMore = useCallback(() => {
     setPage(prev => prev + 1);
   }, []);
 
-  // Fetch results
   useEffect(() => {
     let cancelled = false;
     const timer = setTimeout(async () => {
@@ -66,7 +64,6 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
           params.set("q", query);
         }
 
-        // Add filters if any
         const filterParams: Record<string, string | number[]> = {};
         if (filters.genre) filterParams.genre = filters.genre;
         if (filters.yearFrom) filterParams.yearFrom = String(filters.yearFrom);
@@ -87,8 +84,6 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
           params.set("filters", JSON.stringify(filterParams));
         }
 
-        // Log reducido solo para debug
-        // console.log(`[DiscoverGrid] Fetching page ${page} with params:`, params.toString());
 
         const response = await fetch(`/api/discover?${params.toString()}`);
          
@@ -109,7 +104,6 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
         // Combine results based on type (no client-side filtering needed, backend handles providerIds)
         let newResults: SearchResult[] = [];
         if (type === "all") {
-          // When showing "All", limit to 10 per type and include users
           newResults = [
             ...(data.movies?.slice(0, 10) || []),
             ...(data.tv?.slice(0, 10) || []),
@@ -132,7 +126,6 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
           setResults(prev => [...prev, ...newResults]);
         }
 
-        // If we got less than 20 items, likely no more pages
         setHasMore(newResults.length >= 20);
 
         setIsLoading(false);
@@ -224,3 +217,5 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
     </div>
   );
 }
+
+

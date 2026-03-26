@@ -55,7 +55,6 @@ function LoginPageContent() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
 
-  // Leer parámetros de la URL al cargar la página
   useEffect(() => {
     const emailParam = searchParams.get('email');
     const verifiedParam = searchParams.get('verified');
@@ -68,7 +67,6 @@ function LoginPageContent() {
     
     if (verifiedParam === 'true') {
       setSuccessMessage('¡Email verificado correctamente! Ahora solo necesitas ingresar tu contraseña.');
-      // Limpiar la URL
       window.history.replaceState({}, document.title, window.location.pathname);
     }
     
@@ -211,3 +209,4 @@ export default function LoginPage() {
     </Suspense>
   );
 }
+

@@ -78,7 +78,6 @@ export function DiscoverCard({
       {/* Poster / Avatar */}
       <div className="relative aspect-[2/3] overflow-hidden bg-zinc-800">
         {type === "user" ? (
-          // User avatar
           <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-zinc-800 to-zinc-900">
             {avatarUrl ? (
               <Image
@@ -98,7 +97,6 @@ export function DiscoverCard({
             )}
           </div>
         ) : (
-          // Media poster
           <>
             {isLoading && (
               <div className="absolute inset-0 bg-zinc-800 animate-pulse" />
@@ -231,3 +229,4 @@ export function DiscoverCard({
     </Link>
   );
 }
+

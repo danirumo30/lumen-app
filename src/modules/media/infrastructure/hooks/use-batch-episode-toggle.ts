@@ -80,7 +80,6 @@ export function useBatchEpisodeToggle(tmdbId: number | null) {
         throw new Error("tmdbId is required");
       }
 
-      // Convert to API format
       const episodes = variables.episodes.map((ep) => ({
         seasonNumber: ep.season,
         episodeNumber: ep.episode,
@@ -88,10 +87,8 @@ export function useBatchEpisodeToggle(tmdbId: number | null) {
         runtime: ep.runtime ?? 0,
       }));
 
-      // Execute batch
       const result = await toggleEpisodesBatch(tmdbId, episodes);
 
-      // Update series watched status if any episodes were marked as watched
       const hasWatchedEpisodes = variables.episodes.some((ep) => ep.watched);
       if (hasWatchedEpisodes && variables.seriesData) {
         await updateSeriesWatchedStatus(tmdbId, true, variables.seriesData);
@@ -103,22 +100,18 @@ export function useBatchEpisodeToggle(tmdbId: number | null) {
     onMutate: async (variables) => {
       if (tmdbId === null) return;
 
-      // Cancel outgoing queries
       await queryClient.cancelQueries({
         queryKey: episodeKeys.watched(tmdbId),
       });
 
-      // Snapshot previous value
       const previousData = queryClient.getQueryData<WatchedEpisodesResponse>(
         episodeKeys.watched(tmdbId)
       );
 
-      // Calculate new state
       queryClient.setQueryData<WatchedEpisodesResponse>(
         episodeKeys.watched(tmdbId),
         (old) => {
           if (!old) {
-            // If no previous data, create from mutations
             const watchedEpisodes: WatchedEpisode[] = variables.episodes
               .filter((ep) => ep.watched)
               .map((ep) => ({
@@ -130,13 +123,11 @@ export function useBatchEpisodeToggle(tmdbId: number | null) {
             return { watchedEpisodes };
           }
 
-          // Create Set from existing episodes
           const watchedSet = new Set<string>();
           for (const ep of old.watchedEpisodes) {
             watchedSet.add(`tv_${ep.tmdbId}_s${ep.seasonNumber}_e${ep.episodeNumber}`);
           }
 
-          // Apply all mutations
           for (const ep of variables.episodes) {
             const key = `tv_${tmdbId}_s${ep.season}_e${ep.episode}`;
             if (ep.watched) {
@@ -146,7 +137,6 @@ export function useBatchEpisodeToggle(tmdbId: number | null) {
             }
           }
 
-          // Convert back to array
           const watchedEpisodes: WatchedEpisode[] = [];
           for (const key of watchedSet) {
             const match = key.match(/tv_(\d+)_s(\d+)_e(\d+)/);
@@ -171,7 +161,6 @@ export function useBatchEpisodeToggle(tmdbId: number | null) {
 
       console.error("[useBatchEpisodeToggle] Error:", error);
 
-      // Rollback to snapshot
       if (context?.previousData) {
         queryClient.setQueryData<WatchedEpisodesResponse>(
           episodeKeys.watched(tmdbId),
@@ -188,7 +177,6 @@ export function useBatchEpisodeToggle(tmdbId: number | null) {
         queryKey: episodeKeys.watched(tmdbId),
       });
 
-      // Invalidate profile stats
       queryClient.invalidateQueries({
         queryKey: profileKeys.all,
       });
@@ -278,7 +266,6 @@ export function useMarkAllEpisodes(
     const batchEpisodes: BatchEpisode[] = [];
 
     for (const season of seasons) {
-      // If we have episode details with runtimes, use them
       if (season.episodes && season.episodes.length > 0) {
         for (const ep of season.episodes) {
           batchEpisodes.push({
@@ -364,3 +351,4 @@ export function useMarkAllEpisodes(
     totalEpisodes,
   };
 }
+

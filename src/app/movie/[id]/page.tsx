@@ -83,16 +83,13 @@ export default function MovieDetailPage({ params }: { params: Promise<{ id: stri
    useEffect(() => {
      const fetchData = async () => {
        try {
-         // Get session for auth headers
          const { data: { session } } = await supabase.auth.getSession();
          const authHeaders = {
            "Authorization": `Bearer ${session?.access_token || ""}`,
          };
 
-         // Extract TMDB ID for API calls
          const tmdbId = extractTmdbId(id) || id;
          
-         // Fetch movie details, credits, similar, watched status, and favorite status in parallel
          const [movieRes, creditsRes, similarRes, watchedRes, favoriteRes] = await Promise.all([
            fetch(`/api/movie/${id}`),
            fetch(`/api/movie/${id}/credits`),
@@ -205,3 +202,4 @@ export default function MovieDetailPage({ params }: { params: Promise<{ id: stri
     </div>
   );
 }
+

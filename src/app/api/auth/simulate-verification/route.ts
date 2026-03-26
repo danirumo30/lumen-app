@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
@@ -5,7 +6,6 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-// Solo para desarrollo - simula verificación de email
 export async function POST(request: Request) {
   // Verificar que estamos en desarrollo
   if (process.env.NODE_ENV !== 'development') {
@@ -50,7 +50,6 @@ export async function POST(request: Request) {
     const users = userData as UserResult;
 
     // Actualizar email_confirmed_at directamente en auth.users (solo en desarrollo)
-    // NOTA: En producción, esto debería hacerse mediante el flujo normal de verificación
     const { error: updateError } = await supabase
       .from('users')
       .update({ email_confirmed_at: new Date().toISOString() })
@@ -69,7 +68,7 @@ export async function POST(request: Request) {
       user_id: users.id,
     });
   } catch (error) {
-    console.error('Error en simulate-verification:', error);
+    logger.error('Error en simulate-verification:', error);
     return NextResponse.json(
       { error: 'Error interno del servidor' },
       { status: 500 }

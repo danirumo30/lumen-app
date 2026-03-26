@@ -48,11 +48,9 @@ export function useProfileStats(userId: string | null) {
     queryFn: () => fetchProfileWithStats(userId!),
     enabled: userId !== null,
     
-    // Keep stats relatively fresh
     staleTime: 30 * 1000, // 30 seconds
     gcTime: 5 * 60 * 1000, // 5 minutes
     
-    // Retry configuration
     retry: 1,
     
     // Don't refetch on window focus (we invalidate manually)
@@ -97,7 +95,6 @@ export function useCurrentUserProfile() {
     staleTime: 30 * 1000, // 30 seconds
     gcTime: 5 * 60 * 1000, // 5 minutes
     
-    // Retry
     retry: 1,
     
     // Don't refetch on window focus
@@ -200,7 +197,6 @@ export function useProfileStatsSubscription(
     ? useProfileStats(userId)
     : useCurrentUserProfile();
   
-  // Call callback when profile changes
   if (profile) {
     onStatsUpdate(profile);
   }
@@ -227,3 +223,4 @@ export function useTotalMinutes(userId?: string | null) {
     ...rest,
   };
 }
+

@@ -8,7 +8,6 @@ interface SearchBarProps {
 }
 
 export function DiscoverSearchBar({ initialQuery = "", onSearch }: SearchBarProps) {
-  // Initialize with empty string to avoid hydration mismatch, then update
   const [query, setQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
 
@@ -16,7 +15,6 @@ export function DiscoverSearchBar({ initialQuery = "", onSearch }: SearchBarProp
     setQuery(initialQuery || "");
   }, [initialQuery]);
 
-  // Handle input change (immediate, debounce moved to parent)
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newQuery = e.target.value;
     setQuery(newQuery);
@@ -129,3 +127,4 @@ export function DiscoverSearchBar({ initialQuery = "", onSearch }: SearchBarProp
     </div>
   );
 }
+

@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { NextResponse } from "next/server";
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY!;
@@ -5,7 +6,6 @@ const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 
 export const runtime = "nodejs";
 
-// Get streaming providers for a movie
 async function getMovieProviders(movieId: number): Promise<{ id: number; name: string; logoUrl: string }[]> {
   try {
     const response = await fetch(
@@ -69,7 +69,6 @@ export async function GET() {
       overview: movie.overview,
     })) || [];
 
-    // Fetch providers for first 10 movies
     const moviesWithProviders = await Promise.all(
       movies.slice(0, 10).map(async (movie: any, index: number) => {
         if (index < 10) {
@@ -83,10 +82,11 @@ export async function GET() {
 
     return NextResponse.json({ results: moviesWithProviders });
   } catch (error) {
-    console.error("Error fetching trending movies:", error);
+    logger.error("Error fetching trending movies:", error);
     return NextResponse.json(
       { error: "Failed to fetch trending movies" },
       { status: 500 }
     );
   }
 }
+

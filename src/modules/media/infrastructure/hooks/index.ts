@@ -4,7 +4,6 @@
  * Barrel export for all episode-related hooks
  */
 
-// Query hooks
 export {
   useWatchedEpisodes,
   useWatchedEpisodeSet,
@@ -14,7 +13,6 @@ export {
   episodeKeys,
 } from "./use-watched-episodes";
 
-// Mutation hooks
 export {
   useEpisodeToggle,
   useOptimisticEpisodeToggle,
@@ -29,3 +27,4 @@ export {
   type BatchEpisode,
   type BatchToggleVariables,
 } from "./use-batch-episode-toggle";
+

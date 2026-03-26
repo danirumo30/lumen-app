@@ -63,7 +63,6 @@ export function useEpisodeToggle(tmdbId: number | null) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    // The mutation function
     mutationFn: async (variables: ToggleEpisodeVariables) => {
       if (tmdbId === null) {
         throw new Error("tmdbId is required");
@@ -78,7 +77,6 @@ export function useEpisodeToggle(tmdbId: number | null) {
       );
     },
 
-    // Called before mutation function
     onMutate: async (variables) => {
       if (tmdbId === null) return;
 
@@ -107,20 +105,17 @@ export function useEpisodeToggle(tmdbId: number | null) {
             };
           }
 
-          // Create a Set from the current watched episodes for O(1) lookup
           const watchedSet = new Set<string>();
           for (const ep of old.watchedEpisodes) {
             watchedSet.add(`tv_${ep.tmdbId}_s${ep.seasonNumber}_e${ep.episodeNumber}`);
           }
 
-          // Apply the toggle
           if (variables.watched) {
             watchedSet.add(episodeKey);
           } else {
             watchedSet.delete(episodeKey);
           }
 
-          // Convert back to array
           const watchedEpisodes: WatchedEpisode[] = [];
           for (const key of watchedSet) {
             const match = key.match(/tv_(\d+)_s(\d+)_e(\d+)/);
@@ -137,11 +132,9 @@ export function useEpisodeToggle(tmdbId: number | null) {
         }
       );
 
-      // Return context with snapshot for rollback
       return { previousData };
     },
 
-    // Called if mutation errors
     onError: (error, variables, context) => {
       if (tmdbId === null) return;
 
@@ -156,7 +149,6 @@ export function useEpisodeToggle(tmdbId: number | null) {
       }
     },
 
-    // Called on either success or error
     onSettled: (data, error, variables) => {
       if (tmdbId === null) return;
 
@@ -204,17 +196,14 @@ export function useOptimisticEpisodeToggle(tmdbId: number | null) {
     optimisticToggle: (variables: ToggleEpisodeVariables) => {
       if (tmdbId === null) return;
 
-      // Cancel outgoing queries
       queryClient.cancelQueries({
         queryKey: episodeKeys.watched(tmdbId),
       });
 
-      // Snapshot
       const previousData = queryClient.getQueryData<WatchedEpisodesResponse>(
         episodeKeys.watched(tmdbId)
       );
 
-      // Update optimistically
       const episodeKey = `tv_${tmdbId}_s${variables.season}_e${variables.episode}`;
 
       queryClient.setQueryData<WatchedEpisodesResponse>(
@@ -308,3 +297,4 @@ export function useInvalidateEpisodeQueries() {
     },
   };
 }
+

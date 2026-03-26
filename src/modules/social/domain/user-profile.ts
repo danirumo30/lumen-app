@@ -21,7 +21,6 @@ export interface UserProfileWithStats extends UserProfile {
   readonly totalTvMinutes: MediaProgressMinutes;
   readonly totalGameMinutes: MediaProgressMinutes;
   readonly totalMinutes: MediaProgressMinutes;
-  // Counts
   readonly totalEpisodesWatched: number;
   readonly totalMoviesWatched: number;
   readonly totalGamesPlayed: number;
@@ -53,4 +52,5 @@ export interface UpdateProfileData {
   readonly bannerUrl?: string | null;
   readonly username?: string;
 }
+
 

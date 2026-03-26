@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { NextResponse } from "next/server";
 
 const IGDB_ACCESS_TOKEN = process.env.IGDB_ACCESS_TOKEN!;
@@ -44,15 +45,12 @@ async function fetchGames(accessToken: string, retry = false): Promise<Response>
     `,
   });
 
-  // If 401 and haven't retried, refresh token and retry
   if (response.status === 401 && !retry) {
-    console.log("IGDB token expired, refreshing...");
+    logger.debug("IGDB token expired, refreshing...");
     const newToken = await getFreshAccessToken();
     
-    // Update process env for this request
     process.env.IGDB_ACCESS_TOKEN = newToken;
     
-    // Try again with new token
     return fetchGames(newToken, true);
   }
 
@@ -101,10 +99,11 @@ export async function GET() {
 
     return NextResponse.json({ results });
   } catch (error) {
-    console.error("Error fetching trending games:", error);
+    logger.error("Error fetching trending games:", error);
     return NextResponse.json(
       { error: "Failed to fetch trending games" },
       { status: 500 }
     );
   }
 }
+

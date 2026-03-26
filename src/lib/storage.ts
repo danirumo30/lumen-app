@@ -15,12 +15,10 @@ export async function uploadFile(
     throw new Error("Solo se permiten archivos de imagen");
   }
 
-  // Verificar tamaño (máximo 5MB)
   if (file.size > 5 * 1024 * 1024) {
     throw new Error("La imagen no puede pesar más de 5MB");
   }
 
-  // Subir archivo
   const { data, error } = await supabase.storage
     .from(bucket)
     .upload(path, file, {
@@ -32,7 +30,6 @@ export async function uploadFile(
     throw new Error(`Error al subir imagen: ${error.message}`);
   }
 
-  // Obtener URL pública
   const { data: urlData } = supabase.storage
     .from(bucket)
     .getPublicUrl(path);
@@ -60,3 +57,5 @@ export function validateImageFile(file: File): boolean {
   const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
   return allowedTypes.includes(file.type);
 }
+
+

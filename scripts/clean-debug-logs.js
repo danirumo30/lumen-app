@@ -12,7 +12,6 @@ const path = require('path');
 const projectRoot = process.cwd();
 const apiPath = path.join(projectRoot, 'src', 'app', 'api');
 
-// IMPORTANT LOGS TO KEEP (do not remove)
 const keepPatterns = [
   /token\s+expired/i,
   /Cache\s+hit/i,
@@ -59,7 +58,6 @@ function shouldRemove(line) {
     if (pattern.test(lowerLine)) return false;
   }
   
-  // Default: remove this debug line
   return true;
 }
 
@@ -137,3 +135,4 @@ function main() {
 }
 
 main();
+

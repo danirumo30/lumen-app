@@ -26,7 +26,6 @@ interface DiscoverFiltersProps {
   onProviderChange?: (providerIds: number[]) => void;
 }
 
-// Dropdown props extension
 interface FilterDropdownProps {
   label: string;
   options: { value: string; label: string; isCurrent?: boolean }[];
@@ -69,7 +68,6 @@ const movieYears = Array.from({ length: currentYear - 1900 + 6 }, (_, i) => curr
 const tvYears = Array.from({ length: currentYear - 1900 + 6 }, (_, i) => currentYear + 5 - i);   // 2031 down to 1900
 const gameYears = Array.from({ length: currentYear - 1950 + 4 }, (_, i) => currentYear + 3 - i); // 2029 down to 1950
 
-// Get years based on media type
 function getYearsForType(type: MediaType): number[] {
   switch (type) {
     case "movie": return movieYears;
@@ -79,7 +77,6 @@ function getYearsForType(type: MediaType): number[] {
   }
 }
 
-// FilterDropdown component - single, complete implementation with multiSelect support
 function FilterDropdown(props: FilterDropdownProps) {
   const {
     label,
@@ -111,7 +108,6 @@ function FilterDropdown(props: FilterDropdownProps) {
     }
   };
 
-  // Calcular posición del menú cuando se abre
   useEffect(() => {
     if (isOpen && dropdownRef.current) {
       const rect = dropdownRef.current.getBoundingClientRect();
@@ -141,7 +137,6 @@ function FilterDropdown(props: FilterDropdownProps) {
     };
   }, [isOpen, dropdownId, onOpenChange]);
 
-   // Click fuera
    useEffect(() => {
      function handleClickOutside(event: MouseEvent | TouchEvent) {
        if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -158,7 +153,6 @@ function FilterDropdown(props: FilterDropdownProps) {
      };
    }, [dropdownId, onOpenChange]);
 
-  // Scroll a valor específico
   useEffect(() => {
     if (isOpen && scrollToValue && listRef.current) {
       setTimeout(() => {
@@ -170,7 +164,6 @@ function FilterDropdown(props: FilterDropdownProps) {
     }
   }, [isOpen, scrollToValue]);
 
-  // Get selected values as array for easy check
   const selectedValues = useMemo(() => {
     if (!value) return [];
     return Array.isArray(value) ? value : [value];
@@ -193,7 +186,6 @@ function FilterDropdown(props: FilterDropdownProps) {
     }
   };
 
-  // Display label for button
   const displayLabel = useMemo(() => {
     if (multiSelect && selectedValues.length > 0) {
       return `${label} (${selectedValues.length})`;
@@ -205,7 +197,6 @@ function FilterDropdown(props: FilterDropdownProps) {
     return label === "Ordenar" ? "Ordenar Por" : label;
   }, [label, value, selectedValues, options]);
 
-   // Get accent color gradient based on label
    const getAccentGradient = (label: string) => {
      if (label.includes("Género")) return "from-amber-500 to-orange-600";
      if (label.includes("Plataforma")) return "from-violet-500 to-fuchsia-600";
@@ -308,16 +299,13 @@ export function DiscoverFiltersComponent({
    providersError = null,
    onProviderChange,
  }: DiscoverFiltersProps) {
-  // Estado para saber cuál dropdown está abierto (solo uno a la vez)
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
 
-  // Handler para abrir/cerrar dropdowns - asegura que solo uno esté abierto
   const handleDropdownToggle = (id: string, isOpen: boolean) => {
     if (isOpen) {
       // Al abrir un dropdown, cerrar cualquier otro
       setOpenDropdownId(id);
     } else {
-      // Si el que se cierra es el que está abierto, poner null
       if (openDropdownId === id) {
         setOpenDropdownId(null);
       }
@@ -340,14 +328,12 @@ export function DiscoverFiltersComponent({
   const typePlatforms = platforms[type as keyof typeof platforms] || [];
   const typeYears = getYearsForType(type);
 
-  // For search in movies/TV, limit sort options to those supported by TMDB search
   const availableSortOptions = (isSearching && isMovieOrTv)
     ? sortOptions.filter(opt => opt.value === "popularity" || opt.value === "year")
     : sortOptions;
 
   const updateFilter = <K extends keyof DiscoverFilters>(key: K, value: DiscoverFilters[K]) => {
     if (value === undefined || value === null) {
-      // Remove the filter property
       const { [key]: removed, ...rest } = filters;
       onChange(rest);
     } else {
@@ -562,14 +548,12 @@ export function DiscoverFiltersComponent({
             onChange={(value) => {
               if (value) {
                 if (filters.sortBy === value) {
-                  // Toggle direction
                   updateFilter("sortDirection", filters.sortDirection === "asc" ? "desc" : "asc");
                 } else {
                   // New option: update both sortBy and sortDirection in one go
                   onChange({ ...filters, sortBy: value as DiscoverFilters["sortBy"], sortDirection: "asc" });
                 }
               } else {
-                // Clear both
                 const { sortBy, sortDirection, ...rest } = filters;
                 onChange(rest);
               }
@@ -604,3 +588,5 @@ export function DiscoverFiltersComponent({
     </div>
   );
 }
+
+

@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { NextResponse } from "next/server";
 import { mapGenresToSpanish } from "@/lib/translate";
 
@@ -6,7 +7,6 @@ const IGDB_CLIENT_ID = process.env.TWITCH_CLIENT_ID || "";
 
 export const runtime = "nodejs";
 
-// Cache for franchise data
 const franchiseCache = new Map<string, { data: any; timestamp: number }>();
 const CACHE_TTL = 1000 * 60 * 30; // 30 minutes
 
@@ -69,7 +69,6 @@ export async function GET(
       return NextResponse.json({ error: "Invalid IGDB ID" }, { status: 400 });
     }
 
-    // Check cache
     const cacheKey = `franchise_${igdbId}`;
     const cached = franchiseCache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
@@ -95,15 +94,12 @@ export async function GET(
 
     const game = games[0];
     
-    // Try collections first (more relevant for game series)
     const collectionIds = game.collections || [];
     const franchiseIds = game.franchises || [];
 
-    // If we have collections, use those
     if (collectionIds.length > 0) {
       const collectionId = collectionIds[0];
 
-      // Get collection name
       const collectionRes = await fetchWithTokenRefresh(
         "https://api.igdb.com/v4/collections",
         `fields name; where id = ${collectionId}; limit 1;`,
@@ -118,7 +114,6 @@ export async function GET(
         }
       }
 
-      // Get all games in this collection
       const collectionGamesRes = await fetchWithTokenRefresh(
         "https://api.igdb.com/v4/games",
         `fields id, name, cover.url, rating, genres.name, first_release_date, version_parent; where collections = ${collectionId} & version_title = null; sort first_release_date asc; limit 50;`,
@@ -224,10 +219,11 @@ export async function GET(
     // No collection or franchise found
     return NextResponse.json({ franchise: null, games: [] });
   } catch (error) {
-    console.error("Error fetching franchise:", error);
+    logger.error("Error fetching franchise:", error);
     return NextResponse.json(
       { error: "Failed to fetch franchise", franchise: null, games: [] },
       { status: 500 }
     );
   }
 }
+

@@ -17,7 +17,6 @@ export class UpdateProfileUseCase {
   constructor(private readonly profileRepository: UserProfileRepository) {}
 
   async execute(userId: string, data: UpdateProfileData): Promise<void> {
-    // Validate data before updating
     if (data.username !== undefined) {
       const isAvailable = await this.profileRepository.isUsernameAvailable(data.username, userId);
       if (!isAvailable) {
@@ -59,3 +58,4 @@ export class SearchUsersUseCase {
     return this.profileRepository.searchUsers(query, limit);
   }
 }
+

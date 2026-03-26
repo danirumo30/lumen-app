@@ -6,13 +6,10 @@ const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 
 export async function GET(request: Request) {
   try {
-    // Get region from query param, default to ES
     const { searchParams } = new URL(request.url);
     const region = searchParams.get('region') || 'ES';
     
-// DEBUG REMOVED:     logger.debug("[watch-providers] Fetching for region:", region);
 
-    // Get all watch providers from TMDB for BOTH movie and tv
     const [movieResponse, tvResponse] = await Promise.all([
       fetch(
         `${TMDB_BASE_URL}/watch/providers/movie?api_key=${TMDB_API_KEY}&language=es-ES&watch_region=${region}`,
@@ -31,23 +28,16 @@ export async function GET(request: Request) {
     const movieData = await movieResponse.json();
     const tvData = await tvResponse.json();
     
-// DEBUG REMOVED:     logger.debug("[watch-providers] Movie data type:", typeof movieData, "has results:", movieData?.results);
-// DEBUG REMOVED:     logger.debug("[watch-providers] TV data type:", typeof tvData, "has results:", tvData?.results);
     
     // Extract arrays from results property (TMDB returns { results: [...] })
     const movieProviders = Array.isArray(movieData?.results) ? movieData.results : [];
     const tvProviders = Array.isArray(tvData?.results) ? tvData.results : [];
     
-// DEBUG REMOVED:     logger.debug("[watch-providers] Movie providers count:", movieProviders.length);
-// DEBUG REMOVED:     logger.debug("[watch-providers] TV providers count:", tvProviders.length);
     
     // Combine both arrays (they are already filtered by region)
     let allProviders = [...movieProviders, ...tvProviders];
-// DEBUG REMOVED:     logger.debug("[watch-providers] Combined total (before dedup):", allProviders.length);
 
-    // If no providers found for region, try US fallback
     if (allProviders.length === 0) {
-// DEBUG REMOVED:       logger.debug("[watch-providers] No providers found for region, trying US fallback");
       const usResponse = await fetch(
         `${TMDB_BASE_URL}/watch/providers/movie?api_key=${TMDB_API_KEY}&language=es-ES&watch_region=US`,
         { headers: { "Cache-Control": "public, s-maxage=86400" } }
@@ -61,7 +51,6 @@ export async function GET(request: Request) {
         const usMovie = await usResponse.json();
         const usTv = await usTvResponse.json();
         allProviders = [...usMovie, ...usTv];
-// DEBUG REMOVED:         logger.debug("[watch-providers] US fallback total:", allProviders.length);
       }
     }
 
@@ -84,7 +73,6 @@ export async function GET(request: Request) {
       const name = p.provider_name;
       const logoUrl = p.logo_path ? `https://image.tmdb.org/t/p/original${p.logo_path}` : null;
       
-      // Check which access type arrays are non-empty
       const types = new Set<string>();
       if (p.flatrate && p.flatrate.length > 0) types.add('flatrate');
       if (p.free && p.free.length > 0) types.add('free');
@@ -177,7 +165,6 @@ export async function GET(request: Request) {
       'Artify'
     ];
 
-    // Convert to array and sort by custom priority: first providers in the list (in order), then alphabetically
     const sortedProviders = Array.from(providerMap.values()).sort((a, b) => {
       const aIndex = spainProviderOrder.indexOf(a.name);
       const bIndex = spainProviderOrder.indexOf(b.name);
@@ -204,8 +191,6 @@ export async function GET(request: Request) {
       types: Array.from(p.types), // Convert Set<string> to string[]
     }));
 
-// DEBUG REMOVED:     logger.debug("[watch-providers] Sorted providers for ES (custom priority):", result.map(p => p.name));
-// DEBUG REMOVED:     logger.debug("[watch-providers] Providers with types:", result.map(p => ({name: p.name, types: p.types})));
     return NextResponse.json(result);
   } catch (error) {
     logger.error("Error fetching watch providers:", error);
@@ -215,4 +200,6 @@ export async function GET(request: Request) {
     );
   }
 }
+
+
 

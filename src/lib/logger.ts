@@ -28,13 +28,10 @@ class Logger {
       return { message: '' };
     }
 
-    // First arg is the message
     const message = String(args[0]);
 
-    // If there's a second arg and it's an object (not Error/Array/DOM element), treat as context
     if (args.length >= 2) {
       const secondArg = args[1];
-      // Check if it's a plain object (and not null)
       if (
         secondArg !== null && 
         typeof secondArg === 'object' && 
@@ -114,7 +111,7 @@ class Logger {
   }
 }
 
-// Export singleton instance (class with static methods)
 export const logger = Logger;
 export type { LoggerContext };
 export default Logger;
+

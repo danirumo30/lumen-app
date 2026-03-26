@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
@@ -18,14 +19,12 @@ function createAuthClient(token: string) {
   });
 }
 
-// Create admin client (bypasses RLS) for writes
 function createAdminClient() {
   return createClient(supabaseUrl, supabaseServiceKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 }
 
-// Get user's favorite status for a movie
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -35,7 +34,6 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "tmdbId required" }, { status: 400 });
     }
 
-    // Get token from Authorization header
     const authHeader = request.headers.get("Authorization");
     const token = authHeader?.replace("Bearer ", "");
     
@@ -66,7 +64,7 @@ export async function GET(request: Request) {
       favoritedAt: data?.created_at || null,
     });
   } catch (error) {
-    console.error("Error fetching favorite status:", error);
+    logger.error("Error fetching favorite status:", error);
     return NextResponse.json(
       { error: "Failed to fetch favorite status" },
       { status: 500 }
@@ -74,7 +72,6 @@ export async function GET(request: Request) {
   }
 }
 
-// Toggle favorite status
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -84,7 +81,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "tmdbId required" }, { status: 400 });
     }
 
-    // Get token from Authorization header
     const authHeader = request.headers.get("Authorization");
     const token = authHeader?.replace("Bearer ", "");
     
@@ -98,13 +94,12 @@ export async function POST(request: Request) {
     const { data: { user }, error: userError } = await userClient.auth.getUser();
     
     if (!user || userError) {
-      console.error("[movie-favorite POST] User error:", userError);
+      logger.error("[movie-favorite POST] User error:", userError);
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const mediaId = `movie_${tmdbId}`;
 
-    // Build mediaInsert object with available data or fetch from TMDB
     let title = movieData?.title || null;
     let originalTitle = movieData?.originalTitle || null;
     let releaseYear = movieData?.releaseYear || null;
@@ -114,7 +109,6 @@ export async function POST(request: Request) {
       ? movieData.posterPath.replace("https://image.tmdb.org/t/p/w500", "")
       : null;
 
-    // If title is missing, fetch minimum data from TMDB
     if (!title) {
       try {
         const response = await fetch(
@@ -135,7 +129,7 @@ export async function POST(request: Request) {
           title = `Película ${tmdbId}`;
         }
       } catch (error) {
-        console.error("[movie-favorite POST] TMDB fetch error:", error);
+        logger.error("[movie-favorite POST] TMDB fetch error:", error);
         title = `Película ${tmdbId}`;
       }
     }
@@ -145,7 +139,6 @@ export async function POST(request: Request) {
       title = `Película ${tmdbId}`;
     }
 
-    // Construct final media object
     const mediaInsert = {
       id: mediaId,
       type: "movie",
@@ -165,10 +158,9 @@ export async function POST(request: Request) {
       });
 
     if (mediaError) {
-      console.error("[movie-favorite POST] Media upsert error:", mediaError);
+      logger.error("[movie-favorite POST] Media upsert error:", mediaError);
     }
 
-     // Get current state
      const { data: existing } = await userClient
        .from("user_media_tracking")
        .select("is_favorite, is_watched, is_planned, rating, progress_minutes")
@@ -229,10 +221,11 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, favorite });
   } catch (error) {
-    console.error("Error updating favorite status:", error);
+    logger.error("Error updating favorite status:", error);
     return NextResponse.json(
       { error: "Failed to update favorite status" },
       { status: 500 }
     );
   }
 }
+

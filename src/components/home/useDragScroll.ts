@@ -47,13 +47,11 @@ export function useDragScroll(options: UseDragScrollOptions = {}): UseDragScroll
   const draggedDistance = useRef(0);
   const DRAG_THRESHOLD = 5;
 
-  // Detectar si es dispositivo táctil
   const isTouchDevice = useRef(
     typeof window !== "undefined" && 
     ("ontouchstart" in window || navigator.maxTouchPoints > 0)
   );
 
-  // Actualizar detección de touch en resize (para hybrid devices)
   useEffect(() => {
     const updateTouchDetection = () => {
       isTouchDevice.current = 
@@ -122,7 +120,6 @@ export function useDragScroll(options: UseDragScrollOptions = {}): UseDragScroll
   }, []);
 
   const handleClick = useCallback((e: React.MouseEvent) => {
-    // Si arrastraste más del threshold, cancelá el click
     if (Math.abs(draggedDistance.current) > DRAG_THRESHOLD) {
       e.preventDefault();
       e.stopPropagation();
@@ -130,7 +127,6 @@ export function useDragScroll(options: UseDragScrollOptions = {}): UseDragScroll
     }
   }, []);
 
-  // Cleanup al desmontar
   useEffect(() => {
     return () => {
       if (containerRef.current) {
@@ -176,12 +172,10 @@ function snapToNearest(container: HTMLDivElement) {
   const currentScroll = container.scrollLeft;
   const containerWidth = container.clientWidth;
 
-  // Si ya estás pegado a un borde, dejalo ahí
   if (currentScroll <= 1 || currentScroll >= maxScroll - 1) {
     return;
   }
 
-  // Si estás cerca del borde, déjalo ahí
   const EDGE_THRESHOLD = 50;
   if (currentScroll < EDGE_THRESHOLD || currentScroll > maxScroll - EDGE_THRESHOLD) {
     container.scrollTo({
@@ -218,3 +212,5 @@ function snapToNearest(container: HTMLDivElement) {
     });
   }
 }
+
+

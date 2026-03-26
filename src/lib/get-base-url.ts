@@ -7,7 +7,6 @@ export function getBaseUrl(request?: Request): string {
     try {
       const url = new URL(request.url);
       const origin = url.origin;
-      // Evitar usar orígenes internos o vacíos
       if (origin && origin !== 'null' && !origin.startsWith('http://127.0.0.1')) {
         return origin;
       }
@@ -23,3 +22,4 @@ export function getBaseUrl(request?: Request): string {
   }
   return process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 }
+

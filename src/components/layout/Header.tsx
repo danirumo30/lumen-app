@@ -15,7 +15,6 @@ export default function Header() {
   const { user, signOut, isLoading } = useAuth();
   const pathname = usePathname();
 
-  // Update avatar cache key when user data changes (e.g., after profile update)
    
   useEffect(() => {
     if (user?.avatarUrl) {
@@ -30,7 +29,6 @@ export default function Header() {
     return `${url}${separator}t=${avatarCacheKey}`;
   };
 
-  // Close menus on route change
    
   useEffect(() => {
     setIsMobileMenuOpen(false);
@@ -295,3 +293,4 @@ export default function Header() {
     </>
   );
 }
+

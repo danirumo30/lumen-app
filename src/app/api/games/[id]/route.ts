@@ -6,8 +6,6 @@ const IGDB_ACCESS_TOKEN = process.env.IGDB_ACCESS_TOKEN || "";
 const IGDB_CLIENT_ID = process.env.TWITCH_CLIENT_ID || "";
 const IGDB_CLIENT_SECRET = process.env.TWITCH_CLIENT_SECRET || "";
 
-// DEBUG REMOVED: logger.debug("[games/[id]] IGDB_ACCESS_TOKEN present:", !!IGDB_ACCESS_TOKEN);
-// DEBUG REMOVED: logger.debug("[games/[id]] IGDB_CLIENT_ID present:", !!IGDB_CLIENT_ID);
 
 export const runtime = "nodejs";
 
@@ -52,7 +50,6 @@ async function fetchGameById(accessToken: string, igdbId: number, retry = false)
     `,
   });
 
-  // If 401 and haven't retried, refresh token and retry
   if (response.status === 401 && !retry) {
     logger.debug("IGDB token expired, refreshing...");
     const newToken = await getFreshAccessToken();
@@ -79,14 +76,11 @@ export async function GET(
       );
     }
 
-    // Detect language from browser
     const acceptLanguage = request.headers.get('accept-language') || 'en';
     const browserLang = acceptLanguage.split(',')[0].split('-')[0]; // Get primary language code
     const targetLang = browserLang === 'es' ? 'es' : browserLang === 'fr' ? 'fr' : browserLang === 'de' ? 'de' : browserLang === 'it' ? 'it' : browserLang === 'pt' ? 'pt' : 'es'; // Default to Spanish
     
-// DEBUG REMOVED: // DEBUG REMOVED:     logger.debug(`[games/[id]] Detected browser language: ${browserLang}, using: ${targetLang}`);
 
-    // Check cache first - include language in cache key
     const cacheKey = `game_${igdbId}_${targetLang}`;
     const cached = gameCache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
@@ -96,7 +90,6 @@ export async function GET(
 
     const igdbResponse = await fetchGameById(IGDB_ACCESS_TOKEN, igdbId);
 
-// DEBUG REMOVED: // DEBUG REMOVED:     logger.debug("[games/[id]] IGDB response status:", igdbResponse.status);
     
     if (!igdbResponse.ok) {
       const errorText = await igdbResponse.text();
@@ -115,7 +108,6 @@ export async function GET(
 
     const game = games[0];
 
-    // Get English genres and translate to Spanish
     const englishGenres = game.genres?.map((g: { name: string }) => g.name) || [];
     const genres = mapGenresToSpanish(englishGenres);
 
@@ -125,9 +117,7 @@ export async function GET(
     
     if (shouldTranslate) {
       try {
-// DEBUG REMOVED:         logger.debug(`[games/[id]] Translating summary to ${targetLang} (${summary!.length} chars)`);
         summary = await translateText(summary!, targetLang);
-// DEBUG REMOVED: // DEBUG REMOVED:         logger.debug(`[games/[id]] Translation complete`);
       } catch (error) {
         logger.error("[games/[id]] Translation failed, using original:", error);
         // Keep original English summary if translation fails
@@ -155,7 +145,6 @@ export async function GET(
       involvedCompanies: game.involved_companies?.map((c: { company: { name: string } }) => c.company.name) || [],
     };
 
-    // Cache the result
     gameCache.set(cacheKey, { data: result, timestamp: Date.now() });
 
     return NextResponse.json(result);
@@ -167,5 +156,7 @@ export async function GET(
     );
   }
 }
+
+
 
 

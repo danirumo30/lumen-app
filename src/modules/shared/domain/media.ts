@@ -65,10 +65,10 @@ export interface UserGlobalStats {
   readonly totalTvMinutes: MediaProgressMinutes;
   readonly totalGameMinutes: MediaProgressMinutes;
   readonly totalMinutes: MediaProgressMinutes;
-  // Counts
   readonly totalEpisodesWatched: number;
   readonly totalMoviesWatched: number;
   readonly totalGamesPlayed: number;
   readonly totalGamesPlatinum: number;
 }
+
 

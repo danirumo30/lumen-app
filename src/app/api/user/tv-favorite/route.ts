@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
@@ -10,7 +11,6 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-// Create client with user token (for reading)
 function createUserClient(token: string) {
   return createClient(supabaseUrl, supabaseAnonKey, {
     global: { headers: { Authorization: `Bearer ${token}` } },
@@ -18,14 +18,12 @@ function createUserClient(token: string) {
   });
 }
 
-// Create admin client (bypasses RLS) for writes
 function createAdminClient() {
   return createClient(supabaseUrl, supabaseServiceKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 }
 
-// Get user's favorite status for a TV show
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -35,7 +33,6 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "tmdbId required" }, { status: 400 });
     }
 
-    // Get token from Authorization header
     const authHeader = request.headers.get("Authorization");
     const token = authHeader?.replace("Bearer ", "");
     
@@ -50,7 +47,6 @@ export async function GET(request: Request) {
       return NextResponse.json({ favorite: false, favoritedAt: null });
     }
     
-    // Check user_media_tracking for favorite status
     const { data, error } = await supabase
       .from("user_media_tracking")
       .select("is_favorite, updated_at")
@@ -59,7 +55,7 @@ export async function GET(request: Request) {
       .single();
 
     if (error && error.code !== "PGRST116") {
-      console.error("[tv-favorite GET] Error:", error);
+      logger.error("[tv-favorite GET] Error:", error);
     }
 
     return NextResponse.json({
@@ -67,7 +63,7 @@ export async function GET(request: Request) {
       favoritedAt: data?.updated_at || null,
     });
   } catch (error) {
-    console.error("[tv-favorite GET] Error:", error);
+    logger.error("[tv-favorite GET] Error:", error);
     return NextResponse.json(
       { error: "Failed to fetch TV show favorite status" },
       { status: 500 }
@@ -75,7 +71,6 @@ export async function GET(request: Request) {
   }
 }
 
-// Mark TV show as favorite
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -85,7 +80,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "tmdbId required" }, { status: 400 });
     }
 
-    // Get token from Authorization header
     const authHeader = request.headers.get("Authorization");
     const token = authHeader?.replace("Bearer ", "");
     
@@ -93,7 +87,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // User client for reading
     const userClient = createUserClient(token);
     // Admin client for writing (bypasses RLS)
     const adminClient = createAdminClient();
@@ -101,13 +94,12 @@ export async function POST(request: Request) {
     const { data: { user }, error: userError } = await userClient.auth.getUser();
     
     if (!user || userError) {
-      console.error("[tv-favorite POST] User error:", userError);
+      logger.error("[tv-favorite POST] User error:", userError);
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const mediaId = `tv_${tmdbId}`;
 
-    // Build mediaInsert object with available data or fetch from TMDB
     let title = tvData?.title || null;
     let originalTitle = tvData?.originalTitle || null;
     let releaseYear = tvData?.releaseYear || null;
@@ -117,7 +109,6 @@ export async function POST(request: Request) {
       ? tvData.posterPath.replace("https://image.tmdb.org/t/p/w500", "")
       : null;
 
-    // If title is missing, fetch minimum data from TMDB
     if (!title) {
       try {
         const response = await fetch(
@@ -139,7 +130,7 @@ export async function POST(request: Request) {
           title = `Serie ${tmdbId}`;
         }
       } catch (error) {
-        console.error("[tv-favorite POST] TMDB fetch error:", error);
+        logger.error("[tv-favorite POST] TMDB fetch error:", error);
         title = `Serie ${tmdbId}`;
       }
     }
@@ -149,7 +140,6 @@ export async function POST(request: Request) {
       title = `Serie ${tmdbId}`;
     }
 
-    // Construct final media object
     const mediaInsert = {
       id: mediaId,
       type: "tv",
@@ -169,10 +159,9 @@ export async function POST(request: Request) {
       });
 
     if (mediaError) {
-      console.error("[tv-favorite POST] Media upsert error:", mediaError);
+      logger.error("[tv-favorite POST] Media upsert error:", mediaError);
     }
 
-     // Get current state
      const { data: existing } = await userClient
        .from("user_media_tracking")
        .select("is_watched, is_favorite, is_planned, rating, progress_minutes")
@@ -182,7 +171,6 @@ export async function POST(request: Request) {
 
     if (favorite) {
       if (existing) {
-        // Update existing record - set is_favorite=true
         const { error } = await adminClient
           .from("user_media_tracking")
           .update({ 
@@ -193,11 +181,10 @@ export async function POST(request: Request) {
           .eq("media_id", mediaId);
 
         if (error) {
-          console.error("[tv-favorite POST] Update tracking error:", error);
+          logger.error("[tv-favorite POST] Update tracking error:", error);
           throw error;
         }
       } else {
-        // Create new record
         const { error } = await adminClient
           .from("user_media_tracking")
           .insert({
@@ -210,12 +197,11 @@ export async function POST(request: Request) {
           });
 
         if (error) {
-          console.error("[tv-favorite POST] Insert tracking error:", error);
+          logger.error("[tv-favorite POST] Insert tracking error:", error);
           throw error;
         }
       }
      } else {
-       // Remove favorite status
        if (existing && (existing.is_watched || existing.is_planned || existing.rating)) {
          // Keep record but remove favorite
          const { error } = await adminClient
@@ -244,10 +230,11 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, favorite });
   } catch (error) {
-    console.error("[tv-favorite POST] Error:", error);
+    logger.error("[tv-favorite POST] Error:", error);
     return NextResponse.json(
       { error: "Failed to update TV show favorite status" },
       { status: 500 }
     );
   }
 }
+

@@ -81,10 +81,8 @@ class EpisodeUpdateQueue {
     const timestamp = Date.now();
     const id = `${tmdbId}-${season}-${episode}-${timestamp}`;
 
-    // Get or create queue for this tmdbId
     const operations = this.queue.get(tmdbId) || [];
 
-    // Check if this episode is already queued
     const existingIndex = operations.findIndex(
       (op) => op.season === season && op.episode === episode
     );
@@ -93,13 +91,11 @@ class EpisodeUpdateQueue {
       // Replace existing operation (keeps the latest state)
       operations[existingIndex] = { ...operation, id, timestamp };
     } else {
-      // Add new operation
       operations.push({ ...operation, id, timestamp });
     }
 
     this.queue.set(tmdbId, operations);
 
-    // Reset debounce timer
     this.resetDebounceTimer(tmdbId);
   }
 
@@ -158,20 +154,17 @@ class EpisodeUpdateQueue {
     const operations = this.queue.get(tmdbId);
     if (!operations || operations.length === 0) return;
 
-    // If there's already a pending flush, wait for it
     const existingFlush = this.pendingFlushes.get(tmdbId);
     if (existingFlush) {
       return existingFlush;
     }
 
-    // Clear the queue immediately
     this.queue.set(tmdbId, []);
     this.clearDebounceTimer(tmdbId);
 
     // Sort by timestamp to maintain order
     const sorted = [...operations].sort((a, b) => a.timestamp - b.timestamp);
 
-    // Convert to API format
     const episodes: EpisodeToggle[] = sorted.map((op) => ({
       seasonNumber: op.season,
       episodeNumber: op.episode,
@@ -179,7 +172,6 @@ class EpisodeUpdateQueue {
       runtime: op.runtime,
     }));
 
-    // Create flush promise
     const flushPromise = this.persistWithRetry(tmdbId, episodes, sorted);
     this.pendingFlushes.set(tmdbId, flushPromise);
 
@@ -203,7 +195,6 @@ class EpisodeUpdateQueue {
    * Clear all queues and cancel pending operations
    */
   clear(): void {
-    // Clear all debounce timers
     for (const timer of this.debounceTimers.values()) {
       clearTimeout(timer);
     }
@@ -212,13 +203,10 @@ class EpisodeUpdateQueue {
     this.pendingFlushes.clear();
   }
 
-  // Private methods
 
   private resetDebounceTimer(tmdbId: number): void {
-    // Clear existing timer
     this.clearDebounceTimer(tmdbId);
 
-    // Set new timer
     const timer = setTimeout(() => {
       this.flush(tmdbId);
     }, this.config.debounceMs);
@@ -243,7 +231,6 @@ class EpisodeUpdateQueue {
 
     for (let attempt = 0; attempt < this.config.maxRetries; attempt++) {
       try {
-        // Chunk the episodes if needed
         if (episodes.length > this.config.batchSize) {
           await this.persistChunked(tmdbId, episodes);
         } else {
@@ -269,7 +256,6 @@ class EpisodeUpdateQueue {
       }
     }
 
-    // All retries failed
     console.error("[EpisodeUpdateQueue] All retries exhausted:", lastError);
     this.emitError({
       tmdbId,
@@ -288,7 +274,6 @@ class EpisodeUpdateQueue {
       chunks.push(episodes.slice(i, i + this.config.batchSize));
     }
 
-    // Process chunks sequentially
     for (const chunk of chunks) {
       await toggleEpisodesBatch(tmdbId, chunk);
     }
@@ -320,7 +305,6 @@ class EpisodeUpdateQueue {
   }
 }
 
-// Singleton instance
 export const episodeUpdateQueue = new EpisodeUpdateQueue();
 
 /**
@@ -342,4 +326,4 @@ export const episodeUpdateQueue = new EpisodeUpdateQueue();
  * ```
  */
 // Note: This would be implemented as a hook that wraps the singleton
-// export function useEpisodeQueue() { ... }
+

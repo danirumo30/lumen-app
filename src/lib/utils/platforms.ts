@@ -49,7 +49,6 @@ export function getPlatformIcon(platformName: string | undefined, fallbackId?: n
     return "/icons/platforms/linux.png";
   }
 
-  // macOS
   if (name.includes("mac") || name.includes("os x")) {
     return "/icons/platforms/macos.png";
   }
@@ -80,7 +79,6 @@ export function getPlatformIcon(platformName: string | undefined, fallbackId?: n
     return "/icons/platforms/xbox.png";
   }
 
-  // Nintendo Switch
   if (name.includes("nintendo switch") || name.includes("switch 2")) {
     return "/icons/platforms/nintendo-switch.png";
   }
@@ -101,12 +99,10 @@ export function getPlatformIcon(platformName: string | undefined, fallbackId?: n
     return "/icons/platforms/nintendo.png";
   }
 
-  // Wii
   if (name === "wii") {
     return "/icons/platforms/wii.png";
   }
 
-  // Wii U
   if (name.includes("wii u")) {
     return "/icons/platforms/wiiu.png";
   }
@@ -122,27 +118,22 @@ export function getPlatformIcon(platformName: string | undefined, fallbackId?: n
     return "/icons/platforms/ds.png";
   }
 
-  // iOS
   if (name.includes("ios") || name.includes("iphone") || name.includes("ipad")) {
     return "/icons/platforms/ios.png";
   }
 
-  // Android
   if (name.includes("android") || name.includes("mobile")) {
     return "/icons/platforms/android.png";
   }
 
-  // Google Stadia
   if (name.includes("stadia") || name.includes("google")) {
     return "/icons/platforms/google.png";
   }
 
-  // Steam
   if (name.includes("steam")) {
     return "/icons/platforms/steam.png";
   }
 
-  // VR
   if (
     name.includes("vr") ||
     name.includes("oculus") ||
@@ -155,6 +146,6 @@ export function getPlatformIcon(platformName: string | undefined, fallbackId?: n
     return "/icons/platforms/vr.png";
   }
 
-  // Default
   return "/icons/platforms/windows.png";
 }
+

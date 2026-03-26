@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { NextResponse } from "next/server";
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY!;
@@ -14,7 +15,6 @@ export async function GET(
     // Remove 'movie_' or 'tmdb_' prefix if present
     const tmdbId = id.replace(/^(movie_|tmdb_)/, '');
 
-    // Get country from query param or default to ES
     const url = new URL(request.url);
     const country = url.searchParams.get("country") || "ES";
 
@@ -39,7 +39,6 @@ export async function GET(
 
     const movie = await movieResponse.json();
 
-    // Get certification from release_dates
     let certification = null;
     if (movie.release_dates?.results) {
       const usRelease = movie.release_dates.results.find((r: any) => r.iso_3166_1 === "US");
@@ -48,14 +47,12 @@ export async function GET(
       }
     }
 
-    // Get watch providers for the specified country
     let watchProviders: any = null;
     if (watchProvidersResponse.ok) {
       const providersData = await watchProvidersResponse.json();
       watchProviders = providersData.results?.[country] || null;
     }
 
-    // Transform watch providers to a cleaner format
     const formattedWatchProviders = watchProviders ? {
       link: watchProviders.link,
       providers: [
@@ -99,10 +96,11 @@ export async function GET(
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error("Error fetching movie details:", error);
+    logger.error("Error fetching movie details:", error);
     return NextResponse.json(
       { error: "Failed to fetch movie details" },
       { status: 500 }
     );
   }
 }
+

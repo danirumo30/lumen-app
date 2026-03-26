@@ -84,13 +84,11 @@ export default function ProfileEditPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validar archivo
     if (!validateImageFile(file)) {
       setError("Formato de imagen no válido. Usa JPG, PNG o WebP.");
       return;
     }
 
-    // Validar tamaño
     if (file.size > 5 * 1024 * 1024) {
       setError("La imagen no puede pesar más de 5MB.");
       return;
@@ -106,13 +104,10 @@ export default function ProfileEditPage() {
         throw new Error("Usuario no autenticado");
       }
 
-      // Generar nombre de archivo único
       const filePath = generateUniqueFileName(user.id, type, file.name);
 
-      // Subir archivo
       const publicUrl = await uploadFile(file, "profile-images", filePath);
 
-      // Actualizar preview y formData
       if (type === "avatar") {
         setAvatarPreview(URL.createObjectURL(file));
         setFormData((prev) => ({ ...prev, avatarUrl: publicUrl }));
@@ -154,7 +149,6 @@ export default function ProfileEditPage() {
         throw new Error("Usuario no autenticado");
       }
 
-      // Validate username availability if changed
       if (formData.username !== originalData?.username) {
         const isAvailable = await repository.isUsernameAvailable(
           formData.username!,
@@ -166,9 +160,7 @@ export default function ProfileEditPage() {
         }
       }
 
-      // Update profile with uploaded images
       // avatarPreview es solo para vista previa (URL blob local)
-      // formData.avatarUrl es la URL real de Supabase Storage
       const avatarUrl = formData.avatarUrl || null;
       const bannerUrl = formData.bannerUrl || null;
       
@@ -178,7 +170,6 @@ export default function ProfileEditPage() {
         username: formData.username,
       });
 
-      // Update AuthContext so header avatar updates immediately
       updateUser({
         avatarUrl: avatarUrl || undefined,
         username: formData.username,
@@ -191,7 +182,6 @@ export default function ProfileEditPage() {
       setSuccess("Perfil actualizado correctamente");
       setOriginalData({ ...originalData!, ...formData });
 
-      // Clear previews
       setAvatarPreview(null);
       setBannerPreview(null);
 
@@ -420,3 +410,5 @@ export default function ProfileEditPage() {
     </div>
   );
 }
+
+

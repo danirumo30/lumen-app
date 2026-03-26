@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { NextResponse } from "next/server";
 
 const IGDB_ACCESS_TOKEN = process.env.IGDB_ACCESS_TOKEN || "";
@@ -5,7 +6,6 @@ const IGDB_CLIENT_ID = process.env.TWITCH_CLIENT_ID || "";
 
 export const runtime = "nodejs";
 
-// Cache for franchise details
 const franchiseDetailsCache = new Map<string, { data: any; timestamp: number }>();
 const CACHE_TTL = 1000 * 60 * 30; // 30 minutes
 
@@ -56,7 +56,6 @@ async function fetchWithTokenRefresh(
   return response;
 }
 
-// Map IGDB category to human-readable type
 function mapCategoryToType(category: number): "main" | "dlc" | "expansion" | "edition" {
   switch (category) {
     case 0:
@@ -114,7 +113,6 @@ export async function GET(
       return NextResponse.json({ error: "Invalid IGDB ID" }, { status: 400 });
     }
 
-    // Check cache
     const cacheKey = `franchise_details_${igdbId}`;
     const cached = franchiseDetailsCache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
@@ -144,7 +142,6 @@ export async function GET(
 
     let gameIds: number[] = [];
 
-    // Try collections first
     if (collectionIds.length > 0) {
       const collectionId = collectionIds[0];
       
@@ -162,7 +159,6 @@ export async function GET(
       }
     }
 
-    // Fall back to franchises
     if (gameIds.length === 0 && franchiseIds.length > 0) {
       const franchiseId = franchiseIds[0];
       
@@ -180,7 +176,6 @@ export async function GET(
       }
     }
 
-    // If we have game IDs, get details for all of them
     if (gameIds.length === 0) {
       return NextResponse.json({ details: [] });
     }
@@ -200,13 +195,12 @@ export async function GET(
 
     const detailsGames = await detailsRes.json();
 
-    // Also fetch platform names
     const allPlatformIds = new Set<number>();
     detailsGames.forEach((g: any) => {
       g.platforms?.forEach((p: number) => allPlatformIds.add(p));
     });
 
-    let platformNamesMap: Record<number, string> = {};
+    const platformNamesMap: Record<number, string> = {};
     if (allPlatformIds.size > 0) {
       const platformIdsString = Array.from(allPlatformIds).join(",");
       const platformsRes = await fetchWithTokenRefresh(
@@ -223,7 +217,6 @@ export async function GET(
       }
     }
 
-    // Format the response
     const details = detailsGames
       .filter((g: any) => !g.version_parent) // Exclude child versions
       .map((g: any) => {
@@ -244,10 +237,11 @@ export async function GET(
     franchiseDetailsCache.set(cacheKey, { data: result, timestamp: Date.now() });
     return NextResponse.json(result);
   } catch (error) {
-    console.error("Error fetching franchise details:", error);
+    logger.error("Error fetching franchise details:", error);
     return NextResponse.json(
       { error: "Failed to fetch franchise details", details: [] },
       { status: 500 }
     );
   }
 }
+

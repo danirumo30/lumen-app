@@ -10,7 +10,6 @@ interface MediaModalProps {
 }
 
 export function MediaModal({ type, src, alt, onClose }: MediaModalProps) {
-  // Close on escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -58,3 +57,4 @@ export function MediaModal({ type, src, alt, onClose }: MediaModalProps) {
     </div>
   );
 }
+

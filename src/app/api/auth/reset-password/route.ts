@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
@@ -31,7 +32,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // 2. Validar expiración
     const now = new Date();
     const expiresAt = new Date(tokenData.expires_at);
 
@@ -42,11 +42,10 @@ export async function POST(request: Request) {
       );
     }
 
-    // 3. Obtener email del usuario antes de actualizar contraseña
     const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(tokenData.user_id);
     
     if (userError || !userData?.user?.email) {
-      console.error('Error obteniendo usuario:', userError);
+      logger.error('Error obteniendo usuario:', userError);
       return NextResponse.json(
         { error: 'Error obteniendo información del usuario' },
         { status: 500 }
@@ -55,13 +54,12 @@ export async function POST(request: Request) {
 
     const userEmail = userData.user.email;
 
-    // 4. Actualizar contraseña del usuario
     const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(tokenData.user_id, {
       password: password,
     });
 
     if (updateError) {
-      console.error('Error actualizando contraseña:', updateError);
+      logger.error('Error actualizando contraseña:', updateError);
       return NextResponse.json(
         { error: 'Error al actualizar contraseña' },
         { status: 500 }
@@ -81,10 +79,11 @@ export async function POST(request: Request) {
     });
 
   } catch (error) {
-    console.error('Error en reset-password:', error);
+    logger.error('Error en reset-password:', error);
     return NextResponse.json(
       { error: 'Error interno del servidor' },
       { status: 500 }
     );
   }
 }
+

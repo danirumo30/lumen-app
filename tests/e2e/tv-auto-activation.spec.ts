@@ -73,7 +73,6 @@ async function login(page: Page, email: string = TEST_EMAIL, password: string = 
     console.log(`Login attempt ${attempt}`);
     await page.goto(BASE_URL);
     
-    // Wait for page to load
     await page.waitForLoadState('networkidle');
     
     // Look for login button with various possible texts
@@ -91,7 +90,6 @@ async function login(page: Page, email: string = TEST_EMAIL, password: string = 
     await emailInput.fill(email);
     await passwordInput.fill(password);
     
-    // Submit button
     const submitButton = page.getByRole('button', { name: /iniciar sesión/i });
     await submitButton.waitFor({ state: 'visible' });
     await expect(submitButton).toBeEnabled({ timeout: 5000 });
@@ -107,13 +105,11 @@ async function login(page: Page, email: string = TEST_EMAIL, password: string = 
       console.log('Timeout waiting for modal close or error');
     }
     
-    // Check if modal still visible (login failed)
     const modalVisible = await emailInput.isVisible({ timeout: 1000 }).catch(() => false);
     if (modalVisible) {
       console.log('Login modal still visible, login may have failed');
       await page.screenshot({ path: `tests/e2e/screenshots/login-failure-attempt-${attempt}.png` });
       
-      // Try to sign up user if we have Supabase env vars
       const errorText = await page.getByText(/error|inválida|invalid|credenciales/i).textContent().catch(() => '');
       if (errorText.includes('Invalid login credentials') || errorText.includes('Credenciales inválidas')) {
         console.log('Invalid credentials. Attempting to sign up...');
@@ -121,7 +117,6 @@ async function login(page: Page, email: string = TEST_EMAIL, password: string = 
           const signUpSuccess = await signUpUser(email, password);
           if (signUpSuccess) {
             console.log('Sign up successful. Retrying login...');
-            // Clear modal and retry login
             const cancelButton = page.getByRole('button', { name: /cancelar|cerrar/i });
             if (await cancelButton.isVisible({ timeout: 1000 }).catch(() => false)) {
               await cancelButton.click();
@@ -134,10 +129,8 @@ async function login(page: Page, email: string = TEST_EMAIL, password: string = 
       if (attempt === maxRetries) {
         throw new Error('Login failed after max retries');
       }
-      // Continue to next retry
       continue;
     }
-    // Login succeeded
     console.log('Login succeeded');
     // Wait for session establishment
     await page.waitForLoadState('networkidle');
@@ -212,7 +205,6 @@ async function isSeriesMarked(page: Page): Promise<boolean> {
   }
   const text = await seriesButton.first().textContent();
   console.log(`Series button text: "${text}"`);
-  // If button text indicates it's marked (contains "Serie vista" or "Desmarcar serie")
   return text?.includes('Serie vista') || text?.includes('Desmarcar serie') || false;
 }
 
@@ -223,7 +215,6 @@ async function ensureSeriesUnmarked(page: Page) {
     console.log('Series is marked, unmarking...');
     const seriesButton = page.getByRole('button', { name: /marcar serie|serie vista|desmarcar serie/i }).first();
     await seriesButton.click();
-    // Wait for API response
     await page.waitForResponse(response => response.url().includes('/api/user/tv-status') && response.status() === 200, { timeout: 10000 });
     await page.waitForTimeout(1000); // additional wait for state update
     // Reload page to reset frontend state
@@ -258,7 +249,6 @@ async function markFirstEpisode(page: Page) {
   await page.waitForTimeout(1500);
 }
 
-// Helper to mark entire season
 async function markSeason(page: Page) {
   // Find the season mark button by title attribute (desktop) or mobile button
   const seasonMarkButton = page.locator('button[title*="Marcar temporada"], button[title*="Desmarcar temporada"]').first();
@@ -273,13 +263,11 @@ async function markAllEpisodes(page: Page) {
   await expect(allButton).toBeEnabled({ timeout: 5000 });
   await allButton.click();
   
-  // If modal appears, click "Marcar todos los episodios"
   const modalButton = page.getByRole('button', { name: /marcar todos los episodios/i });
   if (await modalButton.isVisible({ timeout: 2000 }).catch(() => false)) {
     await modalButton.click();
   }
   
-  // Brief wait for API
   await page.waitForTimeout(1500);
 }
 
@@ -290,12 +278,10 @@ async function unmarkAllEpisodes(page: Page) {
   await expect(allButton).toBeEnabled({ timeout: 5000 });
   await allButton.click();
   
-  // If modal appears, click "Desmarcar todos los episodios"
   const modalButton = page.getByRole('button', { name: /desmarcar todos los episodios/i });
   if (await modalButton.isVisible({ timeout: 3000 }).catch(() => false)) {
     await modalButton.click();
   } else {
-    // If no modal (all episodes already marked), clicking "Todos los episodios" should unmark all
     await page.waitForTimeout(1000);
   }
   await page.waitForTimeout(3000);
@@ -325,7 +311,6 @@ test.describe('TV Series Auto-Activation - Authenticated', () => {
       if (url.includes('/api/user/episode-status') || url.includes('/api/user/tv-status')) {
         console.log(`[Network] ${url} → ${status}`);
       }
-      // Log Supabase auth requests
       if (url.includes('auth') || url.includes('token')) {
         console.log(`[Auth Request] ${url} → ${status}`);
         if (status >= 400) {
@@ -337,7 +322,6 @@ test.describe('TV Series Auto-Activation - Authenticated', () => {
       }
     });
     await login(page);
-    // Close any leftover modals
     const closeButton = page.getByRole('button', { name: /cancelar|cerrar/i });
     if (await closeButton.isVisible({ timeout: 1000 }).catch(() => false)) {
       await closeButton.click();
@@ -348,7 +332,6 @@ test.describe('TV Series Auto-Activation - Authenticated', () => {
   test('should auto-activate series when marking a single episode', async ({ page }) => {
     await navigateToTVAndExpandSeason(page);
     
-    // Mark first episode
     await markFirstEpisode(page);
     
     // Verify episode was marked (checkmark visible)
@@ -359,10 +342,8 @@ test.describe('TV Series Auto-Activation - Authenticated', () => {
   test('should auto-activate series when marking a season', async ({ page }) => {
     await navigateToTVAndExpandSeason(page);
     
-    // Mark entire season
     await markSeason(page);
     
-    // Verify episodes were marked
     const checkedEpisodes = page.locator('button:has(svg path[d="M5 13l4 4L19 7"])');
     expect(await checkedEpisodes.count()).toBeGreaterThan(0);
   });
@@ -374,7 +355,6 @@ test.describe('TV Series Auto-Activation - Authenticated', () => {
     const initiallyMarked = await isSeriesMarked(page);
     expect(initiallyMarked).toBe(false);
     
-    // Mark all episodes
     await markAllEpisodes(page);
     
     // The code works correctly - verify by waiting and checking
@@ -390,11 +370,9 @@ test.describe('TV Series Auto-Activation - Authenticated', () => {
     // First mark all episodes to activate series
     await markAllEpisodes(page);
     
-    // Verify episodes are marked
     const episodesMarked = await page.locator('button:has(svg path[d="M5 13l4 4L19 7"])').count();
     expect(episodesMarked).toBeGreaterThan(0);
     
-    // Unmark all episodes  
     await unmarkAllEpisodes(page);
     
     // The series should stay marked (the code correctly doesn't auto-deactivate)
@@ -414,7 +392,6 @@ test.describe('TV Series Auto-Activation - Authenticated', () => {
     // Unmark season (click same button)
     await markSeason(page); // toggles off
     
-    // Wait for state to update
     await page.waitForTimeout(1000);
     
     // The test passes if we can click the button without error
@@ -424,7 +401,6 @@ test.describe('TV Series Auto-Activation - Authenticated', () => {
   test('should show modal when some episodes are marked and clicking "Todos los episodios"', async ({ page }) => {
     await navigateToTVAndExpandSeason(page);
     
-    // Mark one episode
     await markFirstEpisode(page);
     
     // Additional wait for UI to reflect the partial state
@@ -439,7 +415,6 @@ test.describe('TV Series Auto-Activation - Authenticated', () => {
     // Just verify something happens when clicking the button
     await page.waitForTimeout(1000);
     
-    // If modal appears, try to find the heading or buttons
     const modalHeading = page.getByRole('heading', { name: 'Episodios marcados' });
     const markAll = page.getByRole('button', { name: 'Marcar todos los episodios', exact: true });
     const unmarkAll = page.getByRole('button', { name: 'Desmarcar todos los episodios', exact: true });
