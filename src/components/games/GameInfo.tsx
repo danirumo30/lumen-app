@@ -425,24 +425,29 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-8">
-      {/* Cover */}
-      <div className="relative">
-        <div className="sticky top-24">
-          {game.coverUrl ? (
-            <img
-              src={game.coverUrl}
-              alt={game.name}
-              className="w-full rounded-2xl shadow-2xl shadow-black/50"
-            />
-          ) : (
-            <div className="aspect-[2/3] rounded-2xl bg-zinc-800 flex items-center justify-center">
-              <svg className="w-16 h-16 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
-              </svg>
-            </div>
-          )}
-        </div>
-      </div>
+       {/* Cover */}
+       <div className="relative">
+         <div className="sticky top-24">
+           {game.coverUrl ? (
+             <div className="relative aspect-[2/3] rounded-2xl shadow-2xl shadow-black/50 overflow-hidden">
+               <Image
+                 src={game.coverUrl}
+                 alt={game.name}
+                 fill
+                 className="object-cover"
+                 sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                 priority
+               />
+             </div>
+           ) : (
+             <div className="aspect-[2/3] rounded-2xl bg-zinc-800 flex items-center justify-center">
+               <svg className="w-16 h-16 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+               </svg>
+             </div>
+           )}
+         </div>
+       </div>
 
       {/* Info */}
       <div className="space-y-6">
@@ -599,13 +604,13 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
                 } disabled:opacity-50 disabled:cursor-not-allowed`}
               title={hasPlatinum ? "Trofeo de platino conseguido" : "Disponible solo cuando el juego está completado o en progreso"}
             >
-              <img
-                src="/icons/platforms/platino.png"
-                alt="Platino"
-                width={18}
-                height={18}
-                className={hasPlatinum ? "" : "grayscale opacity-50"}
-              />
+               <Image
+                 src="/icons/platforms/platino.png"
+                 alt="Platino"
+                 width={18}
+                 height={18}
+                 className={hasPlatinum ? "" : "grayscale opacity-50"}
+               />
               <span className="">Platino</span>
             </button>
 

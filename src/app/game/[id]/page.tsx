@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { use } from "react";
+import Image from "next/image";
+import Link from "next/link";
 import { GameInfo } from "@/components/games/GameInfo";
 import { GameMediaCarousel } from "@/components/games/GameMediaCarousel";
 import { SimilarGamesCarousel } from "@/components/games/SimilarGamesCarousel";
@@ -188,29 +190,31 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
 
   return (
     <div className="min-h-screen bg-zinc-950">
-      {/* Background backdrop */}
-      {game.coverUrl && (
-        <div className="fixed inset-0 -z-10">
-          <img
-            src={game.coverUrl}
-            alt=""
-            className="w-full h-full object-cover opacity-20 blur-2xl"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/50 via-zinc-950/80 to-zinc-950" />
-        </div>
-      )}
+       {/* Background backdrop */}
+       {game.coverUrl && (
+         <div className="fixed inset-0 -z-10">
+           <Image
+             src={game.coverUrl}
+             alt=""
+             fill
+             className="object-cover opacity-20 blur-2xl"
+             priority
+           />
+           <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/50 via-zinc-950/80 to-zinc-950" />
+         </div>
+       )}
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Back button */}
-        <a
-          href="/"
-          className="inline-flex items-center gap-2 text-zinc-400 hover:text-white mb-8 transition-colors"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" />
-          </svg>
-          <span>Volver</span>
-        </a>
+       <div className="max-w-7xl mx-auto px-4 py-8">
+         {/* Back button */}
+         <Link
+           href="/"
+           className="inline-flex items-center gap-2 text-zinc-400 hover:text-white mb-8 transition-colors"
+         >
+           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" />
+           </svg>
+           <span>Volver</span>
+         </Link>
 
         {/* Main info */}
         <GameInfo

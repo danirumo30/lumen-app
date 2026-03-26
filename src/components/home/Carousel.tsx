@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useDragScroll } from "./useDragScroll";
 import { getPlatformIcon, type PlatformLogo } from "@/lib/utils/platforms";
 
@@ -177,14 +178,16 @@ export function Carousel({ title, subtitle, items, variant = "movies", isLoading
                 <div className="absolute inset-[-1px] rounded-xl bg-gradient-to-br from-white/[0.05] via-transparent to-transparent" />
               </div>
                
-              {item.posterUrl ? (
-                <img
-                  src={item.posterUrl}
-                  alt={item.title}
-                  className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover/item:scale-105"
-                  loading="lazy"
-                />
-              ) : (
+               {item.posterUrl ? (
+                 <Image
+                   src={item.posterUrl}
+                   alt={item.title}
+                   fill
+                   className="object-cover transition-transform duration-700 ease-out group-hover/item:scale-105"
+                   loading="lazy"
+                   sizes="33vw"
+                 />
+               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-zinc-800/50 to-zinc-900/50">
                   {config.icon}
                 </div>
@@ -204,43 +207,47 @@ export function Carousel({ title, subtitle, items, variant = "movies", isLoading
                 </div>
               )}
 
-              {/* Platform/Provider Logos for Movies/TV */}
-              {variant !== "games" && item.providers && item.providers.length > 0 && (
-                <div className="absolute bottom-2 left-2 right-2 flex gap-1">
-                  {item.providers.slice(0, 4).map((provider, idx) => (
-                    <div 
-                      key={`provider-${item.id}-${idx}`}
-                      className="w-6 h-6 flex items-center justify-center bg-black/50 rounded"
-                      title={provider.name}
-                    >
-                      <img 
-                        src={provider.logoUrl} 
-                        alt={provider.name}
-                        className="w-full h-full object-contain p-0.5"
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
+               {/* Platform/Provider Logos for Movies/TV */}
+               {variant !== "games" && item.providers && item.providers.length > 0 && (
+                 <div className="absolute bottom-2 left-2 right-2 flex gap-1">
+                   {item.providers.slice(0, 4).map((provider, idx) => (
+                     <div 
+                       key={`provider-${item.id}-${idx}`}
+                       className="relative w-6 h-6 flex items-center justify-center bg-black/50 rounded"
+                       title={provider.name}
+                     >
+                       <Image
+                         src={provider.logoUrl}
+                         alt={provider.name}
+                         fill
+                         className="object-contain p-0.5"
+                         sizes="24px"
+                       />
+                     </div>
+                   ))}
+                 </div>
+               )}
 
-              {/* Platform Icons for Games - using local PNG icons */}
-              {variant === "games" && item.platformLogos && item.platformLogos.length > 0 && (
-                <div className="absolute bottom-2 left-2 right-2 flex gap-1">
-                  {item.platformLogos.slice(0, 4).map((platform, idx) => (
-                    <div 
-                      key={platform.uniqueKey || `platform-${platform.id}-${idx}`}
-                      className="w-6 h-6 flex items-center justify-center"
-                      title={platform.name}
-                    >
-                      <img 
-                        src={getPlatformIcon(platform.name, platform.id)} 
-                        alt={platform.name}
-                        className="w-full h-full object-contain"
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
+               {/* Platform Icons for Games - using local PNG icons */}
+               {variant === "games" && item.platformLogos && item.platformLogos.length > 0 && (
+                 <div className="absolute bottom-2 left-2 right-2 flex gap-1">
+                   {item.platformLogos.slice(0, 4).map((platform, idx) => (
+                     <div 
+                       key={platform.uniqueKey || `platform-${platform.id}-${idx}`}
+                       className="relative w-6 h-6 flex items-center justify-center"
+                       title={platform.name}
+                     >
+                       <Image
+                         src={getPlatformIcon(platform.name, platform.id)}
+                         alt={platform.name}
+                         fill
+                         className="object-contain"
+                         sizes="24px"
+                       />
+                     </div>
+                   ))}
+                 </div>
+               )}
  
               {/* Elegant Hover Overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover/item:opacity-100 transition-all duration-400 flex flex-col justify-end p-3">

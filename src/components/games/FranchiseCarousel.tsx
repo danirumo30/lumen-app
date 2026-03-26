@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useDragScroll } from "../home/useDragScroll";
 
@@ -80,21 +81,22 @@ export function FranchiseCarousel({ franchise, games, currentGameId }: Franchise
                 isCurrent ? "ring-2 ring-emerald-500 rounded-xl" : ""
               }`}
             >
-              {/* Poster */}
-              <div
-                className={`relative aspect-[2/3] rounded-xl overflow-hidden bg-zinc-800 border-white/[0.03] transition-all duration-500 group-hover/game:scale-[1.02] ${
-                  isCurrent ? "border-emerald-500" : ""
-                }`}
-              >
-                {game.posterUrl ? (
-                  <img
-                    src={game.posterUrl}
-                    alt={game.name}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover/game:scale-105"
-                    loading="lazy"
-                    draggable={false}
-                  />
-                ) : (
+               {/* Poster */}
+               <div
+                 className={`relative aspect-[2/3] rounded-xl overflow-hidden bg-zinc-800 border-white/[0.03] transition-all duration-500 group-hover/game:scale-[1.02] ${
+                   isCurrent ? "border-emerald-500" : ""
+                 }`}
+               >
+                 {game.posterUrl ? (
+                   <Image
+                     src={game.posterUrl}
+                     alt={game.name}
+                     fill
+                     className="object-cover transition-transform duration-700 group-hover/game:scale-105"
+                     loading="lazy"
+                     sizes="(max-width: 768px) 40vw, (max-width: 1024px) 25vw, 15vw"
+                   />
+                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-zinc-700 to-zinc-800">
                     <svg
                       className="w-8 h-8 text-zinc-500"

@@ -6,7 +6,18 @@ const IGDB_CLIENT_ID = process.env.TWITCH_CLIENT_ID || "";
 
 export const runtime = "nodejs";
 
-const mediaCache = new Map<string, { data: any; timestamp: number }>();
+interface ImageResult {
+  url: string;
+  type: "screenshot" | "artwork";
+  width: number;
+  height: number;
+}
+
+interface MediaResponse {
+  images: ImageResult[];
+}
+
+const mediaCache = new Map<string, { data: MediaResponse; timestamp: number }>();
 const CACHE_TTL = 1000 * 60 * 30; // 30 minutes
 
 async function getFreshAccessToken(): Promise<string> {

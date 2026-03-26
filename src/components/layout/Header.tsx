@@ -104,13 +104,15 @@ export default function Header() {
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                   className="md:hidden flex items-center justify-center"
                 >
-                  {user.avatarUrl ? (
-                    <img
-                      src={getAvatarUrl(user.avatarUrl)}
-                      alt="Avatar"
-                      className="w-8 h-8 rounded-full object-cover border-2 border-zinc-700"
-                    />
-                  ) : (
+                 {user.avatarUrl ? (
+                   <Image
+                     src={getAvatarUrl(user.avatarUrl)}
+                     alt="Avatar"
+                     width={32}
+                     height={32}
+                     className="rounded-full object-cover border-2 border-zinc-700"
+                   />
+                 ) : (
                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
                       <span className="text-white text-xs font-semibold">
                         {user.username?.charAt(0).toUpperCase() || user.fullName?.charAt(0).toUpperCase() || 'U'}
@@ -125,13 +127,15 @@ export default function Header() {
                     href={`/profile/${user.username || user.fullName || user.email?.split('@')[0]}`}
                     className="flex items-center space-x-2 hover:bg-zinc-800/50 px-3 py-2 rounded-lg transition-colors duration-200"
                   >
-                    {user.avatarUrl ? (
-                      <img
-                        src={getAvatarUrl(user.avatarUrl)}
-                        alt="Avatar"
-                        className="w-8 h-8 rounded-full object-cover border-2 border-zinc-700 group-hover:border-indigo-500 transition-colors"
-                      />
-                    ) : (
+                     {user.avatarUrl ? (
+                       <Image
+                         src={getAvatarUrl(user.avatarUrl)}
+                         alt="Avatar"
+                         width={32}
+                         height={32}
+                         className="rounded-full object-cover border-2 border-zinc-700 group-hover:border-indigo-500 transition-colors"
+                       />
+                     ) : (
                       <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center border-2 border-zinc-700 group-hover:border-indigo-500 transition-colors">
                         <span className="text-white text-xs font-semibold">
                           {user.username?.charAt(0).toUpperCase() || user.fullName?.charAt(0).toUpperCase() || 'U'}

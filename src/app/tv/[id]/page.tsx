@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { use } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useQueryClient } from "@tanstack/react-query";
 import { TvInfo } from "@/components/tv/TvInfo";
 import { EpisodesAccordion } from "@/components/tv/EpisodesAccordion";
@@ -725,18 +726,18 @@ export default function TvDetailPage({ params }: { params: Promise<{ id: string 
     );
   }
 
-  if (error || !tv) {
-    return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-zinc-400 mb-4">{error || "TV show not found"}</p>
-          <a href="/" className="text-white hover:underline">
-            Volver al inicio
-          </a>
-        </div>
-      </div>
-    );
-  }
+   if (error || !tv) {
+     return (
+       <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+         <div className="text-center">
+           <p className="text-zinc-400 mb-4">{error || "TV show not found"}</p>
+           <Link href="/" className="text-white hover:underline">
+             Volver al inicio
+           </Link>
+         </div>
+       </div>
+     );
+   }
 
   return (
      <div className="min-h-screen bg-zinc-950">
@@ -752,13 +753,13 @@ export default function TvDetailPage({ params }: { params: Promise<{ id: string 
          </div>
        )}
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <a href="/" className="inline-flex items-center gap-2 text-zinc-400 hover:text-white mb-8 transition-colors">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" />
-          </svg>
-          <span>Volver</span>
-        </a>
+       <div className="max-w-7xl mx-auto px-4 py-8">
+         <Link href="/" className="inline-flex items-center gap-2 text-zinc-400 hover:text-white mb-8 transition-colors">
+           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" />
+           </svg>
+           <span>Volver</span>
+         </Link>
 
         <TvInfo
           tv={tv}

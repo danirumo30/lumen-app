@@ -1,11 +1,94 @@
 import { logger } from '@/lib/logger';
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import type { TmdbMovie, TmdbWatchProvider, TmdbSearchResult, TmdbTv } from '@/types/tmdb';
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY!;
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 const IGDB_ACCESS_TOKEN = process.env.IGDB_ACCESS_TOKEN || "";
 const IGDB_CLIENT_ID = process.env.TWITCH_CLIENT_ID || "";
+
+// Result types
+interface ProviderResult {
+  id: number;
+  name: string;
+  logoUrl: string;
+}
+
+interface MovieResult {
+  id: string;
+  type: "movie";
+  title: string;
+  posterUrl: string | null;
+  voteAverage: number;
+  releaseDate: string;
+  overview: string;
+  providers?: ProviderResult[];
+}
+
+interface TvResult {
+  id: string;
+  type: "tv";
+  title: string;
+  posterUrl: string | null;
+  voteAverage: number;
+  releaseDate?: string;
+  overview: string;
+  providers?: ProviderResult[];
+}
+
+interface GameResult {
+  id: string;
+  type: "game";
+  title: string;
+  posterUrl: string | null;
+  releaseDate: string | null;
+  rating: number | null;
+  genres: string[];
+  platforms: string[];
+  platformLogos: Array<{ id: number; name: string; platformName: string; logoUrl: string }>;
+}
+
+interface UserResult {
+  id: string;
+  type: "user";
+  username: string;
+  avatarUrl: string | null;
+}
+
+interface TmdbProviderItem {
+  provider_id: number;
+  provider_name: string;
+  logo_path?: string | null;
+}
+
+interface TmdbProvidersByCountry {
+  flatrate?: TmdbProviderItem[];
+  free?: TmdbProviderItem[];
+  ads?: TmdbProviderItem[];
+  rent?: TmdbProviderItem[];
+  buy?: TmdbProviderItem[];
+}
+
+interface TmdbWatchProvidersData {
+  id: number;
+  results: {
+    [countryCode: string]: TmdbProvidersByCountry;
+  };
+  link?: string;
+}
+
+// Supabase user profile type
+interface UserProfile {
+  id: string;
+  username: string;
+  avatar_url: string | null;
+}
+
+// TMDB paginated response (only need total_pages)
+interface TmdbPaginatedResponse {
+  total_pages: number;
+}
 
 // IGDB genre IDs mapping (Spanish UI -> IGDB numeric IDs)
 const IGDB_GENRE_IDS: Record<string, number> = {
@@ -64,7 +147,7 @@ async function getIgdbToken(): Promise<string> {
   return IGDB_ACCESS_TOKEN;
 }
 
-async function getMovieProviders(movieId: number): Promise<{ id: number; name: string; logoUrl: string }[]> {
+async function getMovieProviders(movieId: number): Promise<ProviderResult[]> {
   try {
     const response = await fetch(
       `${TMDB_BASE_URL}/movie/${movieId}/watch/providers?api_key=${TMDB_API_KEY}`,
@@ -72,33 +155,33 @@ async function getMovieProviders(movieId: number): Promise<{ id: number; name: s
     );
     if (!response.ok) return [];
     
-    const data = await response.json();
+    const data = await response.json() as TmdbWatchProvidersData;
     const country = "ES"; // Spain - can be made dynamic
     const providers = data.results?.[country];
     
     if (!providers) return [];
     
-    const allProviders = [
+    const allProviders: TmdbProviderItem[] = [
       ...(providers.flatrate || []),
       ...(providers.free || []),
       ...(providers.ads || []),
     ];
     
     // Deduplicate by provider_id to avoid duplicate keys in UI
-    const uniqueProviders = Array.from(new Map(allProviders.map((p: any) => [p.provider_id, p])).values());
+    const uniqueProviders = Array.from(new Map(allProviders.map((p) => [p.provider_id, p])).values());
     
-    return uniqueProviders.slice(0, 5).map((p: any) => ({
+    return uniqueProviders.slice(0, 5).map((p) => ({
       id: p.provider_id,
       name: p.provider_name,
       logoUrl: p.logo_path ? `https://image.tmdb.org/t/p/original${p.logo_path}` : null,
-    })).filter((p: { logoUrl: string | null }): p is { id: number; name: string; logoUrl: string } => Boolean(p.logoUrl));
+    })).filter((p): p is ProviderResult => Boolean(p.logoUrl));
   } catch {
     return [];
   }
 }
 
 // Search movies on TMDB with filters
-async function searchMovies(query: string, page = 1, filters?: SearchFilters) {
+async function searchMovies(query: string, page = 1, filters?: SearchFilters): Promise<MovieResult[]> {
   const hasQuery = query && query.trim().length >= 2;
   let url = `${TMDB_BASE_URL}/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}&page=${page}&language=es-ES`;
 
@@ -166,15 +249,9 @@ async function searchMovies(query: string, page = 1, filters?: SearchFilters) {
     throw new Error(`TMDB movies error: ${response.status}`);
   }
 
-  const data = await response.json();
-  const movies = data.results?.map((movie: {
-    id: number;
-    title: string;
-    poster_path: string | null;
-    vote_average: number;
-    release_date: string;
-    overview: string;
-  }) => ({
+  const data = await response.json() as TmdbSearchResult<TmdbMovie>;
+
+  const movies = data.results?.map((movie) => ({
     id: `tmdb_${movie.id}`,
     type: "movie" as const,
     title: movie.title,
@@ -183,11 +260,11 @@ async function searchMovies(query: string, page = 1, filters?: SearchFilters) {
       : null,
     voteAverage: Math.round(movie.vote_average * 10) / 10,
     releaseDate: movie.release_date,
-    overview: movie.overview,
+    overview: movie.overview || "",
   })) || [];
 
   const moviesWithProviders = await Promise.all(
-    movies.slice(0, 10).map(async (movie: any, index: number) => {
+    movies.slice(0, 10).map(async (movie, index) => {
       if (index < 10) {
         const tmdbId = movie.id.replace("tmdb_", "");
         const providers = await getMovieProviders(parseInt(tmdbId));
@@ -200,7 +277,7 @@ async function searchMovies(query: string, page = 1, filters?: SearchFilters) {
   return moviesWithProviders;
 }
 
-async function getTvProviders(tvId: number): Promise<{ id: number; name: string; logoUrl: string }[]> {
+async function getTvProviders(tvId: number): Promise<ProviderResult[]> {
   try {
     const response = await fetch(
       `${TMDB_BASE_URL}/tv/${tvId}/watch/providers?api_key=${TMDB_API_KEY}`,
@@ -208,33 +285,33 @@ async function getTvProviders(tvId: number): Promise<{ id: number; name: string;
     );
     if (!response.ok) return [];
     
-    const data = await response.json();
+    const data = await response.json() as TmdbWatchProvidersData;
     const country = "ES"; // Spain - can be made dynamic
     const providers = data.results?.[country];
     
     if (!providers) return [];
     
-    const allProviders = [
+    const allProviders: TmdbProviderItem[] = [
       ...(providers.flatrate || []),
       ...(providers.free || []),
       ...(providers.ads || []),
     ];
     
     // Deduplicate by provider_id to avoid duplicate keys in UI
-    const uniqueProviders = Array.from(new Map(allProviders.map((p: any) => [p.provider_id, p])).values());
+    const uniqueProviders = Array.from(new Map(allProviders.map((p) => [p.provider_id, p])).values());
     
-    return uniqueProviders.slice(0, 5).map((p: any) => ({
+    return uniqueProviders.slice(0, 5).map((p) => ({
       id: p.provider_id,
       name: p.provider_name,
       logoUrl: p.logo_path ? `https://image.tmdb.org/t/p/original${p.logo_path}` : null,
-    })).filter((p: { logoUrl: string | null }): p is { id: number; name: string; logoUrl: string } => Boolean(p.logoUrl));
+    })).filter((p): p is ProviderResult => Boolean(p.logoUrl));
   } catch {
     return [];
   }
 }
 
 // Search TV on TMDB with filters
-async function searchTv(query: string, page = 1, filters?: SearchFilters) {
+async function searchTv(query: string, page = 1, filters?: SearchFilters): Promise<TvResult[]> {
   const hasQuery = query && query.trim().length >= 2;
   let url = `${TMDB_BASE_URL}/search/tv?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}&page=${page}&language=es-ES`;
 
@@ -305,15 +382,9 @@ async function searchTv(query: string, page = 1, filters?: SearchFilters) {
     throw new Error(`TMDB TV error: ${response.status}`);
   }
 
-  const data = await response.json();
-  const shows = data.results?.map((show: {
-    id: number;
-    name: string;
-    poster_path: string | null;
-    vote_average: number;
-    first_air_date: string;
-    overview: string;
-  }) => ({
+  const data = await response.json() as TmdbSearchResult<TmdbTv>;
+
+  const shows = data.results?.map((show) => ({
     id: `tmdb_${show.id}`,
     type: "tv" as const,
     title: show.name,
@@ -322,11 +393,11 @@ async function searchTv(query: string, page = 1, filters?: SearchFilters) {
       : null,
     voteAverage: Math.round(show.vote_average * 10) / 10,
     releaseDate: show.first_air_date,
-    overview: show.overview,
+    overview: show.overview || "",
   })) || [];
 
   const showsWithProviders = await Promise.all(
-    shows.slice(0, 10).map(async (show: any, index: number) => {
+    shows.slice(0, 10).map(async (show, index) => {
       if (index < 10) {
         const tmdbId = show.id.replace("tmdb_", "");
         const providers = await getTvProviders(parseInt(tmdbId));
@@ -514,7 +585,7 @@ async function searchUsers(query: string, supabaseUrl: string, supabaseKey: stri
   })) || [];
 }
 
-async function getTrendingUsers(supabaseUrl: string, supabaseKey: string, page: number = 1) {
+async function getTrendingUsers(supabaseUrl: string, supabaseKey: string, page: number = 1): Promise<UserResult[]> {
   const supabase = createClient(supabaseUrl, supabaseKey);
   
   const offset = (page - 1) * 20;
@@ -531,7 +602,7 @@ async function getTrendingUsers(supabaseUrl: string, supabaseKey: string, page: 
     return [];
   }
 
-  return profiles.map((user: any) => ({
+  return profiles.map((user: UserProfile) => ({
     id: user.id,
     type: "user" as const,
     username: user.username,
@@ -814,10 +885,10 @@ export async function GET(request: Request) {
   const cacheKey = `${query}_${type}`;
   const cached = pageCache.get(cacheKey);
   
-  let movies: any[] = [];
-  let tv: any[] = [];
-  let games: any[] = [];
-  let users: any[] = [];
+  let movies: MovieResult[] = [];
+  let tv: TvResult[] = [];
+  let games: GameResult[] = [];
+  let users: UserResult[] = [];
   let moviePageCount = cached?.moviePageCount || 1;
   let tvPageCount = cached?.tvPageCount || 1;
   
@@ -840,7 +911,7 @@ export async function GET(request: Request) {
         const movieUrl = `${TMDB_BASE_URL}/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}&page=1&language=es-ES`;
         try {
           const movieRes = await fetch(movieUrl, { headers: { "Cache-Control": "public, s-maxage=600" } });
-          const movieData = await movieRes.json();
+          const movieData = await movieRes.json() as TmdbPaginatedResponse;
           moviePageCount = movieData.total_pages || 1;
           pageCache.set(cacheKey, { moviePageCount, tvPageCount: cached?.tvPageCount || tvPageCount });
         } catch {}
@@ -849,7 +920,7 @@ export async function GET(request: Request) {
         const tvUrl = `${TMDB_BASE_URL}/search/tv?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}&page=1&language=es-ES`;
         try {
           const tvRes = await fetch(tvUrl, { headers: { "Cache-Control": "public, s-maxage=600" } });
-          const tvData = await tvRes.json();
+          const tvData = await tvRes.json() as TmdbPaginatedResponse;
           tvPageCount = tvData.total_pages || 1;
           pageCache.set(cacheKey, { moviePageCount: cached?.moviePageCount || moviePageCount, tvPageCount });
         } catch {}

@@ -7,7 +7,37 @@ const IGDB_CLIENT_ID = process.env.TWITCH_CLIENT_ID || "";
 
 export const runtime = "nodejs";
 
-const similarCache = new Map<string, { data: any; timestamp: number }>();
+interface SimilarGameResult {
+  id: string;
+  igdbId: number;
+  name: string;
+  posterUrl: string | null;
+  releaseDate: string | null;
+  releaseYear: number | null;
+  rating: number | null;
+  genres: string[];
+}
+
+interface IgdbGameBasic {
+  id: number;
+  name: string;
+  similar_games?: number[];
+  genres?: { id: number; name: string }[];
+}
+
+interface IgdbGameWithCover extends IgdbGameBasic {
+  cover?: { url: string };
+  rating?: number;
+  first_release_date?: number;
+  version_parent?: number | null;
+  category?: number;
+}
+
+interface SimilarResponse {
+  games: SimilarGameResult[];
+}
+
+const similarCache = new Map<string, { data: SimilarResponse; timestamp: number }>();
 const CACHE_TTL = 1000 * 60 * 30; // 30 minutes
 
 async function getFreshAccessToken(): Promise<string> {
@@ -86,14 +116,14 @@ export async function GET(
       throw new Error(`IGDB API error`);
     }
 
-    const games = await gameRes.json();
+    const games = await gameRes.json() as IgdbGameBasic[];
     const currentGame = games[0];
 
     const similarIds = currentGame.similar_games || [];
     // Remove the current game from similar
     const filteredSimilarIds = similarIds.filter((id: number) => id !== igdbId);
 
-    let allSimilarGames: any[] = [];
+    let allSimilarGames: IgdbGameWithCover[] = [];
 
     // Step 2: If we have similar_games, fetch them directly
     if (filteredSimilarIds.length > 0) {
@@ -105,14 +135,14 @@ export async function GET(
       );
 
       if (similarRes.ok) {
-        const data = await similarRes.json();
-        allSimilarGames = data.filter((g: any) => g.id !== igdbId && !g.version_parent);
+        const data = await similarRes.json() as IgdbGameWithCover[];
+        allSimilarGames = data.filter((g) => g.id !== igdbId && !g.version_parent);
       }
     }
 
-    // Step 3: If not enough similar games, fall back to genre-based search
-    if (allSimilarGames.length < 5 && currentGame.genres?.length > 0) {
-      const genreIds = currentGame.genres.map((g: any) => g.id).join(",");
+     // Step 3: If not enough similar games, fall back to genre-based search
+     if (allSimilarGames.length < 5 && currentGame.genres && currentGame.genres.length > 0) {
+      const genreIds = currentGame.genres.map((g: { id: number }) => g.id).join(",");
       
       const genreBasedRes = await fetchWithTokenRefresh(
         "https://api.igdb.com/v4/games",
@@ -121,11 +151,11 @@ export async function GET(
       );
 
       if (genreBasedRes.ok) {
-        const genreGames = await genreBasedRes.json();
-        const filteredGenreGames = genreGames.filter((g: any) => g.id !== igdbId && !g.version_parent);
+        const genreGames = await genreBasedRes.json() as IgdbGameWithCover[];
+        const filteredGenreGames = genreGames.filter((g) => g.id !== igdbId && !g.version_parent);
 
         // Merge, avoiding duplicates
-        const existingIds = new Set(allSimilarGames.map((g: any) => g.id));
+        const existingIds = new Set(allSimilarGames.map((g) => g.id));
         for (const game of filteredGenreGames) {
           if (!existingIds.has(game.id)) {
             allSimilarGames.push(game);
@@ -135,26 +165,26 @@ export async function GET(
     }
 
     const formattedGames = allSimilarGames.slice(0, 15)
-      .filter((g: any) => {
+      .filter((g) => {
         // Only include main games (category 0 or undefined), exclude DLCs, expansions, etc.
         return g.category === undefined || g.category === 0;
       })
-      .map((game: any) => ({
-      id: `igdb_${game.id}`,
-      igdbId: game.id,
-      name: game.name,
-      posterUrl: game.cover?.url
-        ? `https:${game.cover.url.replace("t_thumb", "t_cover_big")}`
-        : null,
-      releaseDate: game.first_release_date
-        ? new Date(game.first_release_date * 1000).toISOString().split("T")[0]
-        : null,
-      releaseYear: game.first_release_date
-        ? new Date(game.first_release_date * 1000).getFullYear()
-        : null,
-      rating: game.rating ? Math.round(game.rating / 10) : null,
-      genres: mapGenresToSpanish(game.genres?.map((g: { name: string }) => g.name) || []),
-    }));
+      .map((game) => ({
+        id: `igdb_${game.id}`,
+        igdbId: game.id,
+        name: game.name,
+        posterUrl: game.cover?.url
+          ? `https:${game.cover.url.replace("t_thumb", "t_cover_big")}`
+          : null,
+        releaseDate: game.first_release_date
+          ? new Date(game.first_release_date * 1000).toISOString().split("T")[0]
+          : null,
+        releaseYear: game.first_release_date
+          ? new Date(game.first_release_date * 1000).getFullYear()
+          : null,
+        rating: game.rating ? Math.round(game.rating / 10) : null,
+        genres: mapGenresToSpanish(game.genres?.map((g: { name: string }) => g.name) || []),
+      }));
 
     const result = { games: formattedGames };
     similarCache.set(cacheKey, { data: result, timestamp: Date.now() });

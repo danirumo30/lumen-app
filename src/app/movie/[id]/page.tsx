@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, use } from "react";
+import Image from "next/image";
+import Link from "next/link";
 import { MovieInfo } from "@/components/movie/MovieInfo";
 import { CastCarousel } from "@/components/movie/CastCarousel";
 import { SimilarMoviesCarousel } from "@/components/movie/SimilarMoviesCarousel";
@@ -135,44 +137,46 @@ export default function MovieDetailPage({ params }: { params: Promise<{ id: stri
     );
   }
 
-  if (error || !movie) {
-    return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-zinc-400 mb-4">{error || "Movie not found"}</p>
-          <a href="/" className="text-white hover:underline">
-            Volver al inicio
-          </a>
-        </div>
-      </div>
-    );
-  }
+   if (error || !movie) {
+     return (
+       <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+         <div className="text-center">
+           <p className="text-zinc-400 mb-4">{error || "Movie not found"}</p>
+           <Link href="/" className="text-white hover:underline">
+             Volver al inicio
+           </Link>
+         </div>
+       </div>
+     );
+   }
 
   return (
     <div className="min-h-screen bg-zinc-950">
-      {/* Background backdrop */}
-      {movie.backdropUrl && (
-        <div className="fixed inset-0 -z-10">
-          <img
-            src={movie.backdropUrl}
-            alt=""
-            className="w-full h-full object-cover opacity-20 blur-2xl"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/50 via-zinc-950/80 to-zinc-950" />
-        </div>
-      )}
+       {/* Background backdrop */}
+       {movie.backdropUrl && (
+         <div className="fixed inset-0 -z-10">
+           <Image
+             src={movie.backdropUrl}
+             alt=""
+             fill
+             className="object-cover opacity-20 blur-2xl"
+             priority
+           />
+           <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/50 via-zinc-950/80 to-zinc-950" />
+         </div>
+       )}
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Back button */}
-        <a
-          href="/"
-          className="inline-flex items-center gap-2 text-zinc-400 hover:text-white mb-8 transition-colors"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" />
-          </svg>
-          <span>Volver</span>
-        </a>
+       <div className="max-w-7xl mx-auto px-4 py-8">
+         {/* Back button */}
+         <Link
+           href="/"
+           className="inline-flex items-center gap-2 text-zinc-400 hover:text-white mb-8 transition-colors"
+         >
+           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" />
+           </svg>
+           <span>Volver</span>
+         </Link>
 
         {/* Main info */}
         <MovieInfo

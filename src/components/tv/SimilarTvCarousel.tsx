@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { BaseCarousel } from "../games/BaseCarousel";
 import Link from "next/link";
 
@@ -36,16 +37,18 @@ export function SimilarMediaCarousel({ items, type = "movie" }: SimilarMediaCaro
             href={`${basePath}/${cleanId}`}
             className="flex-shrink-0 w-36 snap-start group/similar block"
           >
-            {/* Poster */}
-            <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-zinc-900 border border-white/[0.03] transition-all duration-300 group-hover/similar:scale-[1.03] group-hover/similar:border-white/[0.08]">
-              {item.posterUrl ? (
-                <img
-                  src={item.posterUrl}
-                  alt={item.title}
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                />
-              ) : (
+             {/* Poster */}
+             <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-zinc-900 border border-white/[0.03] transition-all duration-300 group-hover/similar:scale-[1.03] group-hover/similar:border-white/[0.08]">
+               {item.posterUrl ? (
+                 <Image
+                   src={item.posterUrl}
+                   alt={item.title}
+                   fill
+                   className="object-cover"
+                   loading="lazy"
+                   sizes="(max-width: 768px) 40vw, (max-width: 1024px) 25vw, 15vw"
+                 />
+               ) : (
                 <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
                   <svg
                     className="w-8 h-8 text-zinc-600"

@@ -1,5 +1,23 @@
 import { logger } from '@/lib/logger';
 import { NextResponse } from "next/server";
+import type { TmdbMovie, TmdbWatchProvidersByCountry, TmdbWatchProvider, TmdbGenre } from '@/types/tmdb';
+
+// Local interfaces for movie detail response
+interface MovieReleaseDateEntry {
+  iso_3166_1: string;
+  release_dates: Array<{ certification: string }>;
+}
+
+interface MovieReleaseDates {
+  results: MovieReleaseDateEntry[];
+}
+
+interface MovieDetail extends TmdbMovie {
+  runtime?: number;
+  genres?: TmdbGenre[];
+  homepage?: string;
+  release_dates?: MovieReleaseDates;
+}
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY!;
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
@@ -37,37 +55,38 @@ export async function GET(
       throw new Error(`TMDB API error: ${movieResponse.status}`);
     }
 
-    const movie = await movieResponse.json();
+     const movie = await movieResponse.json() as MovieDetail;
 
-    let certification = null;
+    let certification: string | null = null;
     if (movie.release_dates?.results) {
-      const usRelease = movie.release_dates.results.find((r: any) => r.iso_3166_1 === "US");
+      const usRelease = movie.release_dates.results.find((r) => r.iso_3166_1 === "US");
       if (usRelease?.release_dates?.[0]?.certification) {
         certification = usRelease.release_dates[0].certification;
       }
     }
 
-    let watchProviders: any = null;
+    let formattedWatchProviders: { link?: string; providers: Array<{ id: number; name: string; logoUrl: string | null; type: string }> } | null = null;
     if (watchProvidersResponse.ok) {
-      const providersData = await watchProvidersResponse.json();
-      watchProviders = providersData.results?.[country] || null;
+      const providersData = await watchProvidersResponse.json() as { link?: string; results: { [country: string]: TmdbWatchProvidersByCountry } };
+      const providersForCountry = providersData.results?.[country] ?? null;
+      if (providersForCountry) {
+        formattedWatchProviders = {
+          link: providersData.link,
+          providers: [
+            ...(providersForCountry.flatrate ?? []).map((p: TmdbWatchProvider) => ({ ...p, type: "subscription" })),
+            ...(providersForCountry.free ?? []).map((p: TmdbWatchProvider) => ({ ...p, type: "free" })),
+            ...(providersForCountry.ads ?? []).map((p: TmdbWatchProvider) => ({ ...p, type: "ads" })),
+            ...(providersForCountry.rent ?? []).map((p: TmdbWatchProvider) => ({ ...p, type: "rent" })),
+            ...(providersForCountry.buy ?? []).map((p: TmdbWatchProvider) => ({ ...p, type: "buy" })),
+          ].map((p) => ({
+            id: p.provider_id,
+            name: p.provider_name,
+            logoUrl: p.logo_path ? `https://image.tmdb.org/t/p/original${p.logo_path}` : null,
+            type: p.type,
+          })),
+        };
+      }
     }
-
-    const formattedWatchProviders = watchProviders ? {
-      link: watchProviders.link,
-      providers: [
-        ...(watchProviders.flatrate || []).map((p: any) => ({ ...p, type: "subscription" })),
-        ...(watchProviders.free || []).map((p: any) => ({ ...p, type: "free" })),
-        ...(watchProviders.ads || []).map((p: any) => ({ ...p, type: "ads" })),
-        ...(watchProviders.rent || []).map((p: any) => ({ ...p, type: "rent" })),
-        ...(watchProviders.buy || []).map((p: any) => ({ ...p, type: "buy" })),
-      ].map((p: any) => ({
-        id: p.provider_id,
-        name: p.provider_name,
-        logoUrl: p.logo_path ? `https://image.tmdb.org/t/p/original${p.logo_path}` : null,
-        type: p.type,
-      })),
-    } : null;
 
     const result = {
       id: `tmdb_${movie.id}`,
@@ -84,7 +103,7 @@ export async function GET(
       releaseDate: movie.release_date,
       releaseYear: movie.release_date ? new Date(movie.release_date).getFullYear() : null,
       runtime: movie.runtime,
-      genres: movie.genres?.map((g: any) => ({ id: g.id, name: g.name })) || [],
+      genres: movie.genres?.map((g: TmdbGenre) => ({ id: g.id, name: g.name })) || [],
       rating: movie.vote_average ? Math.round(movie.vote_average * 10) / 10 : null,
       voteCount: movie.vote_count,
       certification,

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 
 export interface WatchProvider {
   id: number;
@@ -104,21 +105,23 @@ export function WatchProvidersSection({ providers, link, className = "" }: Watch
             group-hover/link:opacity-100
           `} />
           
-          {/* Logo container */}
-          <div className={`
-            relative ${size === "small" ? "w-12 h-12" : "w-10 h-10 sm:w-12 sm:h-12"} rounded-xl
-            overflow-hidden transition-all duration-200
-            border border-white/10
-            group-hover/link:border-white/20
-            group-hover/link:scale-110
-          `}>
-            {provider.logoUrl ? (
-              <img
-                src={provider.logoUrl}
-                alt={provider.name}
-                className="w-full h-full object-contain p-1.5 bg-zinc-900/50"
-              />
-            ) : (
+           {/* Logo container */}
+           <div className={`
+             relative ${size === "small" ? "w-12 h-12" : "w-10 h-10 sm:w-12 sm:h-12"} rounded-xl
+             overflow-hidden transition-all duration-200
+             border border-white/10
+             group-hover/link:border-white/20
+             group-hover/link:scale-110
+           `}>
+             {provider.logoUrl ? (
+               <Image
+                 src={provider.logoUrl}
+                 alt={provider.name}
+                 fill
+                 className="object-contain p-1.5 bg-zinc-900/50"
+                 sizes={size === "small" ? "48px" : "40px"}
+               />
+             ) : (
               <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
                 <span className={`${size === "small" ? "text-[10px]" : "text-[9px]"} text-zinc-400 font-medium text-center leading-tight px-1`}>
                   {provider.name}

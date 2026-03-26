@@ -151,24 +151,26 @@ export function DiscoverCard({
           )}
         </div>
 
-        {/* Platform Icons for Games - show icons or fallback text */}
-        {type === "game" && (
-          <div className="absolute bottom-2 left-2 right-2 flex gap-1">
-            {platformLogos && platformLogos.length > 0 ? (
-              platformLogos.slice(0, 4).map((platform, idx) => (
-                <div 
-                  key={platform.uniqueKey || `platform-${platform.id}-${idx}`}
-                  className="w-6 h-6 flex items-center justify-center"
-                  title={platform.name}
-                >
-                  <img 
-                    src={getPlatformIcon(platform.platformName || platform.name, platform.id)} 
-                    alt={platform.name}
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-              ))
-            ) : (
+         {/* Platform Icons for Games - show icons or fallback text */}
+         {type === "game" && (
+           <div className="absolute bottom-2 left-2 right-2 flex gap-1">
+             {platformLogos && platformLogos.length > 0 ? (
+               platformLogos.slice(0, 4).map((platform, idx) => (
+                 <div 
+                   key={platform.uniqueKey || `platform-${platform.id}-${idx}`}
+                   className="relative w-6 h-6 flex items-center justify-center"
+                   title={platform.name}
+                 >
+                   <Image
+                     src={getPlatformIcon(platform.platformName || platform.name, platform.id)}
+                     alt={platform.name}
+                     fill
+                     className="object-contain"
+                     sizes="24px"
+                   />
+                 </div>
+               ))
+             ) : (
               <div className="flex items-center gap-1 text-[10px] text-zinc-400 bg-black/50 px-2 py-1 rounded">
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
@@ -179,24 +181,26 @@ export function DiscoverCard({
           </div>
         )}
 
-        {/* Streaming Providers Logos for Movies/TV */}
-        {type !== "game" && type !== "user" && providers && providers.length > 0 && (
-          <div className="absolute bottom-2 left-2 right-2 flex gap-1">
-            {providers.slice(0, 4).map((provider) => (
-              <div 
-                key={provider.id}
-                className="w-6 h-6 flex items-center justify-center bg-black/50 rounded"
-                title={provider.name}
-              >
-                <img 
-                  src={provider.logoUrl} 
-                  alt={provider.name}
-                  className="w-full h-full object-contain p-0.5"
-                />
-              </div>
-            ))}
-          </div>
-        )}
+         {/* Streaming Providers Logos for Movies/TV */}
+         {type !== "game" && type !== "user" && providers && providers.length > 0 && (
+           <div className="absolute bottom-2 left-2 right-2 flex gap-1">
+             {providers.slice(0, 4).map((provider) => (
+               <div 
+                 key={provider.id}
+                 className="relative w-6 h-6 flex items-center justify-center bg-black/50 rounded"
+                 title={provider.name}
+               >
+                 <Image
+                   src={provider.logoUrl}
+                   alt={provider.name}
+                   fill
+                   className="object-contain p-0.5"
+                   sizes="24px"
+                 />
+               </div>
+             ))}
+           </div>
+         )}
       </div>
 
       {/* Info */}

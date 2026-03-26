@@ -6,11 +6,25 @@ const IGDB_ACCESS_TOKEN = process.env.IGDB_ACCESS_TOKEN || "";
 const IGDB_CLIENT_ID = process.env.TWITCH_CLIENT_ID || "";
 const IGDB_CLIENT_SECRET = process.env.TWITCH_CLIENT_SECRET || "";
 
-
 export const runtime = "nodejs";
 
+interface GameResult {
+  id: string;
+  igdbId: number;
+  name: string;
+  coverUrl: string | null;
+  summary: string | null;
+  genres: string[];
+  gameModes: string[];
+  platforms: string[];
+  releaseDate: string | null;
+  releaseYear: number | null;
+  rating: number | null;
+  involvedCompanies: string[];
+}
+
 // Simple in-memory cache for game data
-const gameCache = new Map<string, { data: any; timestamp: number }>();
+const gameCache = new Map<string, { data: GameResult; timestamp: number }>();
 const CACHE_TTL = 1000 * 60 * 15; // 15 minutes
 
 async function getFreshAccessToken(): Promise<string> {

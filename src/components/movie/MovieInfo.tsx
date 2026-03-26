@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useAuth } from "@/modules/auth/infrastructure/contexts/AuthContext";
 import { Modal } from "@/components/ui/Modal";
 import { supabase } from "@/lib/supabase";
@@ -158,24 +159,29 @@ export function MovieInfo({ movie, watchedStatus, favoriteStatus, onWatchedChang
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-8">
-      {/* Poster */}
-      <div className="relative">
-        <div className="sticky top-24">
-          {movie.posterUrl ? (
-            <img
-              src={movie.posterUrl}
-              alt={movie.title}
-              className="w-full rounded-2xl shadow-2xl shadow-black/50"
-            />
-          ) : (
-            <div className="aspect-[2/3] rounded-2xl bg-zinc-800 flex items-center justify-center">
-              <svg className="w-16 h-16 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
-              </svg>
-            </div>
-          )}
-        </div>
-      </div>
+       {/* Poster */}
+       <div className="relative">
+         <div className="sticky top-24">
+           {movie.posterUrl ? (
+             <div className="relative aspect-[2/3] rounded-2xl shadow-2xl shadow-black/50 overflow-hidden">
+               <Image
+                 src={movie.posterUrl}
+                 alt={movie.title}
+                 fill
+                 className="object-cover"
+                 sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                 priority
+               />
+             </div>
+           ) : (
+             <div className="aspect-[2/3] rounded-2xl bg-zinc-800 flex items-center justify-center">
+               <svg className="w-16 h-16 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
+               </svg>
+             </div>
+           )}
+         </div>
+       </div>
 
       {/* Info */}
       <div className="space-y-6">

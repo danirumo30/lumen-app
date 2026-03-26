@@ -5,6 +5,13 @@ import { DiscoverCard } from "./DiscoverCard";
 import { DiscoverSkeleton } from "./DiscoverSkeleton";
 import { MediaType } from "./DiscoverTypeChips";
 import { DiscoverFilters } from "./DiscoverFilters";
+import type { PlatformLogo } from "@/lib/utils/platforms";
+
+interface StreamingProvider {
+  id: number;
+  name: string;
+  logoUrl: string;
+}
 
 interface SearchResult {
   id: string;
@@ -18,8 +25,8 @@ interface SearchResult {
   platforms?: string[];
   username?: string;
   avatarUrl?: string | null;
-  providers?: any[]; // WatchProvider[] from shared
-  platformLogos?: any[];
+  providers?: StreamingProvider[];
+  platformLogos?: PlatformLogo[];
 }
 
 interface DiscoverGridProps {
@@ -196,7 +203,7 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
               platforms={result.platforms}
               username={result.username}
               avatarUrl={result.avatarUrl}
-              providers={result.providers as any}
+               providers={result.providers}
               platformLogos={result.platformLogos}
             />
           </div>

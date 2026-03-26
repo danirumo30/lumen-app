@@ -325,14 +325,17 @@ export function EpisodesAccordion({
                       return (
                         <div key={episode.id} className="p-3 sm:p-4 hover:bg-white/[0.02] transition-colors">
                           <div className="flex gap-2 sm:gap-4">
-                            {/* Episode thumbnail - responsive sizes */}
-                            {episode.stillPath ? (
-                              <img
-                                src={episode.stillPath}
-                                alt={episode.name}
-                                className={`w-20 h-14 sm:w-28 sm:h-[72px] object-cover rounded-lg flex-shrink-0 transition-all ${watched ? "opacity-60" : ""}`}
-                              />
-                            ) : (
+                             {/* Episode thumbnail - responsive sizes */}
+                             {episode.stillPath ? (
+                               <Image
+                                 src={episode.stillPath}
+                                 alt={episode.name}
+                                 width={112}  // 28*4 (sm:w-28 → 112px at 1x)
+                                 height={72}   // h-[72px]
+                                 className={`object-cover rounded-lg flex-shrink-0 transition-all ${watched ? "opacity-60" : ""}`}
+                                 sizes="(max-width: 640px) 80px, 112px"
+                               />
+                             ) : (
                               <div className={`w-20 h-14 sm:w-28 sm:h-[72px] rounded-lg flex-shrink-0 flex items-center justify-center transition-all ${watched ? "bg-emerald-900/30 opacity-60" : "bg-zinc-800"}`}>
                                 <svg className="w-6 h-6 sm:w-8 sm:h-8 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />

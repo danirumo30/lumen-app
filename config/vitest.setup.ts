@@ -1,4 +1,3 @@
-// Vitest setup file
 import 'dotenv/config';
 
 // Ensure we're using the test environment

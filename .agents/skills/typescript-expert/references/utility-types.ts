@@ -6,7 +6,6 @@
  */
 
 // =============================================================================
-// BRANDED TYPES
 // =============================================================================
 
 /**
@@ -18,7 +17,6 @@
  */
 export type Brand<K, T> = K & { readonly __brand: T }
 
-// Branded type constructors
 export type UserId = Brand<string, 'UserId'>
 export type Email = Brand<string, 'Email'>
 export type UUID = Brand<string, 'UUID'>
@@ -62,13 +60,12 @@ export const some = <T>(value: T): Some<T> => ({ type: 'some', value })
 export const none: None = { type: 'none' }
 
 // =============================================================================
-// DEEP UTILITIES
 // =============================================================================
 
 /**
  * Make all properties deeply readonly.
  */
-export type DeepReadonly<T> = T extends (...args: any[]) => any
+export type DeepReadonly<T> = T extends (...args: unknown[]) => any
     ? T
     : T extends object
     ? { readonly [K in keyof T]: DeepReadonly<T[K]> }
@@ -96,7 +93,6 @@ export type DeepMutable<T> = T extends object
     : T
 
 // =============================================================================
-// OBJECT UTILITIES
 // =============================================================================
 
 /**
@@ -137,7 +133,6 @@ export type ReadonlyBy<T, K extends keyof T> = Omit<T, K> & Readonly<Pick<T, K>>
 export type Merge<T, U> = Omit<T, keyof U> & U
 
 // =============================================================================
-// ARRAY UTILITIES
 // =============================================================================
 
 /**
@@ -169,25 +164,21 @@ export type NonEmptyArray<T> = [T, ...T[]]
 export type AtLeast<T, N extends number> = [...Tuple<T, N>, ...T[]]
 
 // =============================================================================
-// FUNCTION UTILITIES
 // =============================================================================
 
-/**
- * Get function arguments as tuple.
- */
 export type Arguments<T> = T extends (...args: infer A) => any ? A : never
 
 /**
  * Get first argument of function.
  */
-export type FirstArgument<T> = T extends (first: infer F, ...args: any[]) => any
+export type FirstArgument<T> = T extends (first: infer F, ...args: unknown[]) => any
     ? F
     : never
 
 /**
  * Async version of function.
  */
-export type AsyncFunction<T extends (...args: any[]) => any> = (
+export type AsyncFunction<T extends (...args: unknown[]) => any> = (
     ...args: Parameters<T>
 ) => Promise<Awaited<ReturnType<T>>>
 
@@ -199,7 +190,6 @@ export type Promisify<T> = T extends (...args: infer A) => infer R
     : never
 
 // =============================================================================
-// STRING UTILITIES
 // =============================================================================
 
 /**
@@ -232,7 +222,6 @@ export type PathOf<T, K extends keyof T = keyof T> = K extends string
     : never
 
 // =============================================================================
-// UNION UTILITIES
 // =============================================================================
 
 /**
@@ -261,7 +250,6 @@ export type UnionToTuple<T, L = UnionLast<T>> = [T] extends [never]
     : [...UnionToTuple<Exclude<T, L>>, L]
 
 // =============================================================================
-// VALIDATION UTILITIES
 // =============================================================================
 
 /**
@@ -292,7 +280,6 @@ export type IsUnknown<T> = IsAny<T> extends true
     : false
 
 // =============================================================================
-// JSON UTILITIES
 // =============================================================================
 
 /**
@@ -308,7 +295,7 @@ export type JsonValue = JsonPrimitive | JsonArray | JsonObject
  */
 export type Jsonify<T> = T extends JsonPrimitive
     ? T
-    : T extends undefined | ((...args: any[]) => any) | symbol
+    : T extends undefined | ((...args: unknown[]) => any) | symbol
     ? never
     : T extends { toJSON(): infer R }
     ? R
@@ -317,7 +304,6 @@ export type Jsonify<T> = T extends JsonPrimitive
     : never
 
 // =============================================================================
-// EXHAUSTIVE CHECK
 // =============================================================================
 
 /**
@@ -333,3 +319,5 @@ export function assertNever(value: never, message?: string): never {
 export function exhaustiveCheck(_value: never): void {
     // This function should never be called
 }
+
+

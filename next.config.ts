@@ -8,35 +8,40 @@ const nextConfig: NextConfig = {
       bodySizeLimit: '2mb',
     },
   },
-  images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'image.tmdb.org',
-        pathname: '/t/p/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'images.igdb.com',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'avatars.githubusercontent.com',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'media.githubusercontent.com',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'nyjbhwlnnhgaoctxrjdd.supabase.co',
-        pathname: '/storage/v1/object/public/**',
-      },
-    ],
-  },
+   images: {
+     remotePatterns: [
+       {
+         protocol: 'https',
+         hostname: 'image.tmdb.org',
+         pathname: '/t/p/**',
+       },
+       {
+         protocol: 'https',
+         hostname: 'images.igdb.com',
+         pathname: '/**',
+       },
+       {
+         protocol: 'https',
+         hostname: 'img.youtube.com',
+         pathname: '/vi/**',
+       },
+       {
+         protocol: 'https',
+         hostname: 'avatars.githubusercontent.com',
+         pathname: '/**',
+       },
+       {
+         protocol: 'https',
+         hostname: 'media.githubusercontent.com',
+         pathname: '/**',
+       },
+       {
+         protocol: 'https',
+         hostname: 'nyjbhwlnnhgaoctxrjdd.supabase.co',
+         pathname: '/storage/v1/object/public/**',
+       },
+     ],
+   },
 };
 
 export default nextConfig;

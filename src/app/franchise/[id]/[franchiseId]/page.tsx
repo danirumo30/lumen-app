@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, use, useCallback, useRef } from "react";
+import Image from "next/image";
 import Link from "next/link";
 
 interface FranchiseGame {
@@ -374,15 +375,17 @@ export default function FranchisePage({ params }: { params: Promise<{ id: string
                   href={`/game/${game.id}`}
                   className="group relative"
                 >
-                  <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-zinc-800 border border-white/[0.03] transition-all duration-300 group-hover:scale-105 group-hover:border-white/10 group-hover:shadow-xl group-hover:shadow-black/50">
-                    {game.posterUrl ? (
-                      <img
-                        src={game.posterUrl}
-                        alt={game.name}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                        loading="lazy"
-                      />
-                    ) : (
+                   <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-zinc-800 border border-white/[0.03] transition-all duration-300 group-hover:scale-105 group-hover:border-white/10 group-hover:shadow-xl group-hover:shadow-black/50">
+                     {game.posterUrl ? (
+                       <Image
+                         src={game.posterUrl}
+                         alt={game.name}
+                         fill
+                         className="object-cover transition-transform duration-500 group-hover:scale-110"
+                         loading="lazy"
+                         sizes="(max-width: 768px) 25vw, (max-width: 1024px) 16vw, 12vw"
+                       />
+                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-zinc-700 to-zinc-800">
                         <svg
                           className="w-8 h-8 text-zinc-500"

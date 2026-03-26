@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { BaseCarousel } from "../games/BaseCarousel";
 
 interface CastMember {
@@ -26,16 +27,18 @@ export function CastCarousel({ cast }: CastCarouselProps) {
           key={person.id}
           className="flex-shrink-0 w-28 group/cast"
         >
-          {/* Profile image */}
-          <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-zinc-800 border border-white/[0.03] mb-2 transition-transform duration-500 group-hover/cast:scale-105">
-            {person.profileUrl ? (
-              <img
-                src={person.profileUrl}
-                alt={person.name}
-                className="w-full h-full object-cover"
-                loading="lazy"
-              />
-            ) : (
+           {/* Profile image */}
+           <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-zinc-800 border border-white/[0.03] mb-2 transition-transform duration-500 group-hover/cast:scale-105">
+             {person.profileUrl ? (
+               <Image
+                 src={person.profileUrl}
+                 alt={person.name}
+                 fill
+                 className="object-cover"
+                 loading="lazy"
+                 sizes="(max-width: 640px) 28vw, (max-width: 1024px) 14vw, 10vw"
+               />
+             ) : (
               <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-zinc-700 to-zinc-800">
                 <svg
                   className="w-8 h-8 text-zinc-500"

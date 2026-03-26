@@ -23,6 +23,15 @@ function createAdminClient() {
 
 type GameStatus = "favorite" | "playing" | "completed" | "dropped" | "planned" | null;
 
+interface UpdateFields {
+  updated_at: string;
+  is_favorite?: boolean;
+  is_watched?: boolean;
+  is_planned?: boolean;
+  progress_minutes?: number;
+  has_platinum?: boolean;
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -155,7 +164,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, isFavorite: false, playStatus: null });
     }
 
-    const updateFields: Record<string, any> = {
+    const updateFields: UpdateFields = {
       updated_at: new Date().toISOString(),
     };
 
@@ -248,17 +257,17 @@ export async function POST(request: Request) {
         .insert(newRecord);
     }
 
-    const newIsFavorite = updateFields.is_favorite ?? existing?.is_favorite ?? false;
-    let newPlayStatus: GameStatus = null;
-    if (updateFields.is_watched) {
-      newPlayStatus = "completed";
-    } else if (updateFields.is_planned) {
-      newPlayStatus = updateFields.progress_minutes > (existing?.progress_minutes || 0) ? "playing" : "planned";
-    } else if (updateFields.progress_minutes > 0 && existing?.progress_minutes === 0) {
-      newPlayStatus = "dropped";
-    } else if (existing?.is_planned) {
-      newPlayStatus = "playing";
-    }
+     const newIsFavorite = updateFields.is_favorite ?? existing?.is_favorite ?? false;
+     let newPlayStatus: GameStatus = null;
+     if (updateFields.is_watched) {
+       newPlayStatus = "completed";
+     } else if (updateFields.is_planned) {
+       newPlayStatus = (updateFields.progress_minutes ?? 0) > (existing?.progress_minutes || 0) ? "playing" : "planned";
+     } else if ((updateFields.progress_minutes ?? 0) > 0 && existing?.progress_minutes === 0) {
+       newPlayStatus = "dropped";
+     } else if (existing?.is_planned) {
+       newPlayStatus = "playing";
+     }
 
     return NextResponse.json({ 
       success: true, 

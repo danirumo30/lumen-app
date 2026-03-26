@@ -1,5 +1,16 @@
 import { logger } from '@/lib/logger';
 import { NextResponse } from "next/server";
+import type { TmdbPerson } from '@/types/tmdb';
+
+interface CastMember extends TmdbPerson {
+  character: string;
+  order: number;
+}
+
+interface CrewMember extends TmdbPerson {
+  job: string;
+  department: string;
+}
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY!;
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
@@ -16,7 +27,7 @@ export async function GET(
 
     const response = await fetch(
       `${TMDB_BASE_URL}/movie/${tmdbId}/credits?api_key=${TMDB_API_KEY}&language=es-ES`,
-      { 
+      {
         headers: { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400" }
       }
     );
@@ -25,9 +36,12 @@ export async function GET(
       throw new Error(`TMDB API error: ${response.status}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as {
+      cast: CastMember[];
+      crew: CrewMember[];
+    };
 
-    const cast = data.cast?.slice(0, 20).map((person: any) => ({
+    const cast = data.cast?.slice(0, 20).map((person) => ({
       id: person.id,
       name: person.name,
       character: person.character,
@@ -39,12 +53,12 @@ export async function GET(
 
     const crew = data.crew || [];
     const directors = crew
-      .filter((c: any) => c.job === "Director")
-      .map((c: any) => ({ id: c.id, name: c.name }));
-    
+      .filter((c) => c.job === "Director")
+      .map((c) => ({ id: c.id, name: c.name }));
+
     const writers = crew
-      .filter((c: any) => ["Screenplay", "Writer", "Story"].includes(c.job))
-      .map((c: any) => ({ id: c.id, name: c.name, job: c.job }));
+      .filter((c) => ["Screenplay", "Writer", "Story"].includes(c.job))
+      .map((c) => ({ id: c.id, name: c.name, job: c.job }));
 
     return NextResponse.json({ cast, directors, writers });
   } catch (error) {

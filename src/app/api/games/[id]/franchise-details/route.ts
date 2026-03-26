@@ -6,7 +6,33 @@ const IGDB_CLIENT_ID = process.env.TWITCH_CLIENT_ID || "";
 
 export const runtime = "nodejs";
 
-const franchiseDetailsCache = new Map<string, { data: any; timestamp: number }>();
+
+interface IgdbGameDetail {
+  id: number;
+  name: string;
+  category: number;
+  platforms?: number[];
+  version_parent?: number | null;
+}
+
+interface IgdbPlatform {
+  id: number;
+  abbreviation?: string;
+  name?: string;
+}
+
+interface GameDetailResult {
+  id: string;
+  name: string;
+  type: "main" | "dlc" | "expansion" | "edition";
+  platforms: string[];
+}
+
+interface FranchiseDetailsResponse {
+  details: GameDetailResult[];
+}
+
+const franchiseDetailsCache = new Map<string, { data: FranchiseDetailsResponse; timestamp: number }>();
 const CACHE_TTL = 1000 * 60 * 30; // 30 minutes
 
 async function getFreshAccessToken(): Promise<string> {
@@ -151,12 +177,12 @@ export async function GET(
         IGDB_ACCESS_TOKEN
       );
 
-      if (collectionGamesRes.ok) {
-        const collectionGames = await collectionGamesRes.json();
-        gameIds = collectionGames
-          .filter((g: any) => !g.version_parent)
-          .map((g: any) => g.id);
-      }
+       if (collectionGamesRes.ok) {
+         const collectionGames = await collectionGamesRes.json() as IgdbGameDetail[];
+         gameIds = collectionGames
+           .filter((g) => !g.version_parent)
+           .map((g) => g.id);
+       }
     }
 
     if (gameIds.length === 0 && franchiseIds.length > 0) {
@@ -168,12 +194,12 @@ export async function GET(
         IGDB_ACCESS_TOKEN
       );
 
-      if (franchiseGamesRes.ok) {
-        const franchiseGames = await franchiseGamesRes.json();
-        gameIds = franchiseGames
-          .filter((g: any) => !g.version_parent)
-          .map((g: any) => g.id);
-      }
+       if (franchiseGamesRes.ok) {
+         const franchiseGames = await franchiseGamesRes.json() as IgdbGameDetail[];
+         gameIds = franchiseGames
+           .filter((g) => !g.version_parent)
+           .map((g) => g.id);
+       }
     }
 
     if (gameIds.length === 0) {
@@ -193,45 +219,45 @@ export async function GET(
       throw new Error(`IGDB API error: ${detailsRes.status}`);
     }
 
-    const detailsGames = await detailsRes.json();
+     const detailsGames = await detailsRes.json() as IgdbGameDetail[];
 
-    const allPlatformIds = new Set<number>();
-    detailsGames.forEach((g: any) => {
-      g.platforms?.forEach((p: number) => allPlatformIds.add(p));
-    });
+     const allPlatformIds = new Set<number>();
+     detailsGames.forEach((g) => {
+       g.platforms?.forEach((p) => allPlatformIds.add(p));
+     });
 
-    const platformNamesMap: Record<number, string> = {};
-    if (allPlatformIds.size > 0) {
-      const platformIdsString = Array.from(allPlatformIds).join(",");
-      const platformsRes = await fetchWithTokenRefresh(
-        "https://api.igdb.com/v4/platforms",
-        `fields id, name, abbreviation; where id = (${platformIdsString}); limit ${allPlatformIds.size};`,
-        IGDB_ACCESS_TOKEN
-      );
+     const platformNamesMap: Record<number, string> = {};
+     if (allPlatformIds.size > 0) {
+       const platformIdsString = Array.from(allPlatformIds).join(",");
+       const platformsRes = await fetchWithTokenRefresh(
+         "https://api.igdb.com/v4/platforms",
+         `fields id, name, abbreviation; where id = (${platformIdsString}); limit ${allPlatformIds.size};`,
+         IGDB_ACCESS_TOKEN
+       );
 
-      if (platformsRes.ok) {
-        const platforms = await platformsRes.json();
-        platforms.forEach((p: any) => {
-          platformNamesMap[p.id] = p.abbreviation || p.name || `Platform ${p.id}`;
-        });
-      }
-    }
+       if (platformsRes.ok) {
+         const platforms = await platformsRes.json() as IgdbPlatform[];
+         platforms.forEach((p) => {
+           platformNamesMap[p.id] = p.abbreviation || p.name || `Platform ${p.id}`;
+         });
+       }
+     }
 
-    const details = detailsGames
-      .filter((g: any) => !g.version_parent) // Exclude child versions
-      .map((g: any) => {
-        const type = mapCategoryToType(g.category || 0);
-        const platformNames = (g.platforms || []).map((p: number) => 
-          platformNamesMap[p] || `Platform ${p}`
-        );
+     const details = detailsGames
+       .filter((g) => !g.version_parent) // Exclude child versions
+       .map((g) => {
+         const type = mapCategoryToType(g.category || 0);
+         const platformNames = (g.platforms || []).map((p) => 
+           platformNamesMap[p] || `Platform ${p}`
+         );
 
-        return {
-          id: `igdb_${g.id}`,
-          name: g.name,
-          type,
-          platforms: platformNames,
-        };
-      });
+         return {
+           id: `igdb_${g.id}`,
+           name: g.name,
+           type,
+           platforms: platformNames,
+         };
+       });
 
     const result = { details };
     franchiseDetailsCache.set(cacheKey, { data: result, timestamp: Date.now() });

@@ -7,7 +7,43 @@ const IGDB_CLIENT_ID = process.env.TWITCH_CLIENT_ID || "";
 
 export const runtime = "nodejs";
 
-const dlcsCache = new Map<string, { data: any; timestamp: number }>();
+interface DlcResult {
+  id: string;
+  igdbId: number;
+  name: string;
+  posterUrl: string | null;
+  releaseDate: string | null;
+  releaseYear: number | null;
+  rating: number | null;
+  genres: string[];
+  category: number;
+  isStandaloneExpansion: boolean;
+}
+
+interface DlcsResponse {
+  dlcs: DlcResult[];
+}
+
+interface IgdbGameContent {
+  id: number;
+  dlcs?: number[];
+  expansions?: number[];
+  standalone_expansions?: number[];
+  bundles?: number[];
+}
+
+interface IgdbContentGame {
+  id: number;
+  name: string;
+  cover?: { url: string };
+  rating?: number;
+  first_release_date?: number;
+  category?: number;
+  parent_game?: number;
+  genres?: { name: string }[];
+}
+
+const dlcsCache = new Map<string, { data: DlcsResponse; timestamp: number }>();
 const CACHE_TTL = 1000 * 60 * 30; // 30 minutes
 
 async function getFreshAccessToken(): Promise<string> {
@@ -86,8 +122,8 @@ export async function GET(
       throw new Error(`IGDB API error`);
     }
 
-    const games = await gameRes.json();
-    const game = games[0];
+     const games = await gameRes.json() as IgdbGameContent[];
+     const game = games[0];
 
     const contentIds = [
       ...(game.dlcs || []),
@@ -115,36 +151,36 @@ export async function GET(
       throw new Error(`IGDB API error`);
     }
 
-    const allContent = await contentRes.json();
+     const allContent = await contentRes.json() as IgdbContentGame[];
 
-    // Separate DLCs from other content
-    // category: 0 = main game, 1 = DLC, 2 = expansion, 3 = bundle
-    // We want DLCs and standalone expansions
-    const formattedDlcs = allContent
-      .filter((g: any) => {
-        if (g.id === igdbId) return false;
-        // Include DLCs (category 1), Expansions (category 2/8), or items in dlcs/expansions/standalone_expansions/bundles arrays
-        const isDlc = g.category === 1 || g.category === 2 || g.category === 8;
-        return isDlc || g.parent_game === igdbId;
-      })
-      .map((g: any) => ({
-        id: `igdb_${g.id}`,
-        igdbId: g.id,
-        name: g.name,
-        posterUrl: g.cover?.url
-          ? `https:${g.cover.url.replace("t_thumb", "t_cover_big")}`
-          : null,
-        releaseDate: g.first_release_date
-          ? new Date(g.first_release_date * 1000).toISOString().split("T")[0]
-          : null,
-        releaseYear: g.first_release_date
-          ? new Date(g.first_release_date * 1000).getFullYear()
-          : null,
-        rating: g.rating ? Math.round(g.rating / 10) : null,
-        genres: mapGenresToSpanish(g.genres?.map((g: { name: string }) => g.name) || []),
-        category: g.category,
-        isStandaloneExpansion: game.standalone_expansions?.includes(g.id) || false,
-      }));
+     // Separate DLCs from other content
+     // category: 0 = main game, 1 = DLC, 2 = expansion, 3 = bundle
+     // We want DLCs and standalone expansions
+     const formattedDlcs = allContent
+       .filter((g) => {
+         if (g.id === igdbId) return false;
+         // Include DLCs (category 1), Expansions (category 2/8), or items in dlcs/expansions/standalone_expansions/bundles arrays
+         const isDlc = g.category === 1 || g.category === 2 || g.category === 8;
+         return isDlc || g.parent_game === igdbId;
+       })
+       .map((g) => ({
+         id: `igdb_${g.id}`,
+         igdbId: g.id,
+         name: g.name,
+         posterUrl: g.cover?.url
+           ? `https:${g.cover.url.replace("t_thumb", "t_cover_big")}`
+           : null,
+         releaseDate: g.first_release_date
+           ? new Date(g.first_release_date * 1000).toISOString().split("T")[0]
+           : null,
+         releaseYear: g.first_release_date
+           ? new Date(g.first_release_date * 1000).getFullYear()
+           : null,
+         rating: g.rating ? Math.round(g.rating / 10) : null,
+         genres: mapGenresToSpanish(g.genres?.map((genre) => genre.name) || []),
+         category: g.category || 0,
+         isStandaloneExpansion: game.standalone_expansions?.includes(g.id) || false,
+       }));
 
     const result = { dlcs: formattedDlcs };
     dlcsCache.set(cacheKey, { data: result, timestamp: Date.now() });

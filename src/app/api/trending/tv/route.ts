@@ -1,12 +1,49 @@
 import { logger } from '@/lib/logger';
 import { NextResponse } from "next/server";
+import type { TmdbTv, TmdbSearchResult } from '@/types/tmdb';
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY!;
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 
 export const runtime = "nodejs";
 
-async function getTvProviders(tvId: number): Promise<{ id: number; name: string; logoUrl: string }[]> {
+interface ProviderResult {
+  id: number;
+  name: string;
+  logoUrl: string;
+}
+
+interface TmdbProviderItem {
+  provider_id: number;
+  provider_name: string;
+  logo_path?: string | null;
+}
+
+interface TmdbProvidersByCountry {
+  flatrate?: TmdbProviderItem[];
+  free?: TmdbProviderItem[];
+  ads?: TmdbProviderItem[];
+}
+
+interface TmdbWatchProvidersData {
+  id: number;
+  results: {
+    [countryCode: string]: TmdbProvidersByCountry;
+  };
+  link?: string;
+}
+
+interface TvResult {
+  id: string;
+  title: string;
+  posterUrl: string | null;
+  voteAverage: number;
+  firstAirDate: string;
+  overview: string;
+  providers?: ProviderResult[];
+}
+
+async function getTvProviders(tvId: number): Promise<ProviderResult[]> {
   try {
     const response = await fetch(
       `${TMDB_BASE_URL}/tv/${tvId}/watch/providers?api_key=${TMDB_API_KEY}`,
@@ -14,23 +51,23 @@ async function getTvProviders(tvId: number): Promise<{ id: number; name: string;
     );
     if (!response.ok) return [];
     
-    const data = await response.json();
+    const data = await response.json() as TmdbWatchProvidersData;
     const country = "ES";
     const providers = data.results?.[country];
     
     if (!providers) return [];
     
-    const allProviders = [
+    const allProviders: TmdbProviderItem[] = [
       ...(providers.flatrate || []),
       ...(providers.free || []),
       ...(providers.ads || []),
     ];
     
-    return allProviders.slice(0, 5).map((p: any) => ({
+    return allProviders.slice(0, 5).map((p) => ({
       id: p.provider_id,
       name: p.provider_name,
       logoUrl: p.logo_path ? `https://image.tmdb.org/t/p/original${p.logo_path}` : null,
-    })).filter((p: { logoUrl: string | null }): p is { id: number; name: string; logoUrl: string } => Boolean(p.logoUrl));
+    })).filter((p): p is ProviderResult => Boolean(p.logoUrl));
   } catch {
     return [];
   }
@@ -49,28 +86,21 @@ export async function GET() {
       throw new Error(`TMDB API error: ${response.status}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as TmdbSearchResult<TmdbTv>;
 
-    const shows = data.results?.slice(0, 20).map((tv: {
-      id: number;
-      name: string;
-      poster_path: string | null;
-      vote_average: number;
-      first_air_date: string;
-      overview: string;
-    }) => ({
+    const shows = data.results?.slice(0, 20).map((tv) => ({
       id: `tmdb_${tv.id}`,
       title: tv.name,
       posterUrl: tv.poster_path
         ? `https://image.tmdb.org/t/p/w500${tv.poster_path}`
         : null,
       voteAverage: Math.round(tv.vote_average * 10) / 10,
-      firstAirDate: tv.first_air_date,
-      overview: tv.overview,
+      firstAirDate: tv.first_air_date || "",
+      overview: tv.overview || "",
     })) || [];
 
     const showsWithProviders = await Promise.all(
-      shows.slice(0, 10).map(async (show: any, index: number) => {
+      shows.slice(0, 10).map(async (show, index) => {
         if (index < 10) {
           const tmdbId = show.id.replace("tmdb_", "");
           const providers = await getTvProviders(parseInt(tmdbId));

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Modal } from "@/components/ui/Modal";
 import { supabase } from "@/lib/supabase";
 import { WatchProvidersSection, type WatchProvider } from "@/components/shared/WatchProvidersSection";
@@ -96,24 +97,29 @@ export function TvInfo({
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-6 md:gap-8 mb-8 md:mb-12">
-        {/* Poster */}
-        <div className="relative">
-          <div className="sticky top-24">
-            {tv.posterUrl ? (
-              <img
-                src={tv.posterUrl}
-                alt={tv.title}
-                className="w-full rounded-2xl shadow-2xl shadow-black/50"
-              />
-            ) : (
-              <div className="aspect-[2/3] rounded-2xl bg-zinc-800 flex items-center justify-center">
-                <svg className="w-16 h-16 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-              </div>
-            )}
-          </div>
-        </div>
+         {/* Poster */}
+         <div className="relative">
+           <div className="sticky top-24">
+             {tv.posterUrl ? (
+               <div className="relative aspect-[2/3] rounded-2xl shadow-2xl shadow-black/50 overflow-hidden">
+                 <Image
+                   src={tv.posterUrl}
+                   alt={tv.title}
+                   fill
+                   className="object-cover"
+                   sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                   priority
+                 />
+               </div>
+             ) : (
+               <div className="aspect-[2/3] rounded-2xl bg-zinc-800 flex items-center justify-center">
+                 <svg className="w-16 h-16 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                 </svg>
+               </div>
+             )}
+           </div>
+         </div>
 
         {/* Info */}
         <div className="space-y-4">

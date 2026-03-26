@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import Image from "next/image";
 
 interface MediaModalProps {
   type: "image" | "video";
@@ -33,15 +34,22 @@ export function MediaModal({ type, src, alt, onClose }: MediaModalProps) {
         </svg>
       </button>
 
-      {/* Content */}
-      {type === "image" ? (
-        <img
-          src={src}
-          alt={alt || "Media"}
-          className="max-w-full max-h-[90vh] object-contain rounded-lg animate-in zoom-in-95 duration-300"
-          onClick={(e) => e.stopPropagation()}
-        />
-      ) : (
+       {/* Content */}
+       {type === "image" ? (
+         <div
+           className="relative max-w-full max-h-[90vh] animate-in zoom-in-95 duration-300"
+           onClick={(e) => e.stopPropagation()}
+         >
+           <Image
+             src={src}
+             alt={alt || "Media"}
+             fill
+             className="object-contain rounded-lg"
+             sizes="90vw"
+             priority
+           />
+         </div>
+       ) : (
         <div
           className="w-full max-w-5xl aspect-video rounded-lg overflow-hidden animate-in zoom-in-95 duration-300"
           onClick={(e) => e.stopPropagation()}

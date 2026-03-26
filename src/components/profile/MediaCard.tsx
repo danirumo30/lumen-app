@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
 import type { Media } from "@/modules/shared/domain/media";
 
 interface MediaCardProps {
@@ -85,16 +87,18 @@ export function MediaCard({ media }: MediaCardProps) {
           <div className="absolute inset-[-1px] rounded-xl bg-gradient-to-br from-white/[0.05] via-transparent to-transparent" />
         </div>
         
-        {/* Poster image or placeholder */}
-        {imageUrl ? (
-          <img
-            src={imageUrl}
-            alt={media.title}
-            className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover/card:scale-105"
-            loading="lazy"
-            onError={() => setImageError(true)}
-          />
-        ) : (
+         {/* Poster image or placeholder */}
+         {imageUrl ? (
+           <Image
+             src={imageUrl}
+             alt={media.title}
+             fill
+             className="object-cover transition-transform duration-700 ease-out group-hover/card:scale-105"
+             loading="lazy"
+             onError={() => setImageError(true)}
+             sizes="(max-width: 768px) 40vw, (max-width: 1024px) 20vw, 10vw"
+           />
+         ) : (
           <div className={`w-full h-full flex items-center justify-center ${getPlaceholderGradient()}`}>
             {getIcon()}
           </div>

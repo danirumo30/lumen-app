@@ -7,7 +7,19 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 export const runtime = "nodejs";
 
-async function getPopularUsers() {
+interface UserProfile {
+  id: string;
+  username: string;
+  avatar_url: string | null;
+}
+
+interface UserResult {
+  id: string;
+  username: string;
+  avatarUrl: string | null;
+}
+
+async function getPopularUsers(): Promise<UserResult[]> {
   const supabase = createClient(supabaseUrl, supabaseKey);
   
   const { data: profiles, error: profilesError } = await supabase
@@ -23,17 +35,21 @@ async function getPopularUsers() {
 
   const shuffled = [...profiles].sort(() => Math.random() - 0.5);
 
-  return shuffled.slice(0, 20);
+  return shuffled.slice(0, 20).map((user: UserProfile) => ({
+    id: user.id,
+    username: user.username,
+    avatarUrl: user.avatar_url,
+  }));
 }
 
 export async function GET() {
   try {
     const users = await getPopularUsers();
 
-    const results = users.map((user: any) => ({
+    const results = users.map((user) => ({
       id: user.id,
       username: user.username,
-      avatarUrl: user.avatar_url,
+      avatarUrl: user.avatarUrl,
     }));
 
     return NextResponse.json({ results });
