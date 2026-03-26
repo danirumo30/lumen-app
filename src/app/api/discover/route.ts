@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import type { TmdbWatchProvidersByCountry, TmdbWatchProvider } from '@/types/tmdb';
+import { logger } from '@/lib/logger';
+import type { TmdbWatchProvidersByCountry, TmdbWatchProvider, TmdbSearchResult, TmdbMovie, TmdbTv } from '@/types/tmdb';
+import type { IgdbGame } from '@/types/igdb';
+import type { UserPublicProfile } from '@/types/supabase';
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY!;
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
@@ -43,6 +46,28 @@ async function getIgdbToken(): Promise<string> {
   }
   return IGDB_ACCESS_TOKEN;
 }
+
+type MovieWithProviders = {
+  id: string;
+  type: "movie";
+  title: string;
+  posterUrl: string | null;
+  voteAverage: number;
+  releaseDate: string;
+  overview: string;
+  providers?: { id: number; name: string; logoUrl: string | null; type: string }[];
+};
+
+type TvWithProviders = {
+  id: string;
+  type: "tv";
+  title: string;
+  posterUrl: string | null;
+  voteAverage: number;
+  releaseDate: string;
+  overview: string;
+  providers?: { id: number; name: string; logoUrl: string | null; type: string }[];
+};
 
 interface ProviderWithType {
   provider_id: number;
@@ -166,7 +191,7 @@ async function getPopularMovies(filters?: SearchFilters, page: number = 1, query
     })) || [];
     
     const moviesWithProviders = await Promise.all(
-      movies.map(async (movie: any, index: number) => {
+      movies.map(async (movie: MovieWithProviders, index: number) => {
         if (index < 10) {
           const tmdbId = movie.id.replace("tmdb_", "");
           const providers = await getMovieProviders(parseInt(tmdbId));
@@ -249,32 +274,39 @@ async function getPopularMovies(filters?: SearchFilters, page: number = 1, query
   }
 
   const data = await response.json();
-  const movies = data.results?.slice(0, 20).map((movie: {
-    id: number;
-    title: string;
-    poster_path: string | null;
-    vote_average: number;
-    release_date: string;
-    overview: string;
-  }) => ({
-    id: `tmdb_${movie.id}`,
-    type: "movie" as const,
-    title: movie.title,
-    posterUrl: movie.poster_path
-      ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
-      : null,
-    voteAverage: Math.round(movie.vote_average * 10) / 10,
-    releaseDate: movie.release_date,
-    overview: movie.overview,
-  })) || [];
+    const movies = data.results?.slice(0, 20).map((movie: TmdbMovie) => ({
+      id: `tmdb_${movie.id}`,
+      type: "movie" as const,
+      title: movie.title,
+      posterUrl: movie.poster_path
+        ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+        : null,
+      voteAverage: Math.round(movie.vote_average * 10) / 10,
+      releaseDate: movie.release_date,
+      overview: movie.overview,
+    })) || [];
 
-   const moviesWithProviders = await Promise.all(
-     movies.map(async (movie: any) => {
-       const tmdbId = movie.id.replace("tmdb_", "");
-       const providers = await getMovieProviders(parseInt(tmdbId));
-       return { ...movie, providers };
-     })
-   );
+    type MovieWithProviders = {
+      id: string;
+      type: "movie";
+      title: string;
+      posterUrl: string | null;
+      voteAverage: number;
+      releaseDate: string;
+      overview: string;
+      providers?: { id: number; name: string; logoUrl: string | null; type: string }[];
+    };
+
+    const moviesWithProviders = await Promise.all(
+      movies.map(async (movie: MovieWithProviders, index: number) => {
+        if (index < 10) {
+          const tmdbId = movie.id.replace("tmdb_", "");
+          const providers = await getMovieProviders(parseInt(tmdbId));
+          return { ...movie, providers };
+        }
+        return movie;
+      })
+    );
 
   return moviesWithProviders;
 }
@@ -391,16 +423,16 @@ async function getPopularTv(filters?: SearchFilters, page: number = 1, query?: s
       overview: show.overview,
     })) || [];
     
-    const showsWithProviders = await Promise.all(
-      shows.map(async (show: any, index: number) => {
-        if (index < 10) {
-          const tmdbId = show.id.replace("tmdb_", "");
-          const providers = await getTvProviders(parseInt(tmdbId));
-          return { ...show, providers };
-        }
-        return show;
-      })
-    );
+     const showsWithProviders = await Promise.all(
+       shows.map(async (show: TvWithProviders, index: number) => {
+         if (index < 10) {
+           const tmdbId = show.id.replace("tmdb_", "");
+           const providers = await getTvProviders(parseInt(tmdbId));
+           return { ...show, providers };
+         }
+         return show;
+       })
+     );
     
     return showsWithProviders;
   }
@@ -503,13 +535,13 @@ async function getPopularTv(filters?: SearchFilters, page: number = 1, query?: s
     overview: show.overview,
   })) || [];
 
-   const showsWithProviders = await Promise.all(
-     shows.map(async (show: any) => {
-       const tmdbId = show.id.replace("tmdb_", "");
-       const providers = await getTvProviders(parseInt(tmdbId));
-       return { ...show, providers };
-     })
-   );
+    const showsWithProviders = await Promise.all(
+      shows.map(async (show: TvWithProviders) => {
+        const tmdbId = show.id.replace("tmdb_", "");
+        const providers = await getTvProviders(parseInt(tmdbId));
+        return { ...show, providers };
+      })
+    );
 
   return showsWithProviders;
 }
@@ -797,10 +829,10 @@ async function getTrendingUsers() {
   }
   
   const shuffled = [...profiles].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, 20).map((user: any) => ({
+  return shuffled.slice(0, 20).map((user: { id: string; username: string | null; avatar_url: string | null }) => ({
     id: user.id,
     type: "user" as const,
-    title: user.username, // Use title for consistency with SearchResult
+    title: user.username,
     avatarUrl: user.avatar_url,
   }));
 }
