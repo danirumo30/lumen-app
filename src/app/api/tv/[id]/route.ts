@@ -1,5 +1,70 @@
 import { logger } from '@/lib/logger';
 import { NextResponse } from "next/server";
+import type { TmdbTv, TmdbWatchProvidersByCountry, TmdbWatchProvider } from '@/types/tmdb';
+
+// Local interfaces for TV detail response
+interface TvContentRating {
+  iso_3166_1: string;
+  rating: string;
+}
+
+interface TvContentRatings {
+  results: TvContentRating[];
+}
+
+interface TvSeason {
+  season_number: number;
+  name: string;
+  episode_count: number;
+  air_date: string | null;
+  poster_path: string | null;
+  overview?: string;
+}
+
+interface TvCreditsPerson {
+  id: number;
+  name: string;
+  profile_path: string | null;
+  character?: string;
+  character_name?: string;
+  order?: number;
+  roles?: Array<{ character?: string; character_name?: string }>;
+}
+
+interface TvAggregateCredits {
+  cast: TvCreditsPerson[];
+  crew: TvCreditsPerson[];
+}
+
+interface TvNetwork {
+  id: number;
+  name: string;
+  logo_path?: string | null;
+}
+
+interface TvGenre {
+  id: number;
+  name: string;
+}
+
+interface TvCreatedBy {
+  id: number;
+  name: string;
+  profile_path: string | null;
+}
+
+// Extended TV type with additional fields from API
+interface TvDetail extends TmdbTv {
+  content_ratings?: TvContentRatings;
+  aggregate_credits?: TvAggregateCredits;
+  seasons?: TvSeason[];
+  genres?: TvGenre[];
+  networks?: TvNetwork[];
+  created_by?: TvCreatedBy[];
+  number_of_seasons?: number;
+  number_of_episodes?: number;
+  in_production?: boolean;
+}
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY!;
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
@@ -37,39 +102,47 @@ export async function GET(
       throw new Error(`TMDB API error: ${tvResponse.status}`);
     }
 
-    const tv = await tvResponse.json();
+     const tv = await tvResponse.json() as TvDetail;
 
-    let certification = null;
+    let certification: string | null = null;
     if (tv.content_ratings?.results) {
-      const usRating = tv.content_ratings.results.find((r: any) => r.iso_3166_1 === "US");
+      const usRating = tv.content_ratings.results.find((r) => r.iso_3166_1 === "US");
       if (usRating?.rating) {
         certification = usRating.rating;
       }
     }
 
-    let watchProviders: any = null;
+    let formattedWatchProviders: { link?: string; providers: Array<{ id: number; name: string; logoUrl: string | null; type: string }> } | null = null;
     if (watchProvidersResponse.ok) {
-      const providersData = await watchProvidersResponse.json();
-      watchProviders = providersData.results?.[country] || null;
+      const providersData = await watchProvidersResponse.json() as { link?: string; results: { [country: string]: TmdbWatchProvidersByCountry } };
+      const providersForCountry = providersData.results?.[country] ?? null;
+      if (providersForCountry) {
+        formattedWatchProviders = {
+          link: providersData.link,
+          providers: [
+            ...(providersForCountry.flatrate ?? []).map((p: TmdbWatchProvider) => ({ ...p, type: "subscription" })),
+            ...(providersForCountry.free ?? []).map((p: TmdbWatchProvider) => ({ ...p, type: "free" })),
+            ...(providersForCountry.ads ?? []).map((p: TmdbWatchProvider) => ({ ...p, type: "ads" })),
+            ...(providersForCountry.rent ?? []).map((p: TmdbWatchProvider) => ({ ...p, type: "rent" })),
+            ...(providersForCountry.buy ?? []).map((p: TmdbWatchProvider) => ({ ...p, type: "buy" })),
+          ].map((p) => ({
+            id: p.provider_id,
+            name: p.provider_name,
+            logoUrl: p.logo_path ? `https://image.tmdb.org/t/p/original${p.logo_path}` : null,
+            type: p.type,
+          })),
+        };
+      }
     }
 
-    const formattedWatchProviders = watchProviders ? {
-      link: watchProviders.link,
-      providers: [
-        ...(watchProviders.flatrate || []).map((p: any) => ({ ...p, type: "subscription" })),
-        ...(watchProviders.free || []).map((p: any) => ({ ...p, type: "free" })),
-        ...(watchProviders.ads || []).map((p: any) => ({ ...p, type: "ads" })),
-        ...(watchProviders.rent || []).map((p: any) => ({ ...p, type: "rent" })),
-        ...(watchProviders.buy || []).map((p: any) => ({ ...p, type: "buy" })),
-      ].map((p: any) => ({
-        id: p.provider_id,
-        name: p.provider_name,
-        logoUrl: p.logo_path ? `https://image.tmdb.org/t/p/original${p.logo_path}` : null,
-        type: p.type,
-      })),
-    } : null;
-
-    const seasons = tv.seasons?.map((season: any) => ({
+    const seasons: Array<{
+      seasonNumber: number;
+      name: string;
+      episodeCount: number;
+      airDate: string | null;
+      overview?: string;
+      posterPath: string | null;
+    }> = tv.seasons?.map((season: TvSeason) => ({
       seasonNumber: season.season_number,
       name: season.name,
       episodeCount: season.episode_count,
@@ -80,14 +153,20 @@ export async function GET(
         : null,
     })) || [];
 
-    const cast = tv.aggregate_credits?.cast?.slice(0, 20).map((person: any) => ({
+    const cast: Array<{
+      id: number;
+      name: string;
+      character: string;
+      profileUrl: string | null;
+      order: number;
+    }> = tv.aggregate_credits?.cast?.slice(0, 20).map((person: TvCreditsPerson) => ({
       id: person.id,
       name: person.name,
       character: person.roles?.[0]?.character || person.roles?.[0]?.character_name || "",
       profileUrl: person.profile_path
         ? `https://image.tmdb.org/t/p/w185${person.profile_path}`
         : null,
-      order: person.order,
+      order: person.order ?? 0,
     })) || [];
 
     const result = {
@@ -105,7 +184,7 @@ export async function GET(
       firstAirDate: tv.first_air_date,
       lastAirDate: tv.last_air_date,
       releaseYear: tv.first_air_date ? new Date(tv.first_air_date).getFullYear() : null,
-      genres: tv.genres?.map((g: any) => ({ id: g.id, name: g.name })) || [],
+      genres: tv.genres?.map((g: TvGenre) => ({ id: g.id, name: g.name })) || [],
       rating: tv.vote_average ? Math.round(tv.vote_average * 10) / 10 : null,
       voteCount: tv.vote_count,
       certification,
@@ -116,8 +195,16 @@ export async function GET(
       seasons,
       cast,
       inProduction: tv.in_production,
-      networks: tv.networks?.map((n: any) => ({ id: n.id, name: n.name, logoPath: n.logo_path ? `https://image.tmdb.org/t/p/w500${n.logo_path}` : null })) || [],
-      createdBy: tv.created_by?.map((c: any) => ({ id: c.id, name: c.name, profilePath: c.profile_path ? `https://image.tmdb.org/t/p/w185${c.profile_path}` : null })) || [],
+      networks: tv.networks?.map((n: TvNetwork) => ({ 
+        id: n.id, 
+        name: n.name, 
+        logoPath: n.logo_path ? `https://image.tmdb.org/t/p/w500${n.logo_path}` : null 
+      })) || [],
+      createdBy: tv.created_by?.map((c: TvCreatedBy) => ({ 
+        id: c.id, 
+        name: c.name, 
+        profilePath: c.profile_path ? `https://image.tmdb.org/t/p/w185${c.profile_path}` : null 
+      })) || [],
       watchProviders: formattedWatchProviders,
     };
 
