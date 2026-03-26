@@ -648,21 +648,21 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
           </div>
         </div>
 
-        {/* Playtime tracker - Long and slim */}
+        {/* Playtime tracker - precise spacing */}
         {user && (currentPlayStatus === "playing" || currentPlayStatus === "completed" || currentPlayStatus === "dropped") && (
-          <div className="inline-flex items-center gap-5 px-6 py-2 rounded-lg bg-zinc-900/80 border border-emerald-500/30 backdrop-blur-md relative overflow-hidden group">
+          <div className="inline-flex items-center px-6 py-2 rounded-lg bg-zinc-900/80 border border-emerald-500/30 backdrop-blur-md relative overflow-hidden group">
             {/* Hover glow */}
             <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-emerald-500/0 via-emerald-500/10 to-emerald-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
             
             {/* Time display */}
-            <span className="text-sm font-mono tabular-nums bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-400 bg-clip-text text-transparent animate-gradient-x min-w-[90px]">
+            <span className="text-sm font-mono tabular-nums bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-400 bg-clip-text text-transparent animate-gradient-x min-w-[90px] mr-6">
               {formatPlaytime(gameStatus.playtimeMinutes)}
             </span>
             
-            <div className="w-px h-5 bg-gradient-to-b from-emerald-500/50 to-emerald-500/0 rounded-full" />
+            <div className="w-px h-5 bg-gradient-to-b from-emerald-500/50 to-emerald-500/0 rounded-full mr-6" />
             
             {/* Hours with label */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 mr-4">
               <span className="text-[10px] text-emerald-500/70 uppercase tracking-widest">Horas</span>
               <input
                 type="number"
@@ -676,7 +676,7 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
             </div>
 
             {/* Minutes with label */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 mr-1.5">
               <span className="text-[10px] text-emerald-500/70 uppercase tracking-widest">Minutos</span>
               <input
                 type="number"
