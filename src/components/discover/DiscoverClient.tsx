@@ -98,9 +98,9 @@ export function DiscoverClient() {
           </div>
         </div>
 
-        {/* Tagline bajo la línea */}
-        <div className="w-full flex justify-center mb-5">
-          <p className="text-zinc-400 text-sm tracking-wide max-w-3xl text-center">
+        {/* Tagline bajo la línea con gradiente animado */}
+        <div className="w-full flex justify-center mb-6">
+          <p className="text-lg tracking-wide max-w-3xl text-center font-light animate-gradient-text">
             Encuentra tu próxima película, serie o juego favorito
           </p>
         </div>
