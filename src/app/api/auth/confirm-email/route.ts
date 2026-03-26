@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
@@ -7,7 +8,7 @@ const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 // Debug: Hardcodear URL si la del entorno parece incorrecta (http en lugar de https o localhost)
 if (supabaseUrl.startsWith('http://localhost')) {
-  console.warn(`[WARN] Supabase URL parece ser local (${supabaseUrl}). Usando URL de nube hardcodeada.`);
+  logger.warn(`[WARN] Supabase URL parece ser local (${supabaseUrl}). Usando URL de nube hardcodeada.`);
   supabaseUrl = 'https://nyjbhwlnnhgaoctxrjdd.supabase.co';
 }
 
@@ -38,7 +39,7 @@ export async function GET(request: Request) {
       .single();
 
     if (tokenError || !tokenData) {
-      console.warn('Token no encontrado o error en búsqueda:', tokenError);
+      logger.warn('Token no encontrado o error en búsqueda:', tokenError);
       return NextResponse.redirect(new URL('/?error=invalid_token', request.url));
     }
 
@@ -47,7 +48,7 @@ export async function GET(request: Request) {
     const expiresAt = new Date(tokenData.expires_at);
 
     if (expiresAt < now) {
-      console.warn('Token expirado:', token);
+      logger.warn('Token expirado:', token);
       return NextResponse.redirect(new URL('/?error=token_expired', request.url));
     }
 
@@ -61,10 +62,10 @@ export async function GET(request: Request) {
       .eq('token', token);
 
     if (confirmError) {
-      console.error('Error marcando email como verificado:', confirmError);
+      logger.error('Error marcando email como verificado:', confirmError);
       // No bloqueamos si falla la actualización, pero logueamos
     } else {
-      console.log(`Email verificado para usuario ${tokenData.user_id}.`);
+      logger.debug(`Email verificado para usuario ${tokenData.user_id}.`);
     }
 
     // 4. Eliminar el token para evitar reutilización
@@ -75,41 +76,41 @@ export async function GET(request: Request) {
       .eq('token', token);
 
     if (deleteError) {
-      console.error('Error eliminando token:', deleteError);
+      logger.error('Error eliminando token:', deleteError);
       // No bloqueamos la verificación si falla eliminar el token, pero logueamos
     }
 
     // 5. Confirmar el email en auth.users
     try {
-      console.log(`Intentando confirmar usuario ${tokenData.user_id} en auth.users...`);
+// DEBUG REMOVED:       logger.debug(`Intentando confirmar usuario ${tokenData.user_id} en auth.users...`);
       const { error: confirmUserError } = await supabaseAdmin.auth.admin.updateUserById(tokenData.user_id, {
         email_confirm: true,
       });
       
       if (confirmUserError) {
-        console.error('Error confirmando usuario en auth.users:', confirmUserError);
+        logger.error('Error confirmando usuario en auth.users:', confirmUserError);
       } else {
-        console.log(`Usuario ${tokenData.user_id} confirmado en auth.users.`);
+        logger.debug(`Usuario ${tokenData.user_id} confirmado en auth.users.`);
       }
     } catch (error) {
-      console.error('Excepción confirmando usuario:', error);
+      logger.error('Excepción confirmando usuario:', error);
     }
 
     // 6. Obtener el email del usuario desde auth.users
     try {
       const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(tokenData.user_id);
       
-      console.log(`[Debug] userData:`, JSON.stringify(userData, null, 2));
+// DEBUG REMOVED: // DEBUG REMOVED:       logger.debug(`[Debug] userData:`, JSON.stringify(userData, null, 2));
       
       if (userError || !userData) {
-        console.error('Error obteniendo usuario:', userError);
+        logger.error('Error obteniendo usuario:', userError);
         // Si no podemos obtener el email, redirigimos al login normal
         return NextResponse.redirect(new URL('/login', request.url));
       }
 
       // userData es { user: User, ... } según la API de Supabase
       const userEmail = userData.user?.email;
-      console.log(`[Debug] userEmail: ${userEmail}`);
+// DEBUG REMOVED:       logger.debug(`[Debug] userEmail: ${userEmail}`);
 
       // 7. Eliminar el token usado
       await supabaseAdmin
@@ -127,11 +128,12 @@ export async function GET(request: Request) {
       return NextResponse.redirect(loginUrl);
 
     } catch (error) {
-      console.error('Error obteniendo usuario o redirigiendo:', error);
+      logger.error('Error obteniendo usuario o redirigiendo:', error);
       return NextResponse.redirect(new URL('/login', request.url));
     }
   } catch (error) {
-    console.error('Error en confirm-email:', error);
+    logger.error('Error en confirm-email:', error);
     return NextResponse.redirect(new URL('/?error=server_error', request.url));
   }
 }
+

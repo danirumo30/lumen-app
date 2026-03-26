@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
@@ -167,7 +168,7 @@ async function searchMovies(query: string, page = 1, filters?: SearchFilters) {
      url += "&sort_by=popularity.desc";
    }
 
-   console.log("[searchMovies] final URL:", url);
+// DEBUG REMOVED: // DEBUG REMOVED:    logger.debug("[searchMovies] final URL:", url);
    const response = await fetch(url, { headers: { "Cache-Control": "public, s-maxage=600" } });
 
   if (!response.ok) {
@@ -247,7 +248,7 @@ async function getTvProviders(tvId: number): Promise<{ id: number; name: string;
 
 // Search TV on TMDB with filters
 async function searchTv(query: string, page = 1, filters?: SearchFilters) {
-  console.log("[searchTv] called with:", { query, page, filters });
+// DEBUG REMOVED: // DEBUG REMOVED:   logger.debug("[searchTv] called with:", { query, page, filters });
   const hasQuery = query && query.trim().length >= 2;
   let url = `${TMDB_BASE_URL}/search/tv?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}&page=${page}&language=es-ES`;
 
@@ -314,7 +315,7 @@ async function searchTv(query: string, page = 1, filters?: SearchFilters) {
      url += "&sort_by=popularity.desc";
    }
 
-   console.log("[searchTv] final URL:", url);
+// DEBUG REMOVED: // DEBUG REMOVED:    logger.debug("[searchTv] final URL:", url);
    const response = await fetch(url, { headers: { "Cache-Control": "public, s-maxage=600" } });
 
   if (!response.ok) {
@@ -358,7 +359,7 @@ async function searchTv(query: string, page = 1, filters?: SearchFilters) {
 
 // Search games on IGDB with filters
 async function searchGames(query: string, page: number = 1, filters?: SearchFilters) {
-  console.log("[searchGames] called with:", { query, page, filters });
+// DEBUG REMOVED: // DEBUG REMOVED:   logger.debug("[searchGames] called with:", { query, page, filters });
   const token = await getIgdbToken();
 
   // Escape double quotes in query to avoid breaking IGDB query
@@ -447,7 +448,7 @@ async function searchGames(query: string, page: number = 1, filters?: SearchFilt
       // No query - use trending logic with offset for pagination
       queryBody = `fields id, name, cover.url, first_release_date, rating, genres.name, platforms.id, platforms.name, platforms.platform_logo.image_id;${whereClause}${sortClause}${offsetClause} limit 20;`;
     }
-    console.log("[searchGames] queryBody:", queryBody);
+// DEBUG REMOVED: // DEBUG REMOVED:     logger.debug("[searchGames] queryBody:", queryBody);
 
   const response = await fetch("https://api.igdb.com/v4/games", {
     method: "POST",
@@ -460,7 +461,7 @@ async function searchGames(query: string, page: number = 1, filters?: SearchFilt
   });
 
   if (!response.ok) {
-    console.error("IGDB search error:", await response.text());
+    logger.error("IGDB search error:", await response.text());
     return [];
   }
 
@@ -502,11 +503,11 @@ async function searchGames(query: string, page: number = 1, filters?: SearchFilt
 async function searchUsers(query: string, supabaseUrl: string, supabaseKey: string, page: number = 1) {
   const supabase = createClient(supabaseUrl, supabaseKey);
   
-  console.log("[USER SEARCH] Searching for:", query, "page:", page);
+// DEBUG REMOVED:   logger.debug("[USER SEARCH] Searching for:", query, "page:", page);
   
   // If no query, return empty (use trending users instead)
   if (!query || query.length === 0) {
-    console.log("[USER SEARCH] No query, returning empty (use trending)");
+// DEBUG REMOVED:     logger.debug("[USER SEARCH] No query, returning empty (use trending)");
     return [];
   }
   
@@ -521,11 +522,11 @@ async function searchUsers(query: string, supabaseUrl: string, supabaseKey: stri
     .order("username", { ascending: true });
 
   if (error) {
-    console.error("[USER SEARCH] Error:", error);
+    logger.error("[USER SEARCH] Error:", error);
     return [];
   }
 
-  console.log("[USER SEARCH] Found users:", data?.length || 0);
+  logger.debug("[USER SEARCH] Found users:", data?.length || 0);
 
   return data?.map((user: {
     id: string;
@@ -554,7 +555,7 @@ async function getTrendingUsers(supabaseUrl: string, supabaseKey: string, page: 
     .order("created_at", { ascending: false });
 
   if (profilesError || !profiles) {
-    console.error("Error fetching profiles:", profilesError);
+    logger.error("Error fetching profiles:", profilesError);
     return [];
   }
 
@@ -615,7 +616,7 @@ async function getTrendingMovies(filters?: SearchFilters, limit: number = 10) {
     const response = await fetch(url, { headers: { "Cache-Control": "public, s-maxage=3600" } });
 
     if (!response.ok) {
-      console.error("TMDB discover movies error:", response.status);
+      logger.error("TMDB discover movies error:", response.status);
       return [];
     }
 
@@ -638,7 +639,7 @@ async function getTrendingMovies(filters?: SearchFilters, limit: number = 10) {
       releaseDate: movie.release_date,
     })) || [];
   } catch (error) {
-    console.error("Error fetching trending movies:", error);
+    logger.error("Error fetching trending movies:", error);
     return [];
   }
 }
@@ -689,7 +690,7 @@ async function getTrendingTv(filters?: SearchFilters, limit: number = 10) {
     const response = await fetch(url, { headers: { "Cache-Control": "public, s-maxage=3600" } });
 
     if (!response.ok) {
-      console.error("TMDB discover TV error:", response.status);
+      logger.error("TMDB discover TV error:", response.status);
       return [];
     }
 
@@ -712,7 +713,7 @@ async function getTrendingTv(filters?: SearchFilters, limit: number = 10) {
       releaseDate: show.first_air_date,
     })) || [];
   } catch (error) {
-    console.error("Error fetching trending TV:", error);
+    logger.error("Error fetching trending TV:", error);
     return [];
   }
 }
@@ -771,7 +772,7 @@ async function getTrendingGames(filters?: SearchFilters, limit: number = 10) {
     });
 
     if (!response.ok) {
-      console.error("IGDB discover games error:", response.status);
+      logger.error("IGDB discover games error:", response.status);
       return [];
     }
 
@@ -808,7 +809,7 @@ async function getTrendingGames(filters?: SearchFilters, limit: number = 10) {
       })).filter((p: { logoUrl: string | null }) => p.logoUrl) || [],
     }));
   } catch (error) {
-    console.error("Error fetching trending games:", error);
+    logger.error("Error fetching trending games:", error);
     return [];
   }
 }
@@ -853,7 +854,7 @@ export async function GET(request: Request) {
     const needsTrendingUsers = !query && (type === "user" || isAll);
     const needsTrendingContent = !hasQuery && (type !== "user");
     
-    console.log("[SEARCH] query:", query, "type:", type, "hasQuery:", hasQuery, "isAll:", isAll, "needsTrendingUsers:", needsTrendingUsers, "needsTrendingContent:", needsTrendingContent);
+// DEBUG REMOVED:     logger.debug("[SEARCH] query:", query, "type:", type, "hasQuery:", hasQuery, "isAll:", isAll, "needsTrendingUsers:", needsTrendingUsers, "needsTrendingContent:", needsTrendingContent);
 
   const cacheKey = `${query}_${type}`;
   const cached = pageCache.get(cacheKey);
@@ -906,7 +907,7 @@ export async function GET(request: Request) {
     }
     } else {
       // Trending mode - get 10 of each type (with filters if provided)
-      console.log("[SEARCH] Fetching trending content with filters:", !!filters);
+// DEBUG REMOVED:       logger.debug("[SEARCH] Fetching trending content with filters:", !!filters);
 
       const trendingResults = await Promise.all([
         (type === "all" || type === "movie") ? getTrendingMovies(filters, 10) : Promise.resolve([]),
@@ -920,7 +921,7 @@ export async function GET(request: Request) {
       games = trendingResults[2];
       users = trendingResults[3];
 
-      console.log("[SEARCH] Trending - movies:", movies.length, "tv:", tv.length, "games:", games.length, "users:", users.length);
+// DEBUG REMOVED:       logger.debug("[SEARCH] Trending - movies:", movies.length, "tv:", tv.length, "games:", games.length, "users:", users.length);
     }
 
     const totalResults = movies.length + tv.length + games.length + users.length;
@@ -945,10 +946,12 @@ export async function GET(request: Request) {
       hasMore,
     });
   } catch (error) {
-    console.error("Search error:", error);
+    logger.error("Search error:", error);
     return NextResponse.json(
       { error: "Search failed" },
       { status: 500 }
     );
   }
 }
+
+

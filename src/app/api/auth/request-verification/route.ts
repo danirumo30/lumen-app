@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { 
@@ -52,7 +53,7 @@ export async function POST(request: Request) {
       });
 
     if (insertError) {
-      console.error('Error inserting verification token:', insertError);
+      logger.error('Error inserting verification token:', insertError);
       return NextResponse.json(
         { error: 'Error generando token de verificación' },
         { status: 500 }
@@ -87,14 +88,14 @@ export async function POST(request: Request) {
           html: emailHtml,
           text: emailText,
         });
-        console.log(`Email enviado exitosamente a ${user.email}`);
+        logger.debug(`Email enviado exitosamente a ${user.email}`);
       } catch (emailError) {
-        console.error('Error al enviar email de verificación:', emailError);
+        logger.error('Error al enviar email de verificación:', emailError);
         // No fallamos el registro si el email falla, solo logueamos el error
       }
     } else {
-      console.log(`[DEVELOPMENT] Email no enviado (simulado). Para enviar emails reales en desarrollo, configura SMTP_SEND_IN_DEVELOPMENT=true en .env.local`);
-      console.log(`[DEVELOPMENT] URL de verificación: ${verificationUrl}`);
+      logger.debug(`[DEVELOPMENT] Email no enviado (simulado). Para enviar emails reales en desarrollo, configura SMTP_SEND_IN_DEVELOPMENT=true en .env.local`);
+// DEBUG REMOVED:       logger.debug(`[DEVELOPMENT] URL de verificación: ${verificationUrl}`);
     }
     
     return NextResponse.json({
@@ -107,7 +108,7 @@ export async function POST(request: Request) {
       verificationUrl: isDevelopment && sendInDevelopment ? verificationUrl : undefined,
     });
   } catch (error) {
-    console.error('Error en request-verification:', error);
+    logger.error('Error en request-verification:', error);
     return NextResponse.json(
       { error: 'Error interno del servidor' },
       { status: 500 }

@@ -1,5 +1,6 @@
 import type { UserProfileWithStats } from "@/modules/social/domain/user-profile";
 import { useDragScroll } from "@/components/home/useDragScroll";
+import Image from "next/image";
 
 interface ProfileStatsProps {
   stats: UserProfileWithStats;
@@ -141,13 +142,19 @@ export function ProfileStats({ stats }: ProfileStatsProps) {
       colorKey: "emerald" as const,
     },
     {
-      label: "Platinados",
-      value: stats.totalGamesPlatinum.toString(),
-      icon: (
-        <img src="/icons/platforms/platino.png" alt="Platino" className="w-4 h-4 sm:w-5 sm:h-5" />
-      ),
-      colorKey: "amber" as const,
-    },
+       label: "Platinados",
+       value: stats.totalGamesPlatinum.toString(),
+       icon: (
+         <Image
+           src="/icons/platforms/platino.png"
+           alt="Platino"
+           width={20}
+           height={20}
+           className="w-4 h-4 sm:w-5 sm:h-5"
+         />
+       ),
+       colorKey: "amber" as const,
+     },
   ];
 
   return (

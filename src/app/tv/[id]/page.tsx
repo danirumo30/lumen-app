@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { use } from "react";
+import Image from "next/image";
 import { useQueryClient } from "@tanstack/react-query";
 import { TvInfo } from "@/components/tv/TvInfo";
 import { EpisodesAccordion } from "@/components/tv/EpisodesAccordion";
@@ -768,13 +769,18 @@ export default function TvDetailPage({ params }: { params: Promise<{ id: string 
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950">
-      {tv.backdropUrl && (
-        <div className="fixed inset-0 -z-10">
-          <img src={tv.backdropUrl} alt="" className="w-full h-full object-cover opacity-20 blur-2xl" />
-          <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/50 via-zinc-950/80 to-zinc-950" />
-        </div>
-      )}
+     <div className="min-h-screen bg-zinc-950">
+       {tv.backdropUrl && (
+         <div className="fixed inset-0 -z-10">
+           <Image
+             src={tv.backdropUrl}
+             alt=""
+             fill
+             className="object-cover opacity-20 blur-2xl"
+           />
+           <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/50 via-zinc-950/80 to-zinc-950" />
+         </div>
+       )}
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         <a href="/" className="inline-flex items-center gap-2 text-zinc-400 hover:text-white mb-8 transition-colors">

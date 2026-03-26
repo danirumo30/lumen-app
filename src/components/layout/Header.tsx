@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/modules/auth/infrastructure/contexts/AuthContext';
@@ -15,7 +16,7 @@ export default function Header() {
   const pathname = usePathname();
 
   // Update avatar cache key when user data changes (e.g., after profile update)
-  // eslint-disable-next-line react-hooks/set-state-in-effect -- Intentional: needed for avatar cache busting
+   
   useEffect(() => {
     if (user?.avatarUrl) {
       setAvatarCacheKey(prev => prev + 1);
@@ -23,15 +24,14 @@ export default function Header() {
   }, [user?.avatarUrl]);
 
   // Helper to get avatar URL with cache busting
-  const getAvatarUrl = (url?: string) => {
-    if (!url) return undefined;
+  const getAvatarUrl = (url: string): string => {
     // Add cache-busting query param to force browser to reload image
     const separator = url.includes('?') ? '&' : '?';
     return `${url}${separator}t=${avatarCacheKey}`;
   };
 
   // Close menus on route change
-  // eslint-disable-next-line react-hooks/set-state-in-effect -- Intentional: needed to close menus on navigation
+   
   useEffect(() => {
     setIsMobileMenuOpen(false);
     setIsUserMenuOpen(false);
@@ -52,7 +52,13 @@ export default function Header() {
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2 md:space-x-3 group" onClick={closeMobileMenu}>
             <div className="w-8 h-8 md:w-9 md:h-9 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg md:rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/25 transform group-hover:scale-105 transition-transform duration-200 overflow-hidden">
-              <img src="/images/lumen-logo.png" alt="Lumen Logo" className="w-full h-full object-cover" />
+              <Image
+                src="/images/lumen-logo.png"
+                alt="Lumen Logo"
+                width={36}
+                height={36}
+                className="object-cover"
+              />
             </div>
             <span className="text-lg md:text-xl font-semibold tracking-tight text-zinc-100 group-hover:text-white transition-colors hidden sm:inline">
               Lumen
@@ -142,16 +148,22 @@ export default function Header() {
                   {/* Dropdown on hover */}
                   <div className="absolute right-0 top-full mt-1 w-56 bg-zinc-900/95 backdrop-blur-xl border border-zinc-800/50 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 overflow-hidden">
                     <div className="p-4 border-b border-zinc-800/50">
-                      <div className="flex items-center space-x-3">
-                        {user.avatarUrl ? (
-                          <img src={getAvatarUrl(user.avatarUrl)} alt="Avatar" className="w-10 h-10 rounded-full object-cover" />
-                        ) : (
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-                            <span className="text-white text-sm font-semibold">
-                              {user.username?.charAt(0).toUpperCase() || 'U'}
-                            </span>
-                          </div>
-                        )}
+                       <div className="flex items-center space-x-3">
+                         {user.avatarUrl ? (
+                           <Image
+                             src={getAvatarUrl(user.avatarUrl!)}
+                             alt="Avatar"
+                             width={40}
+                             height={40}
+                             className="rounded-full object-cover"
+                           />
+                         ) : (
+                           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                             <span className="text-white text-sm font-semibold">
+                               {user.username?.charAt(0).toUpperCase() || 'U'}
+                             </span>
+                           </div>
+                         )}
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-zinc-200 truncate">
                             {user.username || user.fullName || user.email?.split('@')[0]}
@@ -184,14 +196,20 @@ export default function Header() {
                 {isUserMenuOpen && (
                   <div className="absolute right-0 top-full mt-2 w-56 bg-zinc-900/95 backdrop-blur-xl border border-zinc-800/50 rounded-xl shadow-2xl z-50 overflow-hidden md:hidden">
                     <div className="p-4 border-b border-zinc-800/50">
-                      <div className="flex items-center space-x-3">
-                        {user.avatarUrl ? (
-                          <img src={getAvatarUrl(user.avatarUrl)} alt="Avatar" className="w-10 h-10 rounded-full object-cover" />
-                        ) : (
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-                            <span className="text-white text-sm font-semibold">{user.username?.charAt(0).toUpperCase() || 'U'}</span>
-                          </div>
-                        )}
+                       <div className="flex items-center space-x-3">
+                         {user.avatarUrl ? (
+                           <Image
+                             src={getAvatarUrl(user.avatarUrl)}
+                             alt="Avatar"
+                             width={40}
+                             height={40}
+                             className="rounded-full object-cover"
+                           />
+                         ) : (
+                           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                             <span className="text-white text-sm font-semibold">{user.username?.charAt(0).toUpperCase() || 'U'}</span>
+                           </div>
+                         )}
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-zinc-200 truncate">{user.username || user.fullName || user.email?.split('@')[0]}</p>
                           <p className="text-xs text-zinc-500 truncate">{user.email}</p>

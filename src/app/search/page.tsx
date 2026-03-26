@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef, Suspense } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 
@@ -99,15 +100,21 @@ function ListItemSkeleton() {
 function UserCard({ user }: { user: UserResult }) {
   return (
     <Link href={`/profile/${user.username}`} className="flex items-center gap-4 p-4 bg-zinc-900/40 rounded-xl hover:bg-zinc-800/60 transition-all duration-300 group border border-transparent hover:border-zinc-700">
-      <div className="relative flex-shrink-0">
-        {user.avatarUrl ? (
-          <img src={user.avatarUrl} alt={user.username} className="w-12 h-12 rounded-full object-cover ring-2 ring-zinc-800 group-hover:ring-indigo-500/50 transition-all" />
-        ) : (
-          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-            <span className="text-white text-lg font-semibold">{user.username?.charAt(0).toUpperCase() || 'U'}</span>
-          </div>
-        )}
-      </div>
+       <div className="relative flex-shrink-0">
+         {user.avatarUrl ? (
+           <Image
+             src={user.avatarUrl}
+             alt={user.username}
+             width={48}
+             height={48}
+             className="rounded-full object-cover ring-2 ring-zinc-800 group-hover:ring-indigo-500/50 transition-all"
+           />
+         ) : (
+           <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+             <span className="text-white text-lg font-semibold">{user.username?.charAt(0).toUpperCase() || 'U'}</span>
+           </div>
+         )}
+       </div>
       <div className="flex-1 min-w-0">
         <p className="text-white font-medium truncate group-hover:text-indigo-300 transition-colors">@{user.username}</p>
       </div>
@@ -119,17 +126,24 @@ function MediaCard({ media, accentColor }: { media: MediaResult; accentColor: st
   return (
     <Link href={`/${media.type}/${media.id}`} className="flex items-center gap-4 p-4 bg-zinc-900/40 rounded-xl hover:bg-zinc-800/60 transition-all duration-300 group border border-transparent hover:border-zinc-700">
       {/* Poster (left) */}
-      <div className="relative w-12 h-16 flex-shrink-0 rounded overflow-hidden bg-zinc-800">
-        {media.posterUrl ? (
-          <img src={media.posterUrl} alt={media.title} className="w-full h-full object-cover" loading="lazy" />
-        ) : (
-          <div className={`w-full h-full bg-gradient-to-br ${accentColor} flex items-center justify-center`}>
-            <span className="text-white text-2xl opacity-60">
-              {media.type === "movie" ? "🎬" : media.type === "tv" ? "📺" : "🎮"}
-            </span>
-          </div>
-        )}
-      </div>
+       <div className="relative w-12 h-16 flex-shrink-0 rounded overflow-hidden bg-zinc-800">
+         {media.posterUrl ? (
+           <Image
+             src={media.posterUrl}
+             alt={media.title}
+             width={48}
+             height={64}
+             className="object-cover"
+             loading="lazy"
+           />
+         ) : (
+           <div className={`w-full h-full bg-gradient-to-br ${accentColor} flex items-center justify-center`}>
+             <span className="text-white text-2xl opacity-60">
+               {media.type === "movie" ? "🎬" : media.type === "tv" ? "📺" : "🎮"}
+             </span>
+           </div>
+         )}
+       </div>
       {/* Info (right) */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">

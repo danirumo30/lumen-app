@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
@@ -72,7 +73,7 @@ export async function GET(request: Request) {
       .single();
 
     if (error && error.code !== "PGRST116") {
-      console.error("[game-status GET] Error:", error);
+      logger.error("[game-status GET] Error:", error);
     }
 
     // Favorite is always independent - check separately
@@ -104,7 +105,7 @@ export async function GET(request: Request) {
       completedAt: data?.is_watched ? data.updated_at : null,
     });
   } catch (error) {
-    console.error("[game-status GET] Error:", error);
+    logger.error("[game-status GET] Error:", error);
     return NextResponse.json(
       { error: "Failed to fetch game status" },
       { status: 500 }
@@ -118,10 +119,10 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { igdbId, status, isFavorite, playtimeMinutes, hasPlatinum, gameData } = body;
 
-    console.log("[game-status POST] Received:", { igdbId, status, isFavorite, playtimeMinutes, hasPlatinum, gameData });
+// DEBUG REMOVED:     logger.debug("[game-status POST] Received:", { igdbId, status, isFavorite, playtimeMinutes, hasPlatinum, gameData });
 
     if (!igdbId) {
-      console.log("[game-status POST] Missing igdbId");
+// DEBUG REMOVED:       logger.debug("[game-status POST] Missing igdbId");
       return NextResponse.json({ error: "igdbId required" }, { status: 400 });
     }
 
@@ -222,7 +223,7 @@ export async function POST(request: Request) {
       updateFields.has_platinum = hasPlatinum;
     }
 
-    console.log("[game-status POST] Update fields:", updateFields);
+// DEBUG REMOVED:     logger.debug("[game-status POST] Update fields:", updateFields);
 
     // Check if we need to upsert media first
     if (gameData && (Object.keys(updateFields).length > 1 || !existing)) {
@@ -265,7 +266,7 @@ export async function POST(request: Request) {
         has_platinum: updateFields.has_platinum ?? false,
       };
       
-      console.log("[game-status POST] Inserting new record:", newRecord);
+// DEBUG REMOVED:       logger.debug("[game-status POST] Inserting new record:", newRecord);
       
       await adminClient
         .from("user_media_tracking")
@@ -293,10 +294,11 @@ export async function POST(request: Request) {
       playtimeMinutes: updateFields.progress_minutes ?? existing?.progress_minutes ?? 0,
     });
   } catch (error) {
-    console.error("[game-status POST] Error:", error);
+    logger.error("[game-status POST] Error:", error);
     return NextResponse.json(
       { error: "Failed to update game status" },
       { status: 500 }
     );
   }
 }
+

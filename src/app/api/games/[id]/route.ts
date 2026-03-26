@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { NextResponse } from "next/server";
 import { mapGenresToSpanish, mapGameModesToSpanish, translateText } from "@/lib/translate";
 
@@ -5,8 +6,8 @@ const IGDB_ACCESS_TOKEN = process.env.IGDB_ACCESS_TOKEN || "";
 const IGDB_CLIENT_ID = process.env.TWITCH_CLIENT_ID || "";
 const IGDB_CLIENT_SECRET = process.env.TWITCH_CLIENT_SECRET || "";
 
-console.log("[games/[id]] IGDB_ACCESS_TOKEN present:", !!IGDB_ACCESS_TOKEN);
-console.log("[games/[id]] IGDB_CLIENT_ID present:", !!IGDB_CLIENT_ID);
+// DEBUG REMOVED: logger.debug("[games/[id]] IGDB_ACCESS_TOKEN present:", !!IGDB_ACCESS_TOKEN);
+// DEBUG REMOVED: logger.debug("[games/[id]] IGDB_CLIENT_ID present:", !!IGDB_CLIENT_ID);
 
 export const runtime = "nodejs";
 
@@ -53,7 +54,7 @@ async function fetchGameById(accessToken: string, igdbId: number, retry = false)
 
   // If 401 and haven't retried, refresh token and retry
   if (response.status === 401 && !retry) {
-    console.log("IGDB token expired, refreshing...");
+    logger.debug("IGDB token expired, refreshing...");
     const newToken = await getFreshAccessToken();
     process.env.IGDB_ACCESS_TOKEN = newToken;
     return fetchGameById(newToken, igdbId, true);
@@ -83,23 +84,23 @@ export async function GET(
     const browserLang = acceptLanguage.split(',')[0].split('-')[0]; // Get primary language code
     const targetLang = browserLang === 'es' ? 'es' : browserLang === 'fr' ? 'fr' : browserLang === 'de' ? 'de' : browserLang === 'it' ? 'it' : browserLang === 'pt' ? 'pt' : 'es'; // Default to Spanish
     
-    console.log(`[games/[id]] Detected browser language: ${browserLang}, using: ${targetLang}`);
+// DEBUG REMOVED: // DEBUG REMOVED:     logger.debug(`[games/[id]] Detected browser language: ${browserLang}, using: ${targetLang}`);
 
     // Check cache first - include language in cache key
     const cacheKey = `game_${igdbId}_${targetLang}`;
     const cached = gameCache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-      console.log(`[games/[id]] Cache hit for game ${igdbId} in ${targetLang}`);
+      logger.debug(`[games/[id]] Cache hit for game ${igdbId} in ${targetLang}`);
       return NextResponse.json(cached.data);
     }
 
     const igdbResponse = await fetchGameById(IGDB_ACCESS_TOKEN, igdbId);
 
-    console.log("[games/[id]] IGDB response status:", igdbResponse.status);
+// DEBUG REMOVED: // DEBUG REMOVED:     logger.debug("[games/[id]] IGDB response status:", igdbResponse.status);
     
     if (!igdbResponse.ok) {
       const errorText = await igdbResponse.text();
-      console.log("[games/[id]] IGDB error response:", errorText);
+      logger.debug("[games/[id]] IGDB error response:", errorText);
       throw new Error(`IGDB API error: ${igdbResponse.status} - ${errorText}`);
     }
 
@@ -124,11 +125,11 @@ export async function GET(
     
     if (shouldTranslate) {
       try {
-        console.log(`[games/[id]] Translating summary to ${targetLang} (${summary!.length} chars)`);
+// DEBUG REMOVED:         logger.debug(`[games/[id]] Translating summary to ${targetLang} (${summary!.length} chars)`);
         summary = await translateText(summary!, targetLang);
-        console.log(`[games/[id]] Translation complete`);
+// DEBUG REMOVED: // DEBUG REMOVED:         logger.debug(`[games/[id]] Translation complete`);
       } catch (error) {
-        console.error("[games/[id]] Translation failed, using original:", error);
+        logger.error("[games/[id]] Translation failed, using original:", error);
         // Keep original English summary if translation fails
       }
     }
@@ -159,10 +160,12 @@ export async function GET(
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error("Error fetching game details:", error);
+    logger.error("Error fetching game details:", error);
     return NextResponse.json(
       { error: "Failed to fetch game details" },
       { status: 500 }
     );
   }
 }
+
+
