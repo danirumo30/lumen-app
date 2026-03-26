@@ -648,35 +648,36 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
           </div>
         </div>
 
-        {/* Playtime tracker - Single line artistic control */}
+        {/* Playtime tracker - Clear labels, spacious */}
         {user && (currentPlayStatus === "playing" || currentPlayStatus === "completed" || currentPlayStatus === "dropped") && (
-          <div className="inline-flex items-center gap-3 px-5 py-2 rounded-lg bg-zinc-900/80 border border-emerald-500/30 backdrop-blur-md relative overflow-hidden group">
+          <div className="inline-flex items-center gap-6 px-8 py-4 rounded-xl bg-zinc-900/80 border border-emerald-500/30 backdrop-blur-md relative overflow-hidden group">
             {/* Hover glow */}
-            <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-emerald-500/0 via-emerald-500/10 to-emerald-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-emerald-500/0 via-emerald-500/10 to-emerald-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             
-            {/* Current time with gradient */}
-            <span className="text-sm font-mono tabular-nums bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-400 bg-clip-text text-transparent animate-gradient-x">
+            {/* Time display */}
+            <span className="text-base font-mono tabular-nums bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-400 bg-clip-text text-transparent animate-gradient-x min-w-[100px]">
               {formatPlaytime(gameStatus.playtimeMinutes)}
             </span>
             
-            <div className="w-px h-5 bg-gradient-to-b from-emerald-500/50 to-emerald-500/0 rounded-full" />
+            <div className="w-px h-7 bg-gradient-to-b from-emerald-500/50 to-emerald-500/0 rounded-full" />
             
-            {/* Hours input */}
-            <div className="flex items-center gap-1">
+            {/* Hours with label */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-emerald-500/70 uppercase tracking-widest">Horas</span>
               <input
                 type="number"
                 value={hoursInput}
                 onChange={(e) => setHoursInput(e.target.value)}
                 placeholder="0"
-                className="w-24 h-8 px-2 text-center text-sm bg-transparent border-b border-emerald-500/40 text-white placeholder:text-zinc-600 focus:border-emerald-400 focus:outline-none focus:bg-emerald-500/5 transition-all [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:hidden [&::-webkit-outer-spin-button]:hidden"
+                className="w-32 h-10 px-4 text-center text-base bg-transparent border-2 border-emerald-500/40 rounded-lg text-white placeholder:text-zinc-600 focus:border-emerald-400 focus:outline-none focus:bg-emerald-500/5 transition-all relative z-10 [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:hidden [&::-webkit-outer-spin-button]:hidden"
                 min="0"
                 style={{ WebkitAppearance: 'none', appearance: 'textfield' }}
               />
-              <span className="text-[10px] text-emerald-500/70 uppercase">h</span>
             </div>
 
-            {/* Minutes input */}
-            <div className="flex items-center gap-1">
+            {/* Minutes with label */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-emerald-500/70 uppercase tracking-widest">Minutos</span>
               <input
                 type="number"
                 value={minsInput}
@@ -685,28 +686,27 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
                   setMinsInput(val > 59 ? "59" : val.toString());
                 }}
                 placeholder="0"
-                className="w-24 h-8 px-2 text-center text-sm bg-transparent border-b border-emerald-500/40 text-white placeholder:text-zinc-600 focus:border-emerald-400 focus:outline-none focus:bg-emerald-500/5 transition-all [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:hidden [&::-webkit-outer-spin-button]:hidden"
+                className="w-32 h-10 px-4 text-center text-base bg-transparent border-2 border-emerald-500/40 rounded-lg text-white placeholder:text-zinc-600 focus:border-emerald-400 focus:outline-none focus:bg-emerald-500/5 transition-all relative z-10 [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:hidden [&::-webkit-outer-spin-button]:hidden"
                 min="0"
                 max="59"
                 style={{ WebkitAppearance: 'none', appearance: 'textfield' }}
               />
-              <span className="text-[10px] text-emerald-500/70 uppercase">m</span>
             </div>
 
             {/* Save button */}
             <button
               onClick={handlePlaytimeSubmit}
               disabled={isLoading}
-              className="flex items-center justify-center w-9 h-9 rounded-full bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/20 hover:border-emerald-400 active:scale-95 transition-all disabled:opacity-50 group/btn"
+              className="flex items-center justify-center w-12 h-12 rounded-full bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/20 hover:border-emerald-400 active:scale-95 transition-all disabled:opacity-50 group/btn"
               title={isLoading ? "Guardando..." : "Guardar"}
             >
               {isLoading ? (
-                <svg className="w-4 h-4 text-emerald-400 animate-spin" fill="none" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-emerald-400 animate-spin" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="2"/>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
                 </svg>
               ) : (
-                <svg className="w-4 h-4 text-emerald-400 group-hover/btn:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-emerald-400 group-hover/btn:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                 </svg>
               )}
