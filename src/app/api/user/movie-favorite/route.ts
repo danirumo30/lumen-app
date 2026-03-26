@@ -90,13 +90,13 @@ export async function POST(request: Request) {
 
     const mediaId = `movie_${tmdbId}`;
 
-    if (favorite) {
-      const { data: existing } = await supabase
-        .from("user_media_tracking")
-        .select("is_favorite, is_watched, is_planned, rating, progress_minutes")
-        .eq("user_id", user.id)
-        .eq("media_id", mediaId)
-        .single();
+     if (favorite) {
+       const { data: existing } = await supabase
+         .from("user_media_tracking")
+         .select("is_favorite, is_watched, is_planned, rating, progress_minutes")
+         .eq("user_id", user.id)
+         .eq("media_id", mediaId)
+         .maybeSingle();
 
       if (existing) {
         const { error } = await supabase
@@ -123,15 +123,15 @@ export async function POST(request: Request) {
 
         if (error) throw error;
       }
-    } else {
-      const { data: existing } = await supabase
-        .from("user_media_tracking")
-        .select("is_watched, is_planned, rating, progress_minutes")
-        .eq("user_id", user.id)
-        .eq("media_id", mediaId)
-        .single();
+     } else {
+       const { data: existing } = await supabase
+         .from("user_media_tracking")
+         .select("is_watched, is_planned, rating, progress_minutes")
+         .eq("user_id", user.id)
+         .eq("media_id", mediaId)
+         .maybeSingle();
 
-      if (existing && (existing.is_watched || existing.is_planned || existing.rating || existing.progress_minutes)) {
+       if (existing && (existing.is_watched || existing.is_planned || existing.rating || existing.progress_minutes)) {
         const { error } = await supabase
           .from("user_media_tracking")
           .update({ 

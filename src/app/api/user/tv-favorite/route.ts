@@ -104,13 +104,13 @@ export async function POST(request: Request) {
 
     const mediaId = `tv_${tmdbId}`;
 
-    // Get current state
-    const { data: existing } = await userClient
-      .from("user_media_tracking")
-      .select("is_watched, is_favorite, is_planned, rating, progress_minutes")
-      .eq("user_id", user.id)
-      .eq("media_id", mediaId)
-      .single();
+     // Get current state
+     const { data: existing } = await userClient
+       .from("user_media_tracking")
+       .select("is_watched, is_favorite, is_planned, rating, progress_minutes")
+       .eq("user_id", user.id)
+       .eq("media_id", mediaId)
+       .maybeSingle();
 
     if (favorite) {
       if (existing) {
@@ -146,31 +146,33 @@ export async function POST(request: Request) {
           throw error;
         }
       }
-    } else {
-      // Remove favorite status
-      if (existing && (existing.is_watched || existing.is_planned || existing.rating)) {
-        // Keep record but remove favorite
-        const { error } = await adminClient
-          .from("user_media_tracking")
-          .update({ 
-            is_favorite: false,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("user_id", user.id)
-          .eq("media_id", mediaId);
+     } else {
+       // Remove favorite status
+       if (existing && (existing.is_watched || existing.is_planned || existing.rating)) {
+         // Keep record but remove favorite
+         const { error } = await adminClient
+           .from("user_media_tracking")
+           .update({ 
+             is_favorite: false,
+             updated_at: new Date().toISOString(),
+           })
+           .eq("user_id", user.id)
+           .eq("media_id", mediaId);
 
-        if (error) throw error;
-      } else {
-        // Delete the record entirely
-        const { error } = await adminClient
-          .from("user_media_tracking")
-          .delete()
-          .eq("user_id", user.id)
-          .eq("media_id", mediaId);
+         if (error) throw error;
+       } else if (existing) {
+         // No other data, delete the record
+         const { error } = await adminClient
+           .from("user_media_tracking")
+           .delete()
+           .eq("user_id", user.id)
+           .eq("media_id", mediaId);
 
-        if (error) throw error;
-      }
-    }
+         if (error) throw error;
+       } else {
+         // No existing record, success no-op
+       }
+     }
 
     return NextResponse.json({ success: true, favorite });
   } catch (error) {

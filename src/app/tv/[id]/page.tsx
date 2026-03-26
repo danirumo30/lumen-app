@@ -644,23 +644,32 @@ export default function TvDetailPage({ params }: { params: Promise<{ id: string 
     }
   };
   
-  // Handle favorite
-  const handleFavoriteToggle = async (favorite: boolean) => {
-    if (!tv) return;
-    
-    try {
-      await fetchWithAuth("/api/user/tv-favorite", {
-        method: "POST",
-        body: JSON.stringify({
-          tmdbId: tv.tmdbId,
-          favorite,
-        }),
-      });
-      setFavoriteStatus({ favorite, favoritedAt: favorite ? new Date().toISOString() : null });
-    } catch (err) {
-      console.error("Error toggling favorite:", err);
-    }
-  };
+   // Handle favorite
+   const handleFavoriteToggle = async (favorite: boolean) => {
+     if (!tv) return;
+     
+     try {
+       const response = await fetchWithAuth("/api/user/tv-favorite", {
+         method: "POST",
+         body: JSON.stringify({
+           tmdbId: tv.tmdbId,
+           favorite,
+         }),
+       });
+       
+       if (!response.ok) {
+         const errorText = await response.text();
+         console.error("[handleFavoriteToggle] API error:", response.status, errorText);
+         showToast("Error al actualizar favorito", "error");
+         return;
+       }
+       
+       setFavoriteStatus({ favorite, favoritedAt: favorite ? new Date().toISOString() : null });
+     } catch (err) {
+       console.error("Error toggling favorite:", err);
+       showToast("Error al actualizar favorito", "error");
+     }
+   };
   
   // ========================================
   // DATA LOADING
