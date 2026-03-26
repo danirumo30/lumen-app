@@ -89,7 +89,7 @@ export async function GET() {
       platformLogos: game.platforms?.map((p: { id: number; name: string; platform_logo?: { image_id: string } }) => ({
         id: p.id,
         name: p.name,
-        // Use platform name for icon mapping (more reliable than ID)
+        
         platformName: p.name,
         logoUrl: p.platform_logo?.image_id 
           ? `https://images.igdb.com/igdb/image/upload/t_micro/${p.platform_logo.image_id}.png`

@@ -44,7 +44,7 @@ interface IgdbContentGame {
 }
 
 const dlcsCache = new Map<string, { data: DlcsResponse; timestamp: number }>();
-const CACHE_TTL = 1000 * 60 * 30; // 30 minutes
+const CACHE_TTL = 1000 * 60 * 30; 
 
 async function getFreshAccessToken(): Promise<string> {
   const tokenResponse = await fetch(
@@ -111,7 +111,7 @@ export async function GET(
       return NextResponse.json(cached.data);
     }
 
-    // Step 1: Get the game to extract dlcs, expansions, standalone_expansions, bundles IDs
+    
     const gameRes = await fetchWithTokenRefresh(
       "https://api.igdb.com/v4/games",
       `fields id, dlcs, expansions, standalone_expansions, bundles; where id = ${igdbId}; limit 1;`,
@@ -132,14 +132,14 @@ export async function GET(
       ...(game.bundles || [])
     ];
 
-    // Remove duplicates and filter out the game itself
+    
     const uniqueIds = [...new Set(contentIds)].filter(id => id !== igdbId);
 
     if (uniqueIds.length === 0) {
       return NextResponse.json({ dlcs: [], additionalContent: [] });
     }
 
-    // Step 2: Fetch all content by their IDs
+    
     const idsString = uniqueIds.join(",");
     const contentRes = await fetchWithTokenRefresh(
       "https://api.igdb.com/v4/games",
@@ -153,13 +153,13 @@ export async function GET(
 
      const allContent = await contentRes.json() as IgdbContentGame[];
 
-     // Separate DLCs from other content
-     // category: 0 = main game, 1 = DLC, 2 = expansion, 3 = bundle
-     // We want DLCs and standalone expansions
+     
+     
+     
      const formattedDlcs = allContent
        .filter((g) => {
          if (g.id === igdbId) return false;
-         // Include DLCs (category 1), Expansions (category 2/8), or items in dlcs/expansions/standalone_expansions/bundles arrays
+         
          const isDlc = g.category === 1 || g.category === 2 || g.category === 8;
          return isDlc || g.parent_game === igdbId;
        })

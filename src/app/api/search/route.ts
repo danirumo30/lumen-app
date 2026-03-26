@@ -1,14 +1,14 @@
 import { logger } from '@/lib/logger';
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import type { TmdbMovie, TmdbWatchProvider, TmdbSearchResult, TmdbTv } from '@/types/tmdb';
+import type { TmdbMovie, TmdbSearchResult, TmdbTv } from '@/types/tmdb';
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY!;
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 const IGDB_ACCESS_TOKEN = process.env.IGDB_ACCESS_TOKEN || "";
 const IGDB_CLIENT_ID = process.env.TWITCH_CLIENT_ID || "";
 
-// Result types
+
 interface ProviderResult {
   id: number;
   name: string;
@@ -78,19 +78,19 @@ interface TmdbWatchProvidersData {
   link?: string;
 }
 
-// Supabase user profile type
+
 interface UserProfile {
   id: string;
   username: string;
   avatar_url: string | null;
 }
 
-// TMDB paginated response (only need total_pages)
+
 interface TmdbPaginatedResponse {
   total_pages: number;
 }
 
-// IGDB genre IDs mapping (Spanish UI -> IGDB numeric IDs)
+
 const IGDB_GENRE_IDS: Record<string, number> = {
   "Acción": 4,
   "Aventura": 8,
@@ -109,7 +109,7 @@ export const runtime = "nodejs";
 type SearchType = "all" | "movie" | "tv" | "game" | "user";
 
 interface SearchFilters {
-  // Movies/TV
+  
   genre?: string;
   yearFrom?: number;
   yearTo?: number;
@@ -117,13 +117,6 @@ interface SearchFilters {
   platform?: string;
   sortBy?: "relevance" | "rating" | "year" | "popularity";
   sortDirection?: "asc" | "desc";
-}
-
-interface SearchParams {
-  q: string;
-  type?: SearchType;
-  filters?: SearchFilters;
-  page?: number;
 }
 
 async function getIgdbToken(): Promise<string> {
@@ -156,7 +149,7 @@ async function getMovieProviders(movieId: number): Promise<ProviderResult[]> {
     if (!response.ok) return [];
     
     const data = await response.json() as TmdbWatchProvidersData;
-    const country = "ES"; // Spain - can be made dynamic
+    const country = "ES"; 
     const providers = data.results?.[country];
     
     if (!providers) return [];
@@ -167,7 +160,7 @@ async function getMovieProviders(movieId: number): Promise<ProviderResult[]> {
       ...(providers.ads || []),
     ];
     
-    // Deduplicate by provider_id to avoid duplicate keys in UI
+    
     const uniqueProviders = Array.from(new Map(allProviders.map((p) => [p.provider_id, p])).values());
     
     return uniqueProviders.slice(0, 5).map((p) => ({
@@ -180,12 +173,12 @@ async function getMovieProviders(movieId: number): Promise<ProviderResult[]> {
   }
 }
 
-// Search movies on TMDB with filters
+
 async function searchMovies(query: string, page = 1, filters?: SearchFilters): Promise<MovieResult[]> {
   const hasQuery = query && query.trim().length >= 2;
   let url = `${TMDB_BASE_URL}/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}&page=${page}&language=es-ES`;
 
-  // Genre filter: only for discover (no search)
+  
   if (!hasQuery && filters?.genre) {
     const genreMap: Record<string, number> = {
       "Acción": 28, "Animación": 16, "Aventura": 12, "Bélica": 10752,
@@ -199,7 +192,7 @@ async function searchMovies(query: string, page = 1, filters?: SearchFilters): P
     }
   }
 
-  // Year filter: if searching, use single year; if discover, use range
+  
   if (filters?.yearFrom) {
     if (hasQuery && !filters.yearTo) {
       url += `&year=${filters.yearFrom}`;
@@ -211,7 +204,7 @@ async function searchMovies(query: string, page = 1, filters?: SearchFilters): P
     url += `&primary_release_date.lte=${filters.yearTo}-12-31`;
   }
 
-  // Minimum rating: only for discover
+  
   if (!hasQuery && filters?.minRating) {
     url += `&vote_average.gte=${filters.minRating}`;
   }
@@ -220,7 +213,7 @@ async function searchMovies(query: string, page = 1, filters?: SearchFilters): P
     const direction = filters.sortDirection || "desc";
     let sortField: string;
     if (hasQuery) {
-      // In search, TMDB does not support vote_average; use vote_count for rating
+      
       const searchSortMap: Record<string, string> = {
         "popularity": "popularity",
         "rating": "vote_count",
@@ -229,7 +222,7 @@ async function searchMovies(query: string, page = 1, filters?: SearchFilters): P
       };
       sortField = searchSortMap[filters.sortBy] || "popularity";
     } else {
-      // Discover supports vote_average
+      
       const discoverSortMap: Record<string, string> = {
         "popularity": "popularity",
         "rating": "vote_average",
@@ -286,7 +279,7 @@ async function getTvProviders(tvId: number): Promise<ProviderResult[]> {
     if (!response.ok) return [];
     
     const data = await response.json() as TmdbWatchProvidersData;
-    const country = "ES"; // Spain - can be made dynamic
+    const country = "ES"; 
     const providers = data.results?.[country];
     
     if (!providers) return [];
@@ -297,7 +290,7 @@ async function getTvProviders(tvId: number): Promise<ProviderResult[]> {
       ...(providers.ads || []),
     ];
     
-    // Deduplicate by provider_id to avoid duplicate keys in UI
+    
     const uniqueProviders = Array.from(new Map(allProviders.map((p) => [p.provider_id, p])).values());
     
     return uniqueProviders.slice(0, 5).map((p) => ({
@@ -310,7 +303,7 @@ async function getTvProviders(tvId: number): Promise<ProviderResult[]> {
   }
 }
 
-// Search TV on TMDB with filters
+
 async function searchTv(query: string, page = 1, filters?: SearchFilters): Promise<TvResult[]> {
   const hasQuery = query && query.trim().length >= 2;
   let url = `${TMDB_BASE_URL}/search/tv?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}&page=${page}&language=es-ES`;
@@ -319,7 +312,7 @@ async function searchTv(query: string, page = 1, filters?: SearchFilters): Promi
     url += "&sort_by=first_air_date.desc";
   }
 
-  // Genre filter: only for discover (no search)
+  
   if (!hasQuery && filters?.genre) {
     const genreMap: Record<string, number> = {
       "Acción": 10759, "Animación": 16, "Comedia": 35, "Crimen": 80,
@@ -333,7 +326,7 @@ async function searchTv(query: string, page = 1, filters?: SearchFilters): Promi
     }
   }
 
-  // Year filter: if searching, use single first_air_date_year; if discover, use range
+  
   if (filters?.yearFrom) {
     if (hasQuery && !filters.yearTo) {
       url += `&first_air_date_year=${filters.yearFrom}`;
@@ -345,7 +338,7 @@ async function searchTv(query: string, page = 1, filters?: SearchFilters): Promi
     url += `&first_air_date.lte=${filters.yearTo}-12-31`;
   }
 
-  // Minimum rating: only for discover
+  
   if (!hasQuery && filters?.minRating) {
     url += `&vote_average.gte=${filters.minRating}`;
   }
@@ -354,7 +347,7 @@ async function searchTv(query: string, page = 1, filters?: SearchFilters): Promi
     const direction = filters.sortDirection || "desc";
     let sortField: string;
     if (hasQuery) {
-      // In search, TMDB does not support vote_average; use vote_count for rating
+      
       const searchSortMap: Record<string, string> = {
         "popularity": "popularity",
         "rating": "vote_count",
@@ -410,11 +403,11 @@ async function searchTv(query: string, page = 1, filters?: SearchFilters): Promi
   return showsWithProviders;
 }
 
-// Search games on IGDB with filters
+
 async function searchGames(query: string, page: number = 1, filters?: SearchFilters) {
   const token = await getIgdbToken();
 
-  // Escape double quotes in query to avoid breaking IGDB query
+  
   const escapedQuery = query.replace(/"/g, '\\"');
 
   let whereClause = "";
@@ -787,9 +780,8 @@ async function getTrendingGames(filters?: SearchFilters, limit: number = 10) {
       sortClause = " sort popularity desc";
     }
 
-    // Request platforms with logo info
-    const offset = 0; // No pagination for trending
-    const queryBody = `fields id, name, cover.url, first_release_date, rating, genres.name, platforms.id, platforms.name, platforms.platform_logo.image_id;${whereClause};${sortClause}; limit ${limit};`;
+     // Request platforms with logo info
+     const queryBody = `fields id, name, cover.url, first_release_date, rating, genres.name, platforms.id, platforms.name, platforms.platform_logo.image_id;${whereClause};${sortClause}; limit ${limit};`;
 
     const response = await fetch("https://api.igdb.com/v4/games", {
       method: "POST",
@@ -870,19 +862,11 @@ export async function GET(request: Request) {
     const tvFilters = (type === "all" || type === "tv") ? filters : undefined;
     const gameFilters = (type === "all" || type === "game") ? filters : undefined;
 
-    // Determine if we should search 
-    // - Movies/TV/Games: if has query, search. If no query and type=all, get trending. If no query and type=specific, get trending.
-    const hasQuery = query && query.length >= 2;
-    const isAll = type === "all";
-    
-    
-    const shouldSearchMoviesTvGames = hasQuery;
-    const hasUserQuery = query && query.length >= 1;
-    const needsTrendingUsers = !query && (type === "user" || isAll);
-    const needsTrendingContent = !hasQuery && (type !== "user");
-    
-
-  const cacheKey = `${query}_${type}`;
+     // Determine if we should search 
+     // - Movies/TV/Games: if has query, search. If no query and type=all, get trending. If no query and type=specific, get trending.
+     const hasQuery = query && query.length >= 2;
+     
+   const cacheKey = `${query}_${type}`;
   const cached = pageCache.get(cacheKey);
   
   let movies: MovieResult[] = [];

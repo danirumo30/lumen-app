@@ -1,13 +1,9 @@
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { User } from '@/modules/auth/domain/user.entity';
 
-/**
- * Mapper para convertir datos de Supabase a entidades de dominio
- */
+
 export class UserMapper {
-  /**
-   * Convierte un usuario de Supabase a una entidad de dominio
-   */
+  
   static fromSupabase(supabaseUser: SupabaseUser): User {
     return User.fromRaw({
       id: supabaseUser.id,
@@ -19,9 +15,7 @@ export class UserMapper {
     });
   }
 
-  /**
-   * Convierte una entidad de dominio a datos de Supabase (si es necesario)
-   */
+  
   static toSupabase(user: User): Partial<SupabaseUser> {
     return {
       id: user.id,

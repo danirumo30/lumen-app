@@ -11,7 +11,7 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-// Helper to create authenticated client
+
 function createAuthClient(token: string) {
   return createClient(supabaseUrl, supabaseAnonKey, {
     global: { headers: { Authorization: `Bearer ${token}` } },
@@ -134,7 +134,7 @@ export async function POST(request: Request) {
       }
     }
 
-    // Ensure title is not null/undefined
+    
     if (!title) {
       title = `Película ${tmdbId}`;
     }
@@ -150,7 +150,7 @@ export async function POST(request: Request) {
       poster_path: posterPath,
     };
 
-    // Upsert media record unconditionally
+    
     const { error: mediaError } = await adminClient
       .from("media")
       .upsert(mediaInsert, {
@@ -215,7 +215,7 @@ export async function POST(request: Request) {
 
          if (error) throw error;
        } else {
-         // No existing record, success no-op
+         
        }
      }
 

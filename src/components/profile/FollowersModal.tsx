@@ -21,29 +21,27 @@ export function FollowersModal({
   type,
 }: FollowersModalProps) {
   const [activeTab, setActiveTab] = useState<"followers" | "following">("followers");
-  const list = type === "followers" ? followers : following;
 
-  // Sync activeTab when modal opens or type changes
    
-  useEffect(() => {
-    if (isOpen) {
-      setActiveTab(type);
-    }
-  }, [isOpen, type]);
+    useEffect(() => {
+      if (isOpen) {
+        queueMicrotask(() => setActiveTab(type));
+      }
+    }, [isOpen, type]);
 
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      {/* Backdrop */}
+      {}
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       />
       
-      {/* Modal */}
+      {}
       <div className="relative w-full max-w-md bg-zinc-900/95 backdrop-blur-xl rounded-2xl border border-zinc-800/50 shadow-2xl overflow-hidden">
-        {/* Header */}
+        {}
         <div className="flex items-center justify-between p-4 border-b border-zinc-800/50">
           <h3 className="text-white font-medium">
             {type === "followers" ? "Seguidores" : "Siguiendo"}
@@ -58,7 +56,7 @@ export function FollowersModal({
           </button>
         </div>
 
-        {/* Tabs */}
+        {}
         <div className="flex border-b border-zinc-800/50">
           <button
             onClick={() => setActiveTab("followers")}
@@ -82,7 +80,7 @@ export function FollowersModal({
           </button>
         </div>
 
-        {/* List */}
+        {}
         <div className="max-h-80 overflow-y-auto">
           {(activeTab === "followers" ? followers : following).length === 0 ? (
             <div className="py-12 text-center text-zinc-500">

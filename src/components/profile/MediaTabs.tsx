@@ -41,7 +41,7 @@ function CarouselSection({ title, icon, mediaList }: CarouselSectionProps) {
       onMouseEnter={() => hasContent && setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Header */}
+      {}
       <div className="flex items-end justify-between mb-4 px-1">
         <div className="flex items-center gap-3">
           <div className="text-zinc-400">{icon}</div>
@@ -49,7 +49,7 @@ function CarouselSection({ title, icon, mediaList }: CarouselSectionProps) {
           <span className="text-sm text-zinc-500">({mediaList.length})</span>
         </div>
         
-        {/* Glassmorphism Navigation Buttons - solo si hay contenido */}
+        {}
         {hasContent && (
           <div className="flex gap-1.5 opacity-0 group-hover/carousel:opacity-100 transition-all duration-300">
             <button
@@ -74,7 +74,7 @@ function CarouselSection({ title, icon, mediaList }: CarouselSectionProps) {
         )}
       </div>
 
-      {/* Content or Empty State */}
+      {}
       {hasContent ? (
         <div
           ref={containerRef}
@@ -106,42 +106,42 @@ interface MediaTabsProps {
 export function MediaTabs({ content }: MediaTabsProps) {
   return (
     <div>
-      {/* Series Vistas */}
+      {}
       <CarouselSection
         title="Series vistas"
         icon={<TvIcon />}
         mediaList={content.watchedTvShows}
       />
 
-      {/* Series Favoritas */}
+      {}
       <CarouselSection
         title="Series favoritas"
         icon={<TvIcon />}
         mediaList={content.favoriteTvShows}
       />
 
-      {/* Películas Vistas */}
+      {}
       <CarouselSection
         title="Películas vistas"
         icon={<MovieIcon />}
         mediaList={content.watchedMovies}
       />
 
-      {/* Películas Favoritas */}
+      {}
       <CarouselSection
         title="Películas favoritas"
         icon={<MovieIcon />}
         mediaList={content.favoriteMovies}
       />
 
-      {/* Videojuegos Vistos */}
+      {}
       <CarouselSection
         title="Videojuegos jugados"
         icon={<GameIcon />}
         mediaList={content.watchedGames}
       />
 
-      {/* Videojuegos Favoritos */}
+      {}
       <CarouselSection
         title="Videojuegos favoritos"
         icon={<GameIcon />}

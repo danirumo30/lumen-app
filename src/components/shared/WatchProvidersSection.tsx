@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Image from "next/image";
 
 export interface WatchProvider {
@@ -14,6 +14,14 @@ interface WatchProvidersSectionProps {
   providers: WatchProvider[];
   link?: string;
   className?: string;
+}
+
+interface ProviderLogosProps {
+  providers: WatchProvider[];
+  config: typeof typeConfig[WatchProvider["type"]];
+  hideScrollbar: string;
+  link?: string;
+  size?: "normal" | "small";
 }
 
 const typeConfig: Record<WatchProvider["type"], { 
@@ -62,34 +70,16 @@ const typeConfig: Record<WatchProvider["type"], {
 
 const hideScrollbar = "[&::-webkit-scrollbar]:hidden [&::-webkit-scrollbar]:display-none [-ms-overflow-style:none] [scrollbar-width:none]";
 
-export function WatchProvidersSection({ providers, link, className = "" }: WatchProvidersSectionProps) {
-  const [selectedType, setSelectedType] = useState<WatchProvider["type"]>("subscription");
-
-  if (!providers || providers.length === 0) {
-    return null;
-  }
-
-  const grouped = providers.reduce((acc, provider) => {
-    if (!acc[provider.type]) {
-      acc[provider.type] = [];
-    }
-    acc[provider.type].push(provider);
-    return acc;
-  }, {} as Record<string, WatchProvider[]>);
-
-  const availableTypes = Object.keys(grouped) as WatchProvider["type"][];
-  
-  if (!grouped[selectedType] && availableTypes.length > 0) {
-    setSelectedType(availableTypes[0]);
-    return null; // Will re-render with correct type
-  }
-
-  const currentProviders = grouped[selectedType] || [];
-  const config = typeConfig[selectedType];
-
-  const ProviderLogos = ({ size = "normal" }: { size?: "normal" | "small" }) => (
+function ProviderLogos({ 
+  providers, 
+  config, 
+  hideScrollbar, 
+  link, 
+  size = "normal" 
+}: ProviderLogosProps) {
+  return (
     <div className={`flex gap-2 overflow-x-auto ${hideScrollbar}`}>
-      {currentProviders.map((provider) => (
+      {providers.map((provider) => (
         <a
           key={`${provider.id}-${provider.type}`}
           href={link || "#"}
@@ -97,7 +87,7 @@ export function WatchProvidersSection({ providers, link, className = "" }: Watch
           rel="noopener noreferrer"
           className="group/link relative flex-shrink-0"
         >
-          {/* Glow on hover */}
+          {}
           <div className={`
             absolute -inset-1 rounded-xl opacity-0 blur-md
             bg-gradient-to-br ${config.bgActive}/30
@@ -105,23 +95,23 @@ export function WatchProvidersSection({ providers, link, className = "" }: Watch
             group-hover/link:opacity-100
           `} />
           
-           {/* Logo container */}
-           <div className={`
-             relative ${size === "small" ? "w-12 h-12" : "w-10 h-10 sm:w-12 sm:h-12"} rounded-xl
-             overflow-hidden transition-all duration-200
-             border border-white/10
-             group-hover/link:border-white/20
-             group-hover/link:scale-110
-           `}>
-             {provider.logoUrl ? (
-               <Image
-                 src={provider.logoUrl}
-                 alt={provider.name}
-                 fill
-                 className="object-contain p-1.5 bg-zinc-900/50"
-                 sizes={size === "small" ? "48px" : "40px"}
-               />
-             ) : (
+          {}
+          <div className={`
+            relative ${size === "small" ? "w-12 h-12" : "w-10 h-10 sm:w-12 sm:h-12"} rounded-xl
+            overflow-hidden transition-all duration-200
+            border border-white/10
+            group-hover/link:border-white/20
+            group-hover/link:scale-110
+          `}>
+            {provider.logoUrl ? (
+              <Image
+                src={provider.logoUrl}
+                alt={provider.name}
+                fill
+                className="object-contain p-1.5 bg-zinc-900/50"
+                sizes={size === "small" ? "48px" : "40px"}
+              />
+            ) : (
               <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
                 <span className={`${size === "small" ? "text-[10px]" : "text-[9px]"} text-zinc-400 font-medium text-center leading-tight px-1`}>
                   {provider.name}
@@ -130,7 +120,7 @@ export function WatchProvidersSection({ providers, link, className = "" }: Watch
             )}
           </div>
 
-          {/* Tooltip */}
+          {}
           <div className={`
             absolute -bottom-6 left-1/2 -translate-x-1/2
             px-1.5 py-0.5 rounded bg-zinc-900/95 border border-white/10
@@ -147,12 +137,40 @@ export function WatchProvidersSection({ providers, link, className = "" }: Watch
       ))}
     </div>
   );
+}
+
+export function WatchProvidersSection({ providers, link, className = "" }: WatchProvidersSectionProps) {
+  const [selectedType, setSelectedType] = useState<WatchProvider["type"]>("subscription");
+
+  const grouped = useMemo(() => 
+    providers.reduce((acc, provider) => {
+      if (!acc[provider.type]) {
+        acc[provider.type] = [];
+      }
+      acc[provider.type].push(provider);
+      return acc;
+    }, {} as Record<string, WatchProvider[]>), [providers]
+  );
+
+  if (!providers || providers.length === 0) {
+    return null;
+  }
+
+  const availableTypes = Object.keys(grouped) as WatchProvider["type"][];
+  
+  if (!grouped[selectedType] && availableTypes.length > 0) {
+    setSelectedType(availableTypes[0]);
+    return null; 
+  }
+
+  const currentProviders = grouped[selectedType] || [];
+  const config = typeConfig[selectedType];
 
   return (
     <div className={`group ${className}`}>
-      {/* DESKTOP: Everything in one line */}
+      {}
       <div className="hidden md:flex items-center gap-3">
-        {/* Title with icon */}
+        {}
         <div className="flex items-center gap-2 flex-shrink-0">
           <div className={`relative w-6 h-6 rounded-md bg-gradient-to-br ${config.bgActive}/20 flex items-center justify-center border ${config.borderActive}`}>
             <svg className={`w-3.5 h-3.5 ${config.textActive}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -162,10 +180,10 @@ export function WatchProvidersSection({ providers, link, className = "" }: Watch
           <span className="text-xs font-medium text-zinc-400 whitespace-nowrap">Dónde ver</span>
         </div>
 
-        {/* Divider */}
+        {}
         <div className="w-px h-4 bg-zinc-700 flex-shrink-0" />
 
-        {/* Filter pills */}
+        {}
         <div className="flex items-center gap-1.5 flex-shrink-0">
           {availableTypes.map((type) => {
             const typeConf = typeConfig[type];
@@ -190,20 +208,26 @@ export function WatchProvidersSection({ providers, link, className = "" }: Watch
           })}
         </div>
 
-        {/* Divider */}
+        {}
         <div className="w-px h-4 bg-zinc-700 flex-shrink-0" />
 
-        {/* Provider logos - scrollable */}
+        {}
         <div className="flex-1 overflow-x-auto scrollbar-hide relative">
           <div className="flex items-center gap-2 min-w-max">
-            <ProviderLogos />
+            <ProviderLogos 
+              providers={currentProviders}
+              config={config}
+              hideScrollbar={hideScrollbar}
+              link={link}
+              size="normal"
+            />
           </div>
         </div>
       </div>
 
-      {/* MOBILE: Filters on top, logos below */}
+      {}
       <div className="flex md:hidden flex-col gap-3">
-        {/* Header row */}
+        {}
         <div className="flex items-center gap-2">
           <div className={`relative w-5 h-5 rounded-md bg-gradient-to-br ${config.bgActive}/20 flex items-center justify-center border ${config.borderActive}`}>
             <svg className={`w-3 h-3 ${config.textActive}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -213,7 +237,7 @@ export function WatchProvidersSection({ providers, link, className = "" }: Watch
           <span className="text-xs font-medium text-zinc-400">Dónde ver</span>
         </div>
 
-        {/* Filter pills - horizontal scroll */}
+        {}
         <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
           {availableTypes.map((type) => {
             const typeConf = typeConfig[type];
@@ -238,12 +262,17 @@ export function WatchProvidersSection({ providers, link, className = "" }: Watch
           })}
         </div>
 
-        {/* Provider logos - below filters */}
+        {}
         <div className="pl-0">
-          <ProviderLogos size="small" />
+          <ProviderLogos 
+            providers={currentProviders}
+            config={config}
+            hideScrollbar={hideScrollbar}
+            link={link}
+            size="small"
+          />
         </div>
       </div>
     </div>
   );
 }
-

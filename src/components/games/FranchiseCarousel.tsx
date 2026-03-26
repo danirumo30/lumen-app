@@ -27,16 +27,17 @@ interface FranchiseCarouselProps {
 }
 
 export function FranchiseCarousel({ franchise, games, currentGameId }: FranchiseCarouselProps) {
+  const { containerRef, handlers } = useDragScroll({ snap: true });
+
   if (!franchise || !games || games.length === 0) {
     return null;
   }
 
   const cleanCurrentId = currentGameId.replace(/^(igdb_|game_)/, "");
-  const { containerRef, handlers } = useDragScroll({ snap: true });
 
   return (
     <section className="mb-10">
-      {/* Header with title and "Ver todos" button */}
+      {}
       <div className="flex items-center justify-between mb-4 px-1">
         <h2 className="text-lg font-semibold text-white/90 tracking-tight">
           {franchise.name}
@@ -52,7 +53,7 @@ export function FranchiseCarousel({ franchise, games, currentGameId }: Franchise
         </Link>
       </div>
 
-      {/* Carousel */}
+      {}
       <div
         ref={containerRef}
         className="flex gap-3 snap-x snap-mandatory carousel-scroll touch-native-scroll"
@@ -81,7 +82,7 @@ export function FranchiseCarousel({ franchise, games, currentGameId }: Franchise
                 isCurrent ? "ring-2 ring-emerald-500 rounded-xl" : ""
               }`}
             >
-               {/* Poster */}
+               {}
                <div
                  className={`relative aspect-[2/3] rounded-xl overflow-hidden bg-zinc-800 border-white/[0.03] transition-all duration-500 group-hover/game:scale-[1.02] ${
                    isCurrent ? "border-emerald-500" : ""
@@ -114,14 +115,14 @@ export function FranchiseCarousel({ franchise, games, currentGameId }: Franchise
                   </div>
                 )}
 
-                {/* Current game indicator */}
+                {}
                 {isCurrent && (
                   <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-emerald-600/90 backdrop-blur-sm">
                     <span className="text-[10px] font-semibold text-white">Actual</span>
                   </div>
                 )}
 
-                {/* Rating badge */}
+                {}
                 {game.rating && (
                   <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded-md bg-black/60 backdrop-blur-sm">
                     <span className="text-[10px] font-semibold text-white/90 tabular-nums">
@@ -131,7 +132,7 @@ export function FranchiseCarousel({ franchise, games, currentGameId }: Franchise
                 )}
               </div>
 
-              {/* Title and year */}
+              {}
               <h3 className="text-xs font-medium text-white/90 mt-2 line-clamp-2 leading-tight">
                 {game.name}
               </h3>

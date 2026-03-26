@@ -7,10 +7,8 @@ import {
   generateVerificationEmailText
 } from '@/modules/auth/infrastructure/email/nodemailer.service';
 import { getBaseUrl } from '@/lib/get-base-url';
-import { randomUUID } from 'crypto';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
@@ -92,7 +90,7 @@ export async function POST(request: Request) {
 
     const user = userData.user;
 
-    // 2. Crear o actualizar perfil de usuario en la tabla user_profiles
+    
     const { error: profileError } = await supabaseAdmin
       .from('user_profiles')
       .upsert({
@@ -114,7 +112,7 @@ export async function POST(request: Request) {
     }
 
     const verificationToken = crypto.randomUUID();
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 horas
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); 
 
     const { error: insertError } = await supabaseAdmin
       .from('email_verifications')
@@ -136,7 +134,7 @@ export async function POST(request: Request) {
     const baseUrl = getBaseUrl(request);
     const verificationUrl = `${baseUrl}/api/auth/confirm-email?token=${verificationToken}`;
 
-    // 4. Preparar y enviar email con Nodemailer
+    
     const emailHtml = generateVerificationEmailHtml({
       userName: fullName,
       verificationUrl,
@@ -161,7 +159,7 @@ export async function POST(request: Request) {
         logger.debug(`Email enviado exitosamente a ${email}`);
       } catch (emailError) {
         logger.error('Error al enviar email de verificación:', emailError);
-        // No fallamos el registro si el email falla, solo logueamos el error
+        
       }
     } else {
       logger.debug(`[DEVELOPMENT] Email no enviado (simulado). Para enviar emails reales en desarrollo, configura SMTP_SEND_IN_DEVELOPMENT=true en .env.local`);

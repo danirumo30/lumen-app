@@ -26,7 +26,7 @@ export function SimilarMoviesCarousel({ movies }: SimilarMoviesCarouselProps) {
   return (
     <BaseCarousel title="Películas similares">
       {movies.map((movie) => {
-        // Strip prefix if present (e.g., "tmdb_550" → "550")
+        
         const cleanId = movie.id.replace(/^(tmdb_|movie_|tv_|igdb_)/, "");
         return (
           <a
@@ -34,7 +34,7 @@ export function SimilarMoviesCarousel({ movies }: SimilarMoviesCarouselProps) {
             href={`/movie/${cleanId}`}
             className="flex-shrink-0 w-36 snap-start group/movie"
           >
-             {/* Poster */}
+             {}
              <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-zinc-800 border border-white/[0.03] transition-all duration-500 group-hover/movie:scale-[1.02] group-hover/movie:border-white/[0.08]">
                {movie.posterUrl ? (
                  <Image
@@ -63,7 +63,7 @@ export function SimilarMoviesCarousel({ movies }: SimilarMoviesCarouselProps) {
                 </div>
               )}
 
-              {/* Rating badge */}
+              {}
               {movie.rating && (
                 <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded-md bg-black/60 backdrop-blur-sm">
                   <span className="text-[10px] font-semibold text-white/90 tabular-nums">
@@ -73,7 +73,7 @@ export function SimilarMoviesCarousel({ movies }: SimilarMoviesCarouselProps) {
               )}
             </div>
 
-            {/* Title and year */}
+            {}
             <h3 className="text-xs font-medium text-white/90 mt-2 line-clamp-2 leading-tight">
               {movie.title}
             </h3>

@@ -15,10 +15,7 @@ interface UseSimpleDragScrollReturn {
   };
 }
 
-/**
- * Hook simple para drag-scroll horizontal
- * Sin scrollbar visible, sin flechas
- */
+
 export function useSimpleDragScroll(): UseSimpleDragScrollReturn {
   const containerRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);

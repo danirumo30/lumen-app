@@ -47,7 +47,7 @@ function Spinner() {
   );
 }
 
-// Dropdown component with chip-style selection
+
 function FilterDropdown({
   label,
   options,
@@ -99,7 +99,7 @@ function FilterDropdown({
         </svg>
       </button>
 
-      {/* Dropdown menu */}
+      {}
       {isOpen && (
         <div className="absolute top-full left-0 mt-2 w-48 py-2 bg-zinc-900/95 backdrop-blur-xl border border-zinc-700/50 rounded-xl shadow-2xl z-50 animate-dropdownIn">
           {options.map((option) => (
@@ -301,13 +301,13 @@ export default function FranchisePage({ params }: { params: Promise<{ id: string
 
   return (
     <div className="min-h-screen bg-zinc-950">
-      {/* Background */}
+      {}
       <div className="fixed inset-0 -z-10">
         <div className="absolute inset-0 bg-gradient-to-b from-violet-950/20 via-zinc-950 to-zinc-950" />
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Back button */}
+        {}
         <Link
           href={`/game/${pageId}`}
           className="inline-flex items-center gap-2 text-zinc-400 hover:text-white mb-6 transition-colors"
@@ -318,7 +318,7 @@ export default function FranchisePage({ params }: { params: Promise<{ id: string
           <span>Volver al juego</span>
         </Link>
 
-        {/* Header */}
+        {}
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-white mb-2">
             {franchise?.name || "Franchise"}
@@ -328,13 +328,13 @@ export default function FranchisePage({ params }: { params: Promise<{ id: string
           </p>
         </div>
 
-        {/* Filters Bar */}
+        {}
         <div className="mb-8 pb-6 border-b border-white/5">
           <div className="flex items-center gap-3 flex-wrap">
-            {/* Search */}
+            {}
             <SearchInput value={searchQuery} onChange={setSearchQuery} />
 
-            {/* Type Filter */}
+            {}
             <FilterDropdown
               label="Tipo"
               options={typeOptions}
@@ -342,7 +342,7 @@ export default function FranchisePage({ params }: { params: Promise<{ id: string
               onChange={(v) => setFilterType(v as FilterType)}
             />
 
-            {/* Platform Filter */}
+            {}
             <FilterDropdown
               label="Plataforma"
               options={platformOptions}
@@ -350,7 +350,7 @@ export default function FranchisePage({ params }: { params: Promise<{ id: string
               onChange={(v) => setFilterPlatform(v as FilterPlatform)}
             />
 
-            {/* Sort */}
+            {}
             <div className="ml-auto">
               <FilterDropdown
                 label="Ordenar"
@@ -362,7 +362,7 @@ export default function FranchisePage({ params }: { params: Promise<{ id: string
           </div>
         </div>
 
-        {/* Games Grid - with spinner when loading details */}
+        {}
         {isLoadingDetails ? (
           <Spinner />
         ) : filteredGames.length > 0 ? (
@@ -403,9 +403,9 @@ export default function FranchisePage({ params }: { params: Promise<{ id: string
                       </div>
                     )}
 
-                    {/* Badges */}
+                    {}
                     <div className="absolute top-2 left-2 flex flex-col gap-1">
-                      {/* Rating badge */}
+                      {}
                       {game.rating && (
                         <div className="px-2 py-0.5 rounded-md bg-black/70 backdrop-blur-sm">
                           <span className="text-xs font-semibold text-white/90">
@@ -413,7 +413,7 @@ export default function FranchisePage({ params }: { params: Promise<{ id: string
                           </span>
                         </div>
                       )}
-                      {/* Type badge */}
+                      {}
                       {detail && detail.type !== "main" && (
                         <div className="px-2 py-0.5 rounded-md bg-violet-600/90 backdrop-blur-sm">
                           <span className="text-xs font-semibold text-white uppercase">
@@ -459,7 +459,7 @@ export default function FranchisePage({ params }: { params: Promise<{ id: string
         )}
       </div>
 
-      {/* Animations */}
+      {}
       <style jsx>{`
         @keyframes dropdownIn {
           from {

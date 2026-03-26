@@ -51,7 +51,7 @@ export async function GET(
 ) {
   try {
     const { id, season } = await params;
-    // Remove 'tv_' or 'tmdb_' prefix if present
+    
     const tmdbId = id.replace(/^(tv_|tmdb_)/, '');
 
     const response = await fetch(

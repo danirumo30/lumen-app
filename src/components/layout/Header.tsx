@@ -11,29 +11,42 @@ export default function Header() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const [avatarCacheKey, setAvatarCacheKey] = useState(0);
   const { user, signOut, isLoading } = useAuth();
   const pathname = usePathname();
+   useEffect(() => {
+     if (user?.avatarUrl) {
+       queueMicrotask(() => {
+         // cache buster not needed; URL likely changes when avatar updates
+       });
+     }
+   }, [user?.avatarUrl]);
 
+   useEffect(() => {
+     queueMicrotask(() => {
+      queueMicrotask(() => {
+      queueMicrotask(() => {
+        setIsMobileMenuOpen(false);
+        setIsUserMenuOpen(false);
+      });
+      });
+     });
+   }, [pathname]);
+
+
+  
+   const getAvatarUrl = (url: string): string => {
+     return url;
+   };
+
+   const closeMenus = () => {
+     setIsMobileMenuOpen(false);
+     setIsUserMenuOpen(false);
+   };
+
+    useEffect(() => {
+      queueMicrotask(closeMenus);
+    }, [pathname]);
    
-  useEffect(() => {
-    if (user?.avatarUrl) {
-      setAvatarCacheKey(prev => prev + 1);
-    }
-  }, [user?.avatarUrl]);
-
-  // Helper to get avatar URL with cache busting
-  const getAvatarUrl = (url: string): string => {
-    // Add cache-busting query param to force browser to reload image
-    const separator = url.includes('?') ? '&' : '?';
-    return `${url}${separator}t=${avatarCacheKey}`;
-  };
-
-   
-  useEffect(() => {
-    setIsMobileMenuOpen(false);
-    setIsUserMenuOpen(false);
-  }, [pathname]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -47,7 +60,7 @@ export default function Header() {
     <>
       <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-zinc-950/95 backdrop-blur-xl border-b border-zinc-800/50">
         <div className="h-full px-4 md:px-6 flex items-center justify-between max-w-7xl mx-auto">
-          {/* Logo */}
+          {}
           <Link href="/" className="flex items-center space-x-2 md:space-x-3 group" onClick={closeMobileMenu}>
             <div className="w-8 h-8 md:w-9 md:h-9 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg md:rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/25 transform group-hover:scale-105 transition-transform duration-200 overflow-hidden">
               <Image
@@ -63,7 +76,7 @@ export default function Header() {
             </span>
           </Link>
 
-           {/* Desktop Navigation */}
+           {}
            <nav className="hidden md:flex items-center space-x-6 lg:space-x-8">
              <Link
                href="/"
@@ -95,11 +108,11 @@ export default function Header() {
              </Link>
            </nav>
 
-          {/* User Menu / Login Button */}
+          {}
           <div className="flex items-center space-x-2 md:space-x-4">
             {user ? (
               <div className="relative">
-                {/* Mobile: Avatar button */}
+                {}
                 <button
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                   className="md:hidden flex items-center justify-center"
@@ -121,7 +134,7 @@ export default function Header() {
                   )}
                 </button>
 
-                {/* Desktop: Avatar + Username with hover */}
+                {}
                 <div className="hidden md:block relative group">
                   <Link 
                     href={`/profile/${user.username || user.fullName || user.email?.split('@')[0]}`}
@@ -147,7 +160,7 @@ export default function Header() {
                     </span>
                   </Link>
                   
-                  {/* Dropdown on hover */}
+                  {}
                   <div className="absolute right-0 top-full mt-1 w-56 bg-zinc-900/95 backdrop-blur-xl border border-zinc-800/50 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 overflow-hidden">
                     <div className="p-4 border-b border-zinc-800/50">
                        <div className="flex items-center space-x-3">
@@ -194,7 +207,7 @@ export default function Header() {
                   </div>
                 </div>
 
-                {/* Mobile User Menu Dropdown */}
+                {}
                 {isUserMenuOpen && (
                   <div className="absolute right-0 top-full mt-2 w-56 bg-zinc-900/95 backdrop-blur-xl border border-zinc-800/50 rounded-xl shadow-2xl z-50 overflow-hidden md:hidden">
                     <div className="p-4 border-b border-zinc-800/50">
@@ -249,7 +262,7 @@ export default function Header() {
               </button>
             )}
 
-            {/* Mobile Menu Button */}
+            {}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="md:hidden p-2 text-zinc-400 hover:text-white transition-colors"
@@ -267,7 +280,7 @@ export default function Header() {
           </div>
         </div>
 
-        {/* Mobile Navigation Menu */}
+        {}
         {isMobileMenuOpen && (
           <div className="md:hidden absolute top-16 left-0 right-0 bg-zinc-950/95 backdrop-blur-xl border-b border-zinc-800/50">
             <nav className="flex flex-col p-4 space-y-2">
@@ -292,7 +305,7 @@ export default function Header() {
         )}
       </header>
 
-      {/* Login Modal */}
+      {}
       <LoginModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </>
   );

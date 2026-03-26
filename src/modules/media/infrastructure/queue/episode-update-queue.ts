@@ -1,19 +1,9 @@
-/**
- * Episode Update Queue
- * 
- * Batches rapid episode toggles and flushes them to the server
- * with debouncing and automatic retry logic.
- * 
- * This prevents making hundreds of individual API calls when the user
- * rapidly toggles episodes.
- */
+
 
 import { toggleEpisodesBatch } from "@/modules/media/infrastructure/queries/episode-queries";
 import type { EpisodeToggle } from "@/modules/media/domain/episode.types";
 
-/**
- * A queued operation for a single episode toggle
- */
+
 interface QueuedOperation {
   id: string;
   tmdbId: number;
@@ -24,26 +14,22 @@ interface QueuedOperation {
   timestamp: number;
 }
 
-/**
- * Event emitted when a batch sync fails after all retries
- */
+
 export interface EpisodeSyncError {
   tmdbId: number;
   error: Error;
   operations: QueuedOperation[];
 }
 
-/**
- * Episode Update Queue Configuration
- */
+
 interface EpisodeUpdateQueueConfig {
-  /** Milliseconds to wait before flushing the queue */
+  
   debounceMs: number;
-  /** Maximum operations per batch request */
+  
   batchSize: number;
-  /** Maximum retry attempts */
+  
   maxRetries: number;
-  /** Base delay for exponential backoff (ms) */
+  
   retryBaseDelayMs: number;
 }
 
@@ -54,9 +40,7 @@ const DEFAULT_CONFIG: EpisodeUpdateQueueConfig = {
   retryBaseDelayMs: 1000,
 };
 
-/**
- * Queue that batches episode updates for efficient server communication
- */
+
 class EpisodeUpdateQueue {
   private queue: Map<number, QueuedOperation[]> = new Map();
   private debounceTimers: Map<number, ReturnType<typeof setTimeout>> = new Map();
@@ -69,13 +53,7 @@ class EpisodeUpdateQueue {
     this.eventTarget = typeof window !== "undefined" ? new EventTarget() : new EventTarget();
   }
 
-  /**
-   * Add an operation to the queue
-   * 
-   * If the same episode is already queued, it will be replaced with the new state.
-   * This handles rapid toggle scenarios (mark, unmark, mark) where only the
-   * final state matters.
-   */
+  
   enqueue(operation: Omit<QueuedOperation, "id" | "timestamp">): void {
     const { tmdbId, season, episode } = operation;
     const timestamp = Date.now();
@@ -88,7 +66,7 @@ class EpisodeUpdateQueue {
     );
 
     if (existingIndex >= 0) {
-      // Replace existing operation (keeps the latest state)
+      
       operations[existingIndex] = { ...operation, id, timestamp };
     } else {
       operations.push({ ...operation, id, timestamp });
@@ -99,9 +77,7 @@ class EpisodeUpdateQueue {
     this.resetDebounceTimer(tmdbId);
   }
 
-  /**
-   * Remove an episode from the queue
-   */
+  
   dequeue(tmdbId: number, season: number, episode: number): void {
     const operations = this.queue.get(tmdbId);
     if (!operations) return;
@@ -118,38 +94,28 @@ class EpisodeUpdateQueue {
     }
   }
 
-  /**
-   * Get all queued operations for a specific TV show
-   */
+  
   getQueuedOperations(tmdbId: number): QueuedOperation[] {
     return this.queue.get(tmdbId) || [];
   }
 
-  /**
-   * Get count of queued operations for a specific TV show
-   */
+  
   getQueuedCount(tmdbId: number): number {
     return this.queue.get(tmdbId)?.length || 0;
   }
 
-  /**
-   * Check if there are pending operations for a specific TV show
-   */
+  
   hasPending(tmdbId: number): boolean {
     return this.pendingFlushes.has(tmdbId);
   }
 
-  /**
-   * Force flush all queues immediately
-   */
+  
   async flushAll(): Promise<void> {
     const tmdbIds = Array.from(this.queue.keys());
     await Promise.all(tmdbIds.map((tmdbId) => this.flush(tmdbId)));
   }
 
-  /**
-   * Force flush a specific TV show's queue
-   */
+  
   async flush(tmdbId: number): Promise<void> {
     const operations = this.queue.get(tmdbId);
     if (!operations || operations.length === 0) return;
@@ -162,7 +128,7 @@ class EpisodeUpdateQueue {
     this.queue.set(tmdbId, []);
     this.clearDebounceTimer(tmdbId);
 
-    // Sort by timestamp to maintain order
+    
     const sorted = [...operations].sort((a, b) => a.timestamp - b.timestamp);
 
     const episodes: EpisodeToggle[] = sorted.map((op) => ({
@@ -182,18 +148,14 @@ class EpisodeUpdateQueue {
     }
   }
 
-  /**
-   * Subscribe to sync error events
-   */
+  
   addErrorListener(callback: (event: CustomEvent<EpisodeSyncError>) => void): () => void {
     const handler = (event: Event) => callback(event as CustomEvent<EpisodeSyncError>);
     this.eventTarget.addEventListener("episode-sync-error", handler);
     return () => this.eventTarget.removeEventListener("episode-sync-error", handler);
   }
 
-  /**
-   * Clear all queues and cancel pending operations
-   */
+  
   clear(): void {
     for (const timer of this.debounceTimers.values()) {
       clearTimeout(timer);
@@ -236,7 +198,7 @@ class EpisodeUpdateQueue {
         } else {
           await toggleEpisodesBatch(tmdbId, episodes);
         }
-        return; // Success
+        return; 
       } catch (error) {
         lastError = error as Error;
         console.error(
@@ -244,12 +206,12 @@ class EpisodeUpdateQueue {
           lastError
         );
 
-        // Don't retry on non-retryable errors
+        
         if (this.isNonRetryableError(error)) {
           break;
         }
 
-        // Exponential backoff: 1s, 2s, 4s, etc.
+        
         const delay =
           this.config.retryBaseDelayMs * Math.pow(2, attempt);
         await this.sleep(delay);
@@ -281,7 +243,7 @@ class EpisodeUpdateQueue {
 
   private isNonRetryableError(error: unknown): boolean {
     if (error instanceof Error) {
-      // Don't retry auth errors or validation errors
+      
       if (
         error.message.includes("401") ||
         error.message.includes("Unauthorized") ||
@@ -307,23 +269,6 @@ class EpisodeUpdateQueue {
 
 export const episodeUpdateQueue = new EpisodeUpdateQueue();
 
-/**
- * Hook to interact with the episode update queue
- * 
- * @example
- * ```tsx
- * function MyComponent() {
- *   const queue = useEpisodeQueue();
- *   
- *   const handleToggle = () => {
- *     queue.enqueue({ tmdbId: 123, season: 1, episode: 5, watched: true });
- *   };
- *   
- *   const pendingCount = queue.getQueuedCount(123);
- *   
- *   return <button onClick={handleToggle}>Toggle ({pendingCount} pending)</button>;
- * }
- * ```
- */
-// Note: This would be implemented as a hook that wraps the singleton
+
+
 

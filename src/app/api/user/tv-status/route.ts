@@ -85,7 +85,7 @@ export async function POST(request: Request) {
     }
 
     const userClient = createUserClient(token);
-    // Admin client for writing (bypasses RLS)
+    
     const adminClient = createAdminClient();
 
     const { data: { user }, error: userError } = await userClient.auth.getUser();
@@ -97,7 +97,7 @@ export async function POST(request: Request) {
 
     const mediaId = `tv_${tmdbId}`;
 
-    // First, ensure the TV show exists in media table (admin to bypass RLS)
+    
     if (watched && tvData) {
       const posterPath = tvData.posterPath 
         ? tvData.posterPath.replace("https://image.tmdb.org/t/p/w500", "")
@@ -127,11 +127,9 @@ export async function POST(request: Request) {
       .select("is_watched, is_favorite, is_planned, rating, progress_minutes")
       .eq("user_id", user.id)
       .eq("media_id", mediaId)
-      .single();
+       .single();
 
-    const wasWatched = existing?.is_watched ?? false;
-
-    if (watched) {
+     if (watched) {
       if (existing) {
         const { error } = await adminClient
           .from("user_media_tracking")
@@ -165,7 +163,7 @@ export async function POST(request: Request) {
       }
     } else {
       if (existing && (existing.is_favorite || existing.is_planned || existing.rating)) {
-        // Keep record but remove watched
+        
         const { error } = await adminClient
           .from("user_media_tracking")
           .update({ 
@@ -202,10 +200,10 @@ export async function POST(request: Request) {
       
       if (progressError) {
         logger.error("[tv-status] Failed to update TV progress:", progressError);
-        // Non-critical error, don't fail the request
+        
       }
     } else if (!watched) {
-      // Remove from user_tv_progress if unmarking series
+      
       await adminClient
         .from("user_tv_progress")
         .delete()

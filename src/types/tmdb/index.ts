@@ -1,7 +1,4 @@
-/**
- * Complete TMDB API type definitions
- * Based on TMDB API v3 documentation
- */
+
 
 export interface TmdbConfiguration {
   id: string;
@@ -111,9 +108,7 @@ export interface TmdbErrorResponse {
   status_message: string;
 }
 
-/**
- * Helper to build TMDB image URLs
- */
+
 export function getTmdbImageUrl(path: string | null | undefined, size: string = 'original'): string | null {
   if (!path) return null;
   const baseUrl = "https://image.tmdb.org/t/p";

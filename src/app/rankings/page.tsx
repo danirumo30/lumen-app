@@ -1,8 +1,18 @@
+export const metadata = {
+  title: "Rankings - Lumen",
+  description: "Los usuarios más activos y内容创作 más populares de la comunidad Lumen.",
+  openGraph: {
+    title: "Rankings - Lumen",
+    description: "Descubre los usuarios más activos de la comunidad",
+    type: "website",
+  },
+};
+
 export default function RankingsPage() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-zinc-950 to-black">
       <div className="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
-        {/* Header */}
+        {}
         <div className="text-center mb-10">
           <h1 className="text-4xl sm:text-5xl font-bold text-white mb-3">
             Ranking<span className="text-amber-400">s</span>
@@ -12,7 +22,7 @@ export default function RankingsPage() {
           </p>
         </div>
 
-        {/* Coming Soon */}
+        {}
         <div className="text-center py-20">
           <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-zinc-800/50 mb-6">
             <svg className="w-12 h-12 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -33,16 +33,6 @@ interface TmdbWatchProvidersData {
   link?: string;
 }
 
-interface TvResult {
-  id: string;
-  title: string;
-  posterUrl: string | null;
-  voteAverage: number;
-  firstAirDate: string;
-  overview: string;
-  providers?: ProviderResult[];
-}
-
 async function getTvProviders(tvId: number): Promise<ProviderResult[]> {
   try {
     const response = await fetch(

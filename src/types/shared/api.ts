@@ -1,10 +1,6 @@
-/**
- * Shared types for external API integrations
- */
 
-/**
- * Paginated response structure (common for TMDB)
- */
+
+
 export interface PaginatedResponse<T> {
   page: number;
   results: T[];
@@ -12,14 +8,10 @@ export interface PaginatedResponse<T> {
   total_results: number;
 }
 
-/**
- * Media type discriminator
- */
+
 export type MediaType = 'movie' | 'tv' | 'game';
 
-/**
- * Base media item with common fields
- */
+
 export interface BaseMedia {
   id: number;
   name?: string;
@@ -75,9 +67,7 @@ export interface Platform {
   };
 }
 
-/**
- * Watch provider structure
- */
+
 export interface WatchProvider {
   provider_id: number;
   provider_name: string;
@@ -96,18 +86,14 @@ export interface WatchProvidersData {
   };
 }
 
-/**
- * Error responses
- */
+
 export interface ApiError {
   status_code: number;
   status_message: string;
   message?: string;
 }
 
-/**
- * TMDB specific
- */
+
 export interface TmdbConfig {
   images: {
     base_url: string;
@@ -120,9 +106,7 @@ export interface TmdbConfig {
   };
 }
 
-/**
- * User profile from Supabase
- */
+
 export interface UserProfile {
   id: string;
   email: string;

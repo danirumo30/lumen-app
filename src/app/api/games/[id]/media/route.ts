@@ -18,7 +18,7 @@ interface MediaResponse {
 }
 
 const mediaCache = new Map<string, { data: MediaResponse; timestamp: number }>();
-const CACHE_TTL = 1000 * 60 * 30; // 30 minutes
+const CACHE_TTL = 1000 * 60 * 30; 
 
 async function getFreshAccessToken(): Promise<string> {
   const tokenResponse = await fetch(

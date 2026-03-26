@@ -33,7 +33,7 @@ export function SimilarGamesCarousel({ games }: SimilarGamesCarouselProps) {
             href={`/game/${cleanId}`}
             className="flex-shrink-0 w-36 snap-start group/game"
           >
-             {/* Poster */}
+             {}
              <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-zinc-800 border border-white/[0.03] transition-all duration-500 group-hover/game:scale-[1.02] group-hover/game:border-white/[0.08]">
                {game.posterUrl ? (
                  <Image
@@ -62,7 +62,7 @@ export function SimilarGamesCarousel({ games }: SimilarGamesCarouselProps) {
                 </div>
               )}
 
-              {/* Rating badge */}
+              {}
               {game.rating && (
                 <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded-md bg-black/60 backdrop-blur-sm">
                   <span className="text-[10px] font-semibold text-white/90 tabular-nums">
@@ -72,7 +72,7 @@ export function SimilarGamesCarousel({ games }: SimilarGamesCarouselProps) {
               )}
             </div>
 
-            {/* Title and year */}
+            {}
             <h3 className="text-xs font-medium text-white/90 mt-2 line-clamp-2 leading-tight">
               {game.name}
             </h3>

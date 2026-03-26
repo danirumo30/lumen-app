@@ -159,7 +159,7 @@ export function MovieInfo({ movie, watchedStatus, favoriteStatus, onWatchedChang
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-8">
-       {/* Poster */}
+       {}
        <div className="relative">
          <div className="sticky top-24">
            {movie.posterUrl ? (
@@ -183,9 +183,9 @@ export function MovieInfo({ movie, watchedStatus, favoriteStatus, onWatchedChang
          </div>
        </div>
 
-      {/* Info */}
+      {}
       <div className="space-y-6">
-        {/* Title */}
+        {}
         <div>
           <h1 className="text-3xl font-bold text-white tracking-tight">{movie.title}</h1>
           {movie.originalTitle !== movie.title && (
@@ -193,7 +193,7 @@ export function MovieInfo({ movie, watchedStatus, favoriteStatus, onWatchedChang
           )}
         </div>
 
-        {/* Meta info */}
+        {}
         <div className="flex flex-wrap items-center gap-3 text-sm text-zinc-400">
           {movie.certification && (
             <span className="px-2 py-0.5 rounded bg-zinc-800 border border-zinc-700 text-zinc-300 font-medium">
@@ -223,7 +223,7 @@ export function MovieInfo({ movie, watchedStatus, favoriteStatus, onWatchedChang
           )}
         </div>
 
-        {/* Genres */}
+        {}
         {movie.genres.length > 0 && (
           <div className="flex flex-wrap gap-2">
             {movie.genres.map((genre) => (
@@ -237,17 +237,17 @@ export function MovieInfo({ movie, watchedStatus, favoriteStatus, onWatchedChang
           </div>
         )}
 
-        {/* Tagline */}
-        {movie.tagline && (
-          <p className="text-zinc-400 italic text-lg">"{movie.tagline}"</p>
-        )}
+         {}
+         {movie.tagline && (
+           <p className="text-zinc-400 italic text-lg">&quot;{movie.tagline}&quot;</p>
+         )}
 
-        {/* Overview */}
+        {}
         {movie.overview && (
           <p className="text-zinc-300 leading-relaxed">{movie.overview}</p>
         )}
 
-        {/* Release date details */}
+        {}
         <div className="flex items-center gap-2 text-sm">
           <svg className="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -265,7 +265,7 @@ export function MovieInfo({ movie, watchedStatus, favoriteStatus, onWatchedChang
           )}
         </div>
 
-        {/* Watch Providers - Compact inline design */}
+        {}
         {movie.watchProviders?.providers && movie.watchProviders.providers.length > 0 && (
           <WatchProvidersSection 
             providers={movie.watchProviders.providers}
@@ -273,10 +273,10 @@ export function MovieInfo({ movie, watchedStatus, favoriteStatus, onWatchedChang
           />
         )}
 
-        {/* Watched & Favorite section */}
+        {}
         <div className="border-t border-white/5 pt-6 mb-6 md:mb-0">
           <div className="flex gap-3">
-            {/* Watched Button */}
+            {}
             <button
               onClick={handleWatchedClick}
               disabled={isLoadingWatched}
@@ -303,7 +303,7 @@ export function MovieInfo({ movie, watchedStatus, favoriteStatus, onWatchedChang
               {isWatched ? "Vista" : "Marcar como vista"}
             </button>
 
-            {/* Favorite Button */}
+            {}
             <button
               onClick={handleFavoriteClick}
               disabled={isLoadingFavorite}
@@ -333,10 +333,10 @@ export function MovieInfo({ movie, watchedStatus, favoriteStatus, onWatchedChang
         </div>
       </div>
 
-      {/* Login Modal */}
+      {}
       <Modal isOpen={showLoginPrompt} onClose={() => setShowLoginPrompt(false)}>
         <div className="p-6">
-          {/* Close button */}
+          {}
           <button
             onClick={() => setShowLoginPrompt(false)}
             className="absolute top-4 right-4 text-zinc-400 hover:text-white transition-colors"
@@ -346,24 +346,24 @@ export function MovieInfo({ movie, watchedStatus, favoriteStatus, onWatchedChang
             </svg>
           </button>
 
-          {/* Icon */}
+          {}
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-amber-500/20 flex items-center justify-center">
             <svg className="w-8 h-8 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
             </svg>
           </div>
 
-          {/* Title */}
+          {}
           <h3 className="text-xl font-semibold text-white text-center mb-2">
             Inicia sesión para continuar
           </h3>
 
-          {/* Description */}
+          {}
           <p className="text-zinc-400 text-sm text-center mb-6">
             Guarda tu progreso, marca películas como vistas y crea tu lista de favoritos.
           </p>
 
-          {/* Actions */}
+          {}
           <div className="space-y-3">
             <a
               href="/login"

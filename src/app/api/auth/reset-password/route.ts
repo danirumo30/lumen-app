@@ -18,7 +18,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // 1. Buscar el token en la tabla password_resets
+    
     const { data: tokenData, error: tokenError } = await supabaseAdmin
       .from('password_resets')
       .select('user_id, expires_at')
@@ -66,7 +66,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // 5. Eliminar el token usado
+    
     await supabaseAdmin
       .from('password_resets')
       .delete()

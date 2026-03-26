@@ -88,7 +88,7 @@ export async function POST(request: Request) {
     }
 
     const userClient = createUserClient(token);
-    // Admin client for writing (bypasses RLS)
+    
     const adminClient = createAdminClient();
 
     const { data: { user }, error: userError } = await userClient.auth.getUser();
@@ -123,7 +123,7 @@ export async function POST(request: Request) {
             releaseYear = releaseYear || parseInt(tv.first_air_date.substring(0, 4));
             releaseDate = releaseDate || tv.first_air_date;
           }
-          // episode_run_time is an array, take first if available
+          
           runtime = runtime || (tv.episode_run_time && tv.episode_run_time[0]) || null;
           posterPath = posterPath || (tv.poster_path ? tv.poster_path.replace(/^t\.*/, "") : null);
         } else {
@@ -135,7 +135,7 @@ export async function POST(request: Request) {
       }
     }
 
-    // Ensure title is not null/undefined
+    
     if (!title) {
       title = `Serie ${tmdbId}`;
     }
@@ -151,7 +151,7 @@ export async function POST(request: Request) {
       poster_path: posterPath,
     };
 
-    // Upsert media record unconditionally
+    
     const { error: mediaError } = await adminClient
       .from("media")
       .upsert(mediaInsert, {
@@ -203,7 +203,7 @@ export async function POST(request: Request) {
       }
      } else {
        if (existing && (existing.is_watched || existing.is_planned || existing.rating)) {
-         // Keep record but remove favorite
+         
          const { error } = await adminClient
            .from("user_media_tracking")
            .update({ 
@@ -215,7 +215,7 @@ export async function POST(request: Request) {
 
          if (error) throw error;
        } else if (existing) {
-         // No other data, delete the record
+         
          const { error } = await adminClient
            .from("user_media_tracking")
            .delete()
@@ -224,7 +224,7 @@ export async function POST(request: Request) {
 
          if (error) throw error;
        } else {
-         // No existing record, success no-op
+         
        }
      }
 

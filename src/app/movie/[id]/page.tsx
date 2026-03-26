@@ -76,7 +76,7 @@ export default function MovieDetailPage({ params }: { params: Promise<{ id: stri
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Helper to extract TMDB ID from media ID (e.g., "movie_1159559" -> "1159559")
+  
   const extractTmdbId = (mediaId: string): string | null => {
     const match = mediaId.match(/^(movie_|tmdb_)(\d+)$/);
     return match ? match[2] : null;
@@ -152,7 +152,7 @@ export default function MovieDetailPage({ params }: { params: Promise<{ id: stri
 
   return (
     <div className="min-h-screen bg-zinc-950">
-       {/* Background backdrop */}
+       {}
        {movie.backdropUrl && (
          <div className="fixed inset-0 -z-10">
            <Image
@@ -167,7 +167,7 @@ export default function MovieDetailPage({ params }: { params: Promise<{ id: stri
        )}
 
        <div className="max-w-7xl mx-auto px-4 py-8">
-         {/* Back button */}
+         {}
          <Link
            href="/"
            className="inline-flex items-center gap-2 text-zinc-400 hover:text-white mb-8 transition-colors"
@@ -178,7 +178,7 @@ export default function MovieDetailPage({ params }: { params: Promise<{ id: stri
            <span>Volver</span>
          </Link>
 
-        {/* Main info */}
+        {}
         <MovieInfo
           movie={movie}
           watchedStatus={watchedStatus}
@@ -197,10 +197,10 @@ export default function MovieDetailPage({ params }: { params: Promise<{ id: stri
           }}
         />
 
-        {/* Cast */}
+        {}
         <CastCarousel cast={cast} />
 
-        {/* Similar movies */}
+        {}
         <SimilarMoviesCarousel movies={similar} />
       </div>
     </div>

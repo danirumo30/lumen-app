@@ -27,7 +27,7 @@ export function CastCarousel({ cast }: CastCarouselProps) {
           key={person.id}
           className="flex-shrink-0 w-28 group/cast"
         >
-           {/* Profile image */}
+           {}
            <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-zinc-800 border border-white/[0.03] mb-2 transition-transform duration-500 group-hover/cast:scale-105">
              {person.profileUrl ? (
                <Image
@@ -57,7 +57,7 @@ export function CastCarousel({ cast }: CastCarouselProps) {
             )}
           </div>
 
-          {/* Name and character */}
+          {}
           <h3 className="text-xs font-medium text-white/90 truncate">{person.name}</h3>
           <p className="text-[10px] text-zinc-500 truncate">{person.character}</p>
         </div>

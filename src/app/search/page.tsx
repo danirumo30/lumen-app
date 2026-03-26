@@ -76,14 +76,6 @@ const TABS = [
   { id: "users", label: "Usuarios", icon: Users, gradient: "from-indigo-500 to-blue-600" },
 ] as const;
 
-function LoadingSpinner({ colorClass = "border-indigo-500" }: { colorClass?: string }) {
-  return (
-    <div className="flex justify-center py-8">
-      <div className={`animate-spin rounded-full h-8 w-8 border-b-2 ${colorClass}`} />
-    </div>
-  );
-}
-
 function ListItemSkeleton() {
   return (
     <div className="flex items-center gap-4 p-4 bg-zinc-900/30 rounded-xl animate-pulse">
@@ -124,7 +116,7 @@ function UserCard({ user }: { user: UserResult }) {
 function MediaCard({ media, accentColor }: { media: MediaResult; accentColor: string }) {
   return (
     <Link href={`/${media.type}/${media.id}`} className="flex items-center gap-4 p-4 bg-zinc-900/40 rounded-xl hover:bg-zinc-800/60 transition-all duration-300 group border border-transparent hover:border-zinc-700">
-      {/* Poster (left) */}
+      {}
        <div className="relative w-12 h-16 flex-shrink-0 rounded overflow-hidden bg-zinc-800">
          {media.posterUrl ? (
            <Image
@@ -143,10 +135,10 @@ function MediaCard({ media, accentColor }: { media: MediaResult; accentColor: st
            </div>
          )}
        </div>
-      {/* Info (right) */}
+      {}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          {/* Type badge */}
+          {}
           {(media.type === "movie" || media.type === "tv") && (
             <span className={`text-xs px-1.5 py-0.5 rounded ${
               media.type === "movie" 
@@ -189,10 +181,11 @@ function SearchContent() {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState({ movies: true, tv: true, games: true, users: true });
-  const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const abortControllerRef = useRef<AbortController | null>(null);
-  const sentinelRef = useRef<HTMLDivElement | null>(null);
+   const [isLoading, setIsLoading] = useState(false);
+   const [isLoadingMore, setIsLoadingMore] = useState(false);
+   const abortControllerRef = useRef<AbortController | null>(null);
+   const sentinelRef = useRef<HTMLDivElement | null>(null);
+   const trendingLoadingRef = useRef(false);
 
   const updateURL = useCallback((newQuery: string, newTab: TabType) => {
     const params = new URLSearchParams();
@@ -238,8 +231,8 @@ function SearchContent() {
         setHasMore(data.hasMore);
       }
       
-      // Append results if loading more, replace if first page
-      // Deduplicate by ID to avoid duplicates from API
+      
+      
       if (pageNum === 1) {
         setResults(combined);
       } else {
@@ -260,34 +253,36 @@ function SearchContent() {
     }
   };
 
-  // Load trending on mount if no query
-  useEffect(() => {
-    if (!initialQuery && !isLoading) {
-      const loadTrending = async () => {
-        setIsLoading(true);
-        try {
-          const typeParam = activeTab === "content" ? "all" : activeTab === "games" ? "game" : "user";
-          const response = await fetch(`/api/search?type=${typeParam}`);
-          const data: SearchResponse = await response.json();
-          const combined: SearchResult[] = [];
-          if (activeTab === "content" && data.movies && data.tv) {
-            data.movies.forEach(m => combined.push({ ...m, type: "movie" as const }));
-            data.tv.forEach(t => combined.push({ ...t, type: "tv" as const }));
-          } else if (activeTab === "games" && data.games) {
-            data.games.forEach(g => combined.push({ ...g, type: "game" as const }));
-          } else if (activeTab === "users" && data.users) {
-            data.users.forEach(u => combined.push({ ...u, type: "user" as const }));
-          }
-          setResults(combined);
-        } catch (err) {
-          console.error("Trending load error:", err);
-        } finally {
-          setIsLoading(false);
-        }
-      };
-      loadTrending();
-    }
-  }, [activeTab]);
+   
+   useEffect(() => {
+     if (!initialQuery && !trendingLoadingRef.current) {
+       trendingLoadingRef.current = true;
+       const loadTrending = async () => {
+         try {
+           setIsLoading(true);
+           const typeParam = activeTab === "content" ? "all" : activeTab === "games" ? "game" : "user";
+           const response = await fetch(`/api/search?type=${typeParam}`);
+           const data: SearchResponse = await response.json();
+           const combined: SearchResult[] = [];
+           if (activeTab === "content" && data.movies && data.tv) {
+             data.movies.forEach(m => combined.push({ ...m, type: "movie" as const }));
+             data.tv.forEach(t => combined.push({ ...t, type: "tv" as const }));
+           } else if (activeTab === "games" && data.games) {
+             data.games.forEach(g => combined.push({ ...g, type: "game" as const }));
+           } else if (activeTab === "users" && data.users) {
+             data.users.forEach(u => combined.push({ ...u, type: "user" as const }));
+           }
+           setResults(combined);
+         } catch (err) {
+           console.error("Trending load error:", err);
+         } finally {
+           setIsLoading(false);
+           trendingLoadingRef.current = false;
+         }
+       };
+       loadTrending();
+     }
+   }, [activeTab, initialQuery]);
 
   useEffect(() => {
     if (initialQuery) {
@@ -295,7 +290,7 @@ function SearchContent() {
     }
   }, [initialQuery]);
 
-  // Reset page when query or tab changes
+  
   useEffect(() => {
     setPage(1);
   }, [query, activeTab]);
@@ -310,7 +305,7 @@ function SearchContent() {
      };
    }, [query, activeTab]);
 
-  // Intersection Observer for infinite scroll
+  
   useEffect(() => {
     const sentinel = sentinelRef.current;
     if (!sentinel) return;
@@ -319,14 +314,14 @@ function SearchContent() {
       (entries) => {
         const [entry] = entries;
         if (entry.isIntersecting && !isLoading && !isLoadingMore) {
-          // Determine if there's more content for current tab
+          
           const currentHasMore = activeTab === "content" 
             ? hasMore.movies || hasMore.tv 
             : activeTab === "games" 
               ? hasMore.games 
               : hasMore.users;
           
-          // Load more if there's more content and we're not already at the limit
+          
           const shouldLoadMore = (currentHasMore && query.trim().length >= 2) || 
                                   (currentHasMore && page === 1 && query.trim() === "");
           
@@ -353,12 +348,10 @@ function SearchContent() {
     }
   };
 
-  const TabIcon = TABS.find(t => t.id === activeTab)?.icon || Film;
-
-  return (
+   return (
     <div className="min-h-screen bg-zinc-950 pt-16">
       <div className="max-w-3xl mx-auto px-4 py-8">
-        {/* Tabs */}
+        {}
         <div className="flex flex-nowrap overflow-x-auto hide-scrollbar px-4 sm:overflow-x-visible sm:justify-center sm:px-0 gap-2 mb-6">
           {TABS.map(tab => {
             const isActive = activeTab === tab.id;
@@ -381,7 +374,7 @@ function SearchContent() {
           })}
         </div>
 
-        {/* Search Bar */}
+        {}
         <div className="relative mb-6">
           <div className="relative flex items-center bg-zinc-900/80 backdrop-blur-sm border border-zinc-800 rounded-xl overflow-hidden transition-all duration-300 focus-within:border-indigo-500/50 focus-within:ring-1 focus-within:ring-indigo-500/50">
             <div className="pl-4">
@@ -395,7 +388,7 @@ function SearchContent() {
               className="flex-1 bg-transparent py-3 px-4 text-white placeholder-zinc-500 focus:outline-none text-base"
               autoFocus
             />
-            {/* Clear button - show when there's text */}
+            {}
             {query.trim() !== "" && (
               <button
                 onClick={() => setQuery("")}
@@ -417,7 +410,7 @@ function SearchContent() {
           </div>
         </div>
 
-        {/* Results */}
+        {}
         {query.trim() === "" && results.length === 0 && !isLoading && activeTab === "users" && (
           <div className="text-center py-16 text-zinc-500">
             <Users className="w-12 h-12 mx-auto mb-3 opacity-30" />
@@ -451,10 +444,10 @@ function SearchContent() {
               }
             })}
             
-            {/* Sentinel for infinite scroll */}
+            {}
             <div ref={sentinelRef} className="h-4" />
             
-            {/* Loading more indicator */}
+            {}
             {isLoadingMore && (
               <div className="flex justify-center py-4">
                 <div className={`w-6 h-6 border-2 border-t-transparent rounded-full animate-spin ${
@@ -469,7 +462,7 @@ function SearchContent() {
         {!isLoading && results.length === 0 && query.trim() !== "" && (
           <div className="text-center py-16 text-zinc-500">
             <SearchIcon className="w-12 h-12 mx-auto mb-3 opacity-30" />
-            <p>No se encontraron resultados para "{query}"</p>
+            <p>No se encontraron resultados para &quot;{query}&quot;</p>
           </div>
         )}
       </div>

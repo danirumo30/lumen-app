@@ -38,7 +38,7 @@ interface GameInfoProps {
   onPlatinumChange: (hasPlatinum: boolean) => void;
 }
 
-// Platform icons - using uploaded SVG files
+
 const platformIcons: Record<string, string> = {
   PC: "/icons/platforms/windows.svg",
   Windows: "/icons/platforms/windows.svg",
@@ -56,14 +56,14 @@ const platformIcons: Record<string, string> = {
   Web: "/icons/platforms/web.svg",
 };
 
-// Generic fallback icon (inline SVG)
+
 const defaultPlatformIcon = (
   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
   </svg>
 );
 
-// Helper to get icon path for a platform
+
 function getPlatformIconPath(platform: string): string | null {
   const lowerPlatform = platform.toLowerCase();
 
@@ -169,7 +169,7 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
   const [isLoading, setIsLoading] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [hasPlatinum, setHasPlatinum] = useState(gameStatus.hasPlatinum);
-  // Split playtime into hours and minutes for two inputs
+  
   const totalMinutes = gameStatus.playtimeMinutes;
   const currentHours = Math.floor(totalMinutes / 60);
   const currentMins = totalMinutes % 60;
@@ -227,10 +227,10 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
         return;
       }
 
-      if (response.ok) {
-        const data = await response.json();
-        onStatusChange(status); // This will refresh the page
-      }
+       if (response.ok) {
+         await response.json();
+         onStatusChange(status); 
+       }
     } catch (error) {
       console.error("Error updating play status:", error);
     } finally {
@@ -268,7 +268,7 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
       });
 
       if (response.ok) {
-        // Use "remove-favorite" to distinguish from play status removal
+        
         onStatusChange(newFavorite ? "favorite" : "remove-favorite");
       }
     } catch (error) {
@@ -314,7 +314,7 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
       }
 
       if (response.ok) {
-        setHasPlatinum(newPlatinum); // Optimistic update
+        setHasPlatinum(newPlatinum); 
         onPlatinumChange(newPlatinum);
       } else {
         console.error("[GameInfo] Failed to update platinum status");
@@ -326,67 +326,13 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
     }
   };
 
-  const handleStatusClick = async (status: string | null) => {
-    if (!user) {
-      setShowLoginPrompt(true);
-      return;
-    }
-
-    console.log("[GameInfo] handleStatusClick called with status:", status, "igdbId:", game.igdbId);
-
-    setIsLoading(true);
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-
-      const igdbId = typeof game.igdbId === 'number' ? game.igdbId : parseInt(game.igdbId);
-      console.log("[GameInfo] Sending request with igdbId:", igdbId);
-
-      const response = await fetch("/api/user/game-status", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${session?.access_token || ""}`,
-        },
-        body: JSON.stringify({
-          igdbId: igdbId,
-          status,
-          gameData: {
-            title: game.name,
-            coverUrl: game.coverUrl,
-            releaseYear: game.releaseYear,
-          },
-        }),
-      });
-
-      console.log("[GameInfo] Response status:", response.status);
-
-      if (response.status === 401) {
-        setShowLoginPrompt(true);
-        return;
-      }
-
-      if (!response.ok) {
-        const error = await response.json();
-        console.error("[GameInfo] Error:", error);
-      }
-
-      if (response.ok) {
-        onStatusChange(status);
-      }
-    } catch (error) {
-      console.error("Error updating game status:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handlePlaytimeSubmit = async () => {
     if (!user) {
       setShowLoginPrompt(true);
       return;
     }
 
-    // Calculate total minutes from both inputs
+    
     const hours = parseInt(hoursInput) || 0;
     const mins = parseInt(minsInput) || 0;
     const totalMinutes = (hours * 60) + mins;
@@ -425,7 +371,7 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-8">
-       {/* Cover */}
+       {}
        <div className="relative">
          <div className="sticky top-24">
            {game.coverUrl ? (
@@ -449,14 +395,14 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
          </div>
        </div>
 
-      {/* Info */}
+      {}
       <div className="space-y-6">
-        {/* Title */}
+        {}
         <div>
           <h1 className="text-3xl font-bold text-white tracking-tight">{game.name}</h1>
         </div>
 
-        {/* Meta info */}
+        {}
         <div className="flex flex-wrap items-center gap-3 text-sm text-zinc-400">
           {game.releaseYear && (
             <span>{game.releaseYear}</span>
@@ -474,10 +420,10 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
           )}
         </div>
 
-        {/* Genres and Game Modes */}
+        {}
         {(game.genres.length > 0 || game.gameModes.length > 0) && (
           <div className="flex flex-wrap gap-2">
-            {/* Genres */}
+            {}
             {game.genres.map((genre, i) => (
               <span
                 key={`genre-${i}`}
@@ -486,7 +432,7 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
                 {genre}
               </span>
             ))}
-            {/* Game Modes */}
+            {}
             {game.gameModes.map((mode, i) => (
               <span
                 key={`mode-${i}`}
@@ -498,7 +444,7 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
           </div>
         )}
 
-        {/* Platforms with icons */}
+        {}
         {game.platforms.length > 0 ? (
           <div className="flex flex-wrap gap-2">
             {game.platforms.map((platform, i) => {
@@ -525,12 +471,12 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
           </div>
         )}
 
-        {/* Summary */}
+        {}
         {game.summary && (
           <p className="text-zinc-300 leading-relaxed">{game.summary}</p>
         )}
 
-        {/* Release date - always show */}
+        {}
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
           <div className="flex items-center gap-2">
             <svg className="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -541,7 +487,7 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
             </span>
           </div>
 
-          {/* Status-specific dates */}
+          {}
           {gameStatus.playStatus === "playing" && gameStatus.startedAt && (
             <div className="flex items-center gap-2">
               <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -576,13 +522,13 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
           )}
         </div>
 
-        {/* Status selector */}
+        {}
         <div className="border-t border-white/5 pt-6">
           <span className="text-xs text-zinc-500 w-full mb-1 block">Estado</span>
 
-          {/* Mobile: 2-column grid | Desktop: horizontal flex */}
+          {}
           <div className="grid grid-cols-2 lg:flex lg:flex-wrap gap-2">
-            {/* Mobile row 1: Favorite + Platinum */}
+            {}
             <button
               onClick={() => handleFavoriteClick()}
               disabled={isLoading}
@@ -614,7 +560,7 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
               <span className="">Platino</span>
             </button>
 
-            {/* Mobile row 2: Playing + Completed */}
+            {}
             {["playing", "completed"].map((key) => {
               const config = statusConfig[key as keyof typeof statusConfig];
               const isActive = currentPlayStatus === key;
@@ -634,7 +580,7 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
               );
             })}
 
-            {/* Mobile row 3: Dropped + Planned */}
+            {}
             {["dropped", "planned"].map((key) => {
               const config = statusConfig[key as keyof typeof statusConfig];
               const isActive = currentPlayStatus === key;
@@ -656,18 +602,18 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
           </div>
         </div>
 
-        {/* Playtime tracker */}
+        {}
         {user && (currentPlayStatus === "playing" || currentPlayStatus === "completed" || currentPlayStatus === "dropped") && (
           <div className="w-full md:max-w-[320px] lg:w-fit flex flex-col sm:flex-row items-center gap-2 sm:gap-3 p-3 rounded-xl bg-gradient-to-br from-zinc-900/90 via-zinc-800/50 to-zinc-900/90 border border-emerald-500/30 shadow-lg shadow-emerald-500/10 backdrop-blur-xl relative overflow-hidden group animate-fade-in-up">
             
-            {/* Decorative background glow */}
+            {}
             <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 via-transparent to-teal-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             
-            {/* Decorative corner accents */}
+            {}
             <div className="absolute top-0 left-0 w-6 h-6 border-l border-t border-emerald-500/40 rounded-tl-lg" />
             <div className="absolute bottom-0 right-0 w-6 h-6 border-r border-b border-emerald-500/40 rounded-br-lg" />
 
-            {/* Sección Izquierda: Tiempo Total */}
+            {}
             <div className="flex flex-row sm:flex-col items-center sm:items-start justify-between w-full sm:w-auto gap-2 border-b sm:border-b-0 sm:border-r border-emerald-500/20 pb-2 sm:pb-0 sm:pr-4 relative z-10">
               <span className="text-[9px] text-emerald-400/70 uppercase tracking-[0.2em] font-bold animate-pulse">Jugado</span>
               <div className="flex items-baseline gap-1">
@@ -678,10 +624,10 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
               </div>
             </div>
 
-            {/* Sección Derecha: Inputs y Botón */}
+            {}
             <div className="flex items-center justify-between w-full sm:w-auto gap-2 relative z-10">
               <div className="flex items-center gap-2">
-                {/* Input Horas */}
+                {}
                 <div className="relative group/input">
                   <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 rounded-lg opacity-0 group-focus-within/input:opacity-100 transition-opacity duration-300 blur" />
                   <input
@@ -693,11 +639,11 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
                   />
                   <span className="absolute -top-1.5 left-1 px-1 bg-zinc-900/95 text-[8px] text-emerald-500/60 uppercase font-bold border border-emerald-500/20 rounded-xs">H</span>
                   
-                  {/* Focus glow effect */}
+                  {}
                   <div className="absolute inset-0 rounded-lg pointer-events-none opacity-0 focus-within:opacity-100 transition-opacity duration-300" style={{ boxShadow: '0 0 12px rgba(16, 185, 129, 0.3)' }} />
                 </div>
 
-                {/* Input Minutos */}
+                {}
                 <div className="relative group/input">
                   <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 rounded-lg opacity-0 group-focus-within/input:opacity-100 transition-opacity duration-300 blur" />
                   <input
@@ -712,18 +658,18 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
                   />
                   <span className="absolute -top-1.5 left-1 px-1 bg-zinc-900/95 text-[8px] text-emerald-500/60 uppercase font-bold border border-emerald-500/20 rounded-xs">M</span>
                   
-                  {/* Focus glow effect */}
+                  {}
                   <div className="absolute inset-0 rounded-lg pointer-events-none opacity-0 focus-within:opacity-100 transition-opacity duration-300" style={{ boxShadow: '0 0 12px rgba(16, 185, 129, 0.3)' }} />
                 </div>
               </div>
 
-              {/* Botón Guardar - con animaciones mejoradas */}
+              {}
               <button
                 onClick={handlePlaytimeSubmit}
                 disabled={isLoading}
                 className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 via-emerald-500 to-teal-600 text-black flex items-center justify-center hover:from-emerald-400 hover:via-emerald-400 hover:to-teal-500 active:scale-95 transition-all duration-300 shadow-md shadow-emerald-500/30 hover:shadow-emerald-400/50 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 relative overflow-hidden group/button"
               >
-                {/* Shine effect on hover */}
+                {}
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover/button:translate-x-full transition-transform duration-700" />
                 
                 {isLoading ? (
@@ -739,10 +685,10 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
         )}
       </div>
 
-      {/* Login Modal */}
+      {}
       <Modal isOpen={showLoginPrompt} onClose={() => setShowLoginPrompt(false)}>
         <div className="p-6">
-          {/* Close button */}
+          {}
           <button
             onClick={() => setShowLoginPrompt(false)}
             className="absolute top-4 right-4 text-zinc-400 hover:text-white transition-colors"
@@ -752,24 +698,24 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
             </svg>
           </button>
 
-          {/* Icon */}
+          {}
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-violet-500/20 flex items-center justify-center">
             <svg className="w-8 h-8 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
             </svg>
           </div>
 
-          {/* Title */}
+          {}
           <h3 className="text-xl font-semibold text-white text-center mb-2">
             Inicia sesión para continuar
           </h3>
 
-          {/* Description */}
+          {}
           <p className="text-zinc-400 text-sm text-center mb-6">
             Guarda tu progreso y marca tus juegos favoritos.
           </p>
 
-          {/* Actions */}
+          {}
           <div className="space-y-3">
             <a
               href="/login"

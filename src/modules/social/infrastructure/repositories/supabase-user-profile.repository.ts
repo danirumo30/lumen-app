@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import type { Media, MediaTypeForStats } from "@/modules/shared/domain/media";
+import type { Media } from "@/modules/shared/domain/media";
 import type { UserProfileRepository } from "@/modules/social/domain/user-profile.repository";
 import type {
   UpdateProfileData,
@@ -13,17 +13,13 @@ import type {
 const TMDB_API_KEY = process.env.TMDB_API_KEY!;
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 
-/**
- * Extract TMDB ID from media ID (e.g., "movie_1159559" -> "1159559")
- */
+
 function extractTmdbId(mediaId: string): string | null {
   const match = mediaId.match(/^(movie_|tmdb_)(\d+)$/);
   return match ? match[2] : null;
 }
 
-/**
- * Fetch movie poster path from TMDB and update the media record in DB
- */
+
 async function fetchAndUpdatePosterPath(
   client: SupabaseClient,
   mediaId: string,
@@ -32,7 +28,7 @@ async function fetchAndUpdatePosterPath(
   try {
     const response = await fetch(
       `${TMDB_BASE_URL}/movie/${tmdbId}?api_key=${TMDB_API_KEY}&language=es-ES`,
-      { next: { revalidate: 86400 } } // Cache for 24 hours
+      { next: { revalidate: 86400 } } 
     );
 
     if (!response.ok) {
@@ -158,12 +154,12 @@ export class SupabaseUserProfileRepository implements UserProfileRepository {
       throw new Error("Profile not found");
     }
 
-    // Only fetch series, movies, and games - NOT episode-level records
+    
     let mediaQuery = this.client
       .from("user_media_tracking")
       .select("media_id, media_type, is_favorite, is_watched, is_planned, progress_minutes")
       .eq("user_id", query.userId)
-      .not("media_id", "like", "%_s%_e%")  // Exclude episodes like tv_123_s1_e5
+      .not("media_id", "like", "%_s%_e%")  
       .limit(10000);
 
     if (query.mediaTypes.length > 0) {
@@ -179,7 +175,7 @@ export class SupabaseUserProfileRepository implements UserProfileRepository {
       throw trackingError;
     }
 
-    // Group media by type and status
+    
     const allMediaIds = new Set<string>();
     const favoriteMovies: Media[] = [];
     const watchedMovies: Media[] = [];
@@ -217,7 +213,7 @@ export class SupabaseUserProfileRepository implements UserProfileRepository {
 
         const mediaMap = new Map<string, Media>();
         if (mediaData) {
-          // Find media items missing poster_path
+          
           const missingPosters = mediaData.filter((m: MediaRow) => !m.poster_path && m.type === "movie");
           
           await Promise.all(
@@ -236,9 +232,9 @@ export class SupabaseUserProfileRepository implements UserProfileRepository {
             let posterUrl: string | undefined;
             
             if (mediaRow.type === "game") {
-              // Games use IGDB cover URLs stored in poster_path
-              // We stored the full IGDB URL during game-status save
-              // Or we stored the relative path, need to construct full URL
+              
+              
+              
               if (mediaRow.poster_path) {
                 if (mediaRow.poster_path.startsWith("http")) {
                   posterUrl = mediaRow.poster_path;
@@ -247,7 +243,7 @@ export class SupabaseUserProfileRepository implements UserProfileRepository {
                 }
               }
             } else {
-              // Movies/TV use TMDB
+              
               posterUrl = mediaRow.poster_path
                 ? `https://image.tmdb.org/t/p/w500${mediaRow.poster_path}`
                 : undefined;
@@ -270,22 +266,22 @@ export class SupabaseUserProfileRepository implements UserProfileRepository {
 
         console.log("[getProfileContent] mediaMap:", Array.from(mediaMap.entries()));
 
-        // Distribute media based on tracking data
+        
         trackingData.forEach((row) => {
           const media = mediaMap.get(row.media_id);
           console.log("[getProfileContent] row.media_id:", row.media_id, "media:", media, "is_watched:", row.is_watched);
           if (!media) return;
 
-          // Skip episode entries (media_id like tv_{tmdbId}_s{season}_e{episode})
+          
           const isEpisode = /^tv_\d+_s\d+_e\d+$/.test(row.media_id);
           if (isEpisode) {
-            // Skip episodes, only include series, movies, games
+            
             return;
           }
 
           const isFavorite = query.includeFavorites && row.is_favorite;
           const isWatched = query.includeWatched && row.is_watched;
-          // Include games with progress (playing) or planned
+          
           const isPlayedOrPlanned = row.media_type === "game" && (
             row.progress_minutes > 0 || row.is_planned
           );
@@ -330,10 +326,10 @@ export class SupabaseUserProfileRepository implements UserProfileRepository {
       watchedTvShows,
       favoriteGames,
       watchedGames,
-      followersCount: 0, // TODO: Implementar
-      followingCount: 0, // TODO: Implementar
-      isFollowing: false, // TODO: Implementar
-      isFollower: false, // TODO: Implementar
+      followersCount: 0, 
+      followingCount: 0, 
+      isFollowing: false, 
+      isFollower: false, 
     };
   }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 interface SearchBarProps {
   initialQuery?: string;
@@ -8,12 +8,8 @@ interface SearchBarProps {
 }
 
 export function DiscoverSearchBar({ initialQuery = "", onSearch }: SearchBarProps) {
-  const [query, setQuery] = useState("");
-  const [isFocused, setIsFocused] = useState(false);
-
-  useEffect(() => {
-    setQuery(initialQuery || "");
-  }, [initialQuery]);
+    const [query, setQuery] = useState(() => initialQuery || "");
+    const [isFocused, setIsFocused] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newQuery = e.target.value;
@@ -23,7 +19,7 @@ export function DiscoverSearchBar({ initialQuery = "", onSearch }: SearchBarProp
     }
   };
 
-  // Remove the debounced useEffect - now handled by parent
+  
 
   const handleClear = () => {
     setQuery("");
@@ -36,7 +32,7 @@ export function DiscoverSearchBar({ initialQuery = "", onSearch }: SearchBarProp
     setQuery(term);
     setIsFocused(false);
     if (onSearch) {
-      onSearch(term, true); // resetType = true
+      onSearch(term, true); 
     }
   };
 
@@ -52,7 +48,7 @@ export function DiscoverSearchBar({ initialQuery = "", onSearch }: SearchBarProp
               : "border-zinc-800 hover:border-zinc-700"}
           `}
         >
-        {/* Search Icon */}
+        {}
         <div className="pl-4">
           <svg
             className={`w-5 h-5 transition-colors ${isFocused ? "text-emerald-400" : "text-zinc-500"}`}
@@ -69,7 +65,7 @@ export function DiscoverSearchBar({ initialQuery = "", onSearch }: SearchBarProp
           </svg>
         </div>
 
-        {/* Input */}
+        {}
         <input
           type="text"
           value={query}
@@ -81,7 +77,7 @@ export function DiscoverSearchBar({ initialQuery = "", onSearch }: SearchBarProp
           className="flex-1 bg-transparent py-3 px-4 text-white placeholder-zinc-500 focus:outline-none text-base"
         />
 
-        {/* Clear Button */}
+        {}
         {query && (
           <button
             onClick={handleClear}
@@ -104,7 +100,7 @@ export function DiscoverSearchBar({ initialQuery = "", onSearch }: SearchBarProp
         )}
       </div>
 
-      {/* Quick suggestions */}
+      {}
       {isFocused && !query && (
         <div className="absolute top-full left-0 right-0 mt-2 p-4 bg-zinc-900/95 backdrop-blur-xl border border-zinc-800 rounded-lg z-50">
           <p className="text-xs text-zinc-500 uppercase tracking-wider mb-3">

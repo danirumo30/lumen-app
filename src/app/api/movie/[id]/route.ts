@@ -2,7 +2,7 @@ import { logger } from '@/lib/logger';
 import { NextResponse } from "next/server";
 import type { TmdbMovie, TmdbWatchProvidersByCountry, TmdbWatchProvider, TmdbGenre } from '@/types/tmdb';
 
-// Local interfaces for movie detail response
+
 interface MovieReleaseDateEntry {
   iso_3166_1: string;
   release_dates: Array<{ certification: string }>;
@@ -30,7 +30,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    // Remove 'movie_' or 'tmdb_' prefix if present
+    
     const tmdbId = id.replace(/^(movie_|tmdb_)/, '');
 
     const url = new URL(request.url);

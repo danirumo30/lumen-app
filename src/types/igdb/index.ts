@@ -1,18 +1,16 @@
-/**
- * IGDB API types (based on IGDB schema v4+)
- */
+
 
 export interface IgdbGame {
   id: number;
   name: string;
   summary?: string;
   storyline?: string;
-  first_release_date?: number; // Unix timestamp
+  first_release_date?: number; 
   total_rating?: number;
   total_rating_count?: number;
   aggregated_rating?: number;
   aggregated_rating_count?: number;
-  status?: number; // 0=released, 1=alpha, etc.
+  status?: number; 
   created_at?: number;
   updated_at?: number;
   url?: string;
@@ -28,7 +26,7 @@ export interface IgdbGame {
   platforms?: IgdbPlatform[];
   themes?: IgdbTheme[];
   keywords?: IgdbKeyword[];
-  similar_games?: number[]; // Array of game IDs
+  similar_games?: number[]; 
   dlcs?: number[];
   expansions?: number[];
   franchises?: IgdbFranchise[];
@@ -69,7 +67,7 @@ export interface IgdbPlatform {
   id: number;
   abbreviation?: string;
   alternative_name?: string;
-  category: number; // 1=console, 2=arcade, etc.
+  category: number; 
   created_at: number;
   name: string;
   platform_family?: string;
@@ -177,17 +175,13 @@ export interface IgdbAlternativeName {
   updated_at: number;
 }
 
-/**
- * TMDB genre mapping used in app
- */
+
 export interface Genre {
   id: number;
   name: string;
 }
 
-/**
- * Combined meta structure for game responses
- */
+
 export interface GameResponse {
   game: IgdbGame;
   platforms?: IgdbPlatform[];

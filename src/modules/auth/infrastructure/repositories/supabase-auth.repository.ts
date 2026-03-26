@@ -1,4 +1,4 @@
-import { createClient, type User as SupabaseUser, type AuthChangeEvent, type Session } from '@supabase/supabase-js';
+import { createClient, type AuthChangeEvent, type Session } from '@supabase/supabase-js';
 import type { AuthRepository } from '@/modules/auth/domain/auth.repository';
 import { User } from '@/modules/auth/domain/user.entity';
 import { UserMapper } from '@/modules/auth/infrastructure/mappers/user.mapper';
@@ -11,7 +11,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: { autoRefreshToken: true, persistSession: true },
 });
 
-// Admin client for integrity checks
+
 const getAdminClient = () => {
   if (!SUPABASE_SERVICE_ROLE_KEY) {
     console.warn('SUPABASE_SERVICE_ROLE_KEY not configured');
@@ -32,7 +32,7 @@ export class SupabaseAuthRepository implements AuthRepository {
       const supabaseUser = data.session?.user;
       if (!supabaseUser) return { user: null };
 
-      // Verify user exists in database
+      
       const isValid = await this.verifyUserExists(supabaseUser.id);
       if (!isValid) {
         await supabase.auth.signOut();
@@ -90,20 +90,20 @@ export class SupabaseAuthRepository implements AuthRepository {
     }
   }
 
-  // Verify user exists in database using admin client
+  
   private async verifyUserExists(userId: string): Promise<boolean> {
     const adminClient = getAdminClient();
-    if (!adminClient) return true; // Skip check if no admin key
+    if (!adminClient) return true; 
 
     try {
       const { error } = await adminClient.auth.admin.getUserById(userId);
       return !error;
     } catch {
-      return true; // Conservative: allow on error
+      return true; 
     }
   }
 
-  // Subscribe to auth state changes
+  
   onAuthChange(callback: (user: User | null) => void) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event: AuthChangeEvent, session: Session | null) => {
@@ -116,7 +116,7 @@ export class SupabaseAuthRepository implements AuthRepository {
     return () => subscription.unsubscribe();
   }
 
-  // Implement interface method (kept for compatibility)
+  
   async verifyUserIntegrity(user: User | null): Promise<User | null> {
     if (!user) return null;
     const isValid = await this.verifyUserExists(user.id);

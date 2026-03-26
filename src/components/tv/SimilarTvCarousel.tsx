@@ -29,7 +29,7 @@ export function SimilarMediaCarousel({ items, type = "movie" }: SimilarMediaCaro
   return (
     <BaseCarousel title={title}>
       {items.map((item) => {
-        // Strip prefix if present (e.g., "tmdb_116135" → "116135")
+        
         const cleanId = item.id.replace(/^(tmdb_|movie_|tv_|igdb_)/, "");
         return (
           <Link
@@ -37,7 +37,7 @@ export function SimilarMediaCarousel({ items, type = "movie" }: SimilarMediaCaro
             href={`${basePath}/${cleanId}`}
             className="flex-shrink-0 w-36 snap-start group/similar block"
           >
-             {/* Poster */}
+             {}
              <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-zinc-900 border border-white/[0.03] transition-all duration-300 group-hover/similar:scale-[1.03] group-hover/similar:border-white/[0.08]">
                {item.posterUrl ? (
                  <Image
@@ -66,7 +66,7 @@ export function SimilarMediaCarousel({ items, type = "movie" }: SimilarMediaCaro
                 </div>
               )}
 
-              {/* Rating badge */}
+              {}
               {item.rating && item.rating > 0 && (
                 <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded bg-black/60 backdrop-blur-sm flex items-center gap-1">
                   <svg
@@ -81,7 +81,7 @@ export function SimilarMediaCarousel({ items, type = "movie" }: SimilarMediaCaro
               )}
             </div>
 
-            {/* Title */}
+            {}
             <h3 className="text-sm text-white/90 mt-2 line-clamp-2 leading-tight">
               {item.title}
             </h3>

@@ -11,7 +11,7 @@ import { useAuth } from "@/modules/auth/infrastructure/contexts/AuthContext";
 
 export default function ProfileEditPage() {
   const router = useRouter();
-  const { user, updateUser } = useAuth();
+   const { updateUser } = useAuth();
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const bannerInputRef = useRef<HTMLInputElement>(null);
   
@@ -160,7 +160,7 @@ export default function ProfileEditPage() {
         }
       }
 
-      // avatarPreview es solo para vista previa (URL blob local)
+      
       const avatarUrl = formData.avatarUrl || null;
       const bannerUrl = formData.bannerUrl || null;
       
@@ -175,9 +175,9 @@ export default function ProfileEditPage() {
         username: formData.username,
       });
 
-      // Note: We only update user_profiles table here.
-      // The AuthContext will read from user_profiles when needed.
-      // This ensures data persists correctly across sessions.
+      
+      
+      
 
       setSuccess("Perfil actualizado correctamente");
       setOriginalData({ ...originalData!, ...formData });
@@ -185,7 +185,7 @@ export default function ProfileEditPage() {
       setAvatarPreview(null);
       setBannerPreview(null);
 
-      // Redirect to profile page after 2 seconds
+      
       setTimeout(() => {
         router.push(`/profile/${formData.username}`);
       }, 2000);
@@ -224,7 +224,7 @@ export default function ProfileEditPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-8">
-            {/* Username */}
+            {}
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-zinc-400 mb-3">
                 Nombre de usuario
@@ -245,7 +245,7 @@ export default function ProfileEditPage() {
               </p>
             </div>
 
-            {/* Avatar Upload */}
+            {}
             <div>
               <label className="block text-sm font-medium text-zinc-400 mb-3">
                 Foto de perfil
@@ -293,7 +293,7 @@ export default function ProfileEditPage() {
               </div>
             </div>
 
-            {/* Banner Upload */}
+            {}
             <div>
               <label className="block text-sm font-medium text-zinc-400 mb-3">
                 Banner
@@ -353,7 +353,7 @@ export default function ProfileEditPage() {
               </p>
             </div>
 
-            {/* Preview */}
+            {}
             <div className="pt-6 border-t border-zinc-800/50">
               <h2 className="text-lg font-medium text-white mb-4">Vista previa</h2>
               <div className="relative h-40 rounded-2xl overflow-hidden bg-gradient-to-r from-indigo-600 to-purple-600">
@@ -387,7 +387,7 @@ export default function ProfileEditPage() {
               </div>
             </div>
 
-            {/* Submit Button */}
+            {}
             <div className="pt-6 flex gap-4">
               <button
                 type="submit"

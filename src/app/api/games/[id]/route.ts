@@ -23,9 +23,9 @@ interface GameResult {
   involvedCompanies: string[];
 }
 
-// Simple in-memory cache for game data
+
 const gameCache = new Map<string, { data: GameResult; timestamp: number }>();
-const CACHE_TTL = 1000 * 60 * 15; // 15 minutes
+const CACHE_TTL = 1000 * 60 * 15; 
 
 async function getFreshAccessToken(): Promise<string> {
   const tokenResponse = await fetch(
@@ -80,7 +80,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    // Remove 'igdb_' prefix if present
+    
     const igdbId = parseInt(id.replace(/^igdb_/, ''));
 
     if (isNaN(igdbId)) {
@@ -91,8 +91,8 @@ export async function GET(
     }
 
     const acceptLanguage = request.headers.get('accept-language') || 'en';
-    const browserLang = acceptLanguage.split(',')[0].split('-')[0]; // Get primary language code
-    const targetLang = browserLang === 'es' ? 'es' : browserLang === 'fr' ? 'fr' : browserLang === 'de' ? 'de' : browserLang === 'it' ? 'it' : browserLang === 'pt' ? 'pt' : 'es'; // Default to Spanish
+    const browserLang = acceptLanguage.split(',')[0].split('-')[0]; 
+    const targetLang = browserLang === 'es' ? 'es' : browserLang === 'fr' ? 'fr' : browserLang === 'de' ? 'de' : browserLang === 'it' ? 'it' : browserLang === 'pt' ? 'pt' : 'es'; 
     
 
     const cacheKey = `game_${igdbId}_${targetLang}`;
@@ -125,7 +125,7 @@ export async function GET(
     const englishGenres = game.genres?.map((g: { name: string }) => g.name) || [];
     const genres = mapGenresToSpanish(englishGenres);
 
-    // Translate summary to browser language (skip if English)
+    
     let summary: string | null = game.summary || null;
     const shouldTranslate = browserLang !== 'en' && summary && summary.trim() !== '';
     
@@ -134,7 +134,7 @@ export async function GET(
         summary = await translateText(summary!, targetLang);
       } catch (error) {
         logger.error("[games/[id]] Translation failed, using original:", error);
-        // Keep original English summary if translation fails
+        
       }
     }
 

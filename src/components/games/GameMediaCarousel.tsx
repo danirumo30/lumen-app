@@ -44,7 +44,7 @@ export function GameMediaCarousel({ images, videos }: GameMediaCarouselProps) {
   return (
     <>
       <BaseCarousel title="Galería" className="mt-4">
-        {/* Videos */}
+        {}
         {hasVideos &&
           videos.map((video) => (
             <button
@@ -61,7 +61,7 @@ export function GameMediaCarousel({ images, videos }: GameMediaCarouselProps) {
                    className="object-cover"
                    loading="lazy"
                  />
-                 {/* Play button overlay */}
+                 {}
                 <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover/video:bg-black/40 transition-colors">
                   <div className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center">
                     <svg className="w-5 h-5 text-black ml-1" fill="currentColor" viewBox="0 0 24 24">
@@ -69,7 +69,7 @@ export function GameMediaCarousel({ images, videos }: GameMediaCarouselProps) {
                     </svg>
                   </div>
                 </div>
-                {/* Video type badge */}
+                {}
                 <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-red-600/80 backdrop-blur-sm">
                   <span className="text-[10px] font-semibold text-white">VIDEO</span>
                 </div>
@@ -77,7 +77,7 @@ export function GameMediaCarousel({ images, videos }: GameMediaCarouselProps) {
             </button>
           ))}
 
-        {/* Screenshots and artworks */}
+        {}
         {hasImages &&
           images.map((image, index) => (
             <button
@@ -94,7 +94,7 @@ export function GameMediaCarousel({ images, videos }: GameMediaCarouselProps) {
                    className="object-cover"
                    loading="lazy"
                  />
-                 {/* Type badge */}
+                 {}
                 <div
                   className={`absolute top-2 left-2 px-2 py-0.5 rounded-md backdrop-blur-sm ${
                     image.type === "screenshot" ? "bg-blue-600/80" : "bg-purple-600/80"
@@ -109,7 +109,7 @@ export function GameMediaCarousel({ images, videos }: GameMediaCarouselProps) {
           ))}
       </BaseCarousel>
 
-      {/* Lightbox Modal */}
+      {}
       {lightbox && (
         <MediaModal
           type={lightbox.type}

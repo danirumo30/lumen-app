@@ -8,10 +8,10 @@ export function DiscoverSkeleton() {
           key={i}
           className="bg-zinc-900/60 border border-zinc-800 rounded-xl overflow-hidden animate-pulse"
         >
-          {/* Poster */}
+          {}
           <div className="aspect-[2/3] bg-zinc-800" />
           
-          {/* Info */}
+          {}
           <div className="p-3 space-y-2">
             <div className="h-4 bg-zinc-800 rounded w-3/4" />
             <div className="h-3 bg-zinc-800 rounded w-1/2" />

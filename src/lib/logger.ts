@@ -1,7 +1,4 @@
-/**
- * Structured logging utility with log levels.
- * Compatible with console.* signatures.
- */
+
 
 type LogLevel = "debug" | "info" | "warn" | "error";
 
@@ -42,7 +39,7 @@ class Logger {
       }
     }
 
-    // Otherwise concatenate all args into message (like console.log)
+    
     const concatenated = args.map(arg => 
       arg instanceof Error ? arg.message : String(arg)
     ).join(' ');
@@ -67,8 +64,7 @@ class Logger {
         message,
         ...mergedContext,
       };
-      // @ts-ignore - console[level] accepts any
-      console[level](JSON.stringify(logEntry));
+       console[level](JSON.stringify(logEntry));
       return;
     }
 
@@ -95,20 +91,7 @@ class Logger {
     this.log("error", args);
   }
 
-  static child(context: LoggerContext) {
-    return {
-      debug: (msg: string, ...rest: unknown[]) => Logger.debug(msg, ...rest),
-      info: (msg: string, ...rest: unknown[]) => Logger.info(msg, ...rest),
-      warn: (msg: string, ...rest: unknown[]) => Logger.warn(msg, ...rest),
-      error: (msg: string | Error, ...rest: unknown[]) => {
-        if (msg instanceof Error) {
-          Logger.error(msg.message, ...rest);
-        } else {
-          Logger.error(msg, ...rest);
-        }
-      },
-    };
-  }
+
 }
 
 export const logger = Logger;

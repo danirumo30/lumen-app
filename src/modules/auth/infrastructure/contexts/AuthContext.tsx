@@ -1,12 +1,8 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { createClient, type User as SupabaseUser } from '@supabase/supabase-js';
 import { User } from '@/modules/auth/domain/user.entity';
 import { SupabaseAuthRepository } from '@/modules/auth/infrastructure/repositories/supabase-auth.repository';
-
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 interface AuthState {
   user: User | null;
@@ -36,37 +32,6 @@ const initialState: AuthState = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const authRepository = new SupabaseAuthRepository();
-
-// Helper: Fetch user profile from database
-const fetchUserProfile = async (userId: string): Promise<{ avatarUrl?: string } | null> => {
-  try {
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const { data } = await supabase
-      .from('user_profiles')
-      .select('avatar_url')
-      .eq('id', userId)
-      .maybeSingle();
-    return data ? { avatarUrl: data.avatar_url } : null;
-  } catch {
-    console.warn('Could not fetch profile data');
-    return null;
-  }
-};
-
-// Helper: Build user entity from Supabase user + profile
-const buildUserFromSupabase = async (supabaseUser: SupabaseUser | null): Promise<User | null> => {
-  if (!supabaseUser) return null;
-  
-  const profile = await fetchUserProfile(supabaseUser.id);
-  return new User(
-    supabaseUser.id,
-    supabaseUser.email ?? '',
-    supabaseUser.email_confirmed_at !== null,
-    supabaseUser.user_metadata?.username as string | undefined,
-    supabaseUser.user_metadata?.full_name as string | undefined,
-    profile?.avatarUrl
-  );
-};
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, setState] = useState<ExtendedAuthState>({

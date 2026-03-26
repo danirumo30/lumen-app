@@ -41,7 +41,7 @@ interface FranchiseResponse {
 }
 
 const franchiseCache = new Map<string, { data: FranchiseResponse; timestamp: number }>();
-const CACHE_TTL = 1000 * 60 * 30; // 30 minutes
+const CACHE_TTL = 1000 * 60 * 30; 
 
 async function getFreshAccessToken(): Promise<string> {
   const tokenResponse = await fetch(
@@ -108,7 +108,7 @@ export async function GET(
       return NextResponse.json(cached.data);
     }
 
-    // Step 1: Get the game to find its collections and franchises
+    
     const gameRes = await fetchWithTokenRefresh(
       "https://api.igdb.com/v4/games",
       `fields id, name, collections, franchises; where id = ${igdbId}; limit 1;`,
@@ -189,7 +189,7 @@ export async function GET(
       return NextResponse.json(result);
     }
 
-    // Fall back to franchises if no collections
+    
     if (franchiseIds.length > 0) {
       const franchiseId = franchiseIds[0];
 
@@ -249,7 +249,7 @@ export async function GET(
       return NextResponse.json(result);
     }
 
-    // No collection or franchise found
+    
     return NextResponse.json({ franchise: null, games: [] });
   } catch (error) {
     logger.error("Error fetching franchise:", error);

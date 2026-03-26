@@ -1,4 +1,4 @@
-// Translation utility using LibreTranslate API (free, no API key required)
+
 
 const LIBRE_TRANSLATE_APIS = [
   "https://libretranslate.com/translate",
@@ -10,11 +10,11 @@ const MYMEMORY_API = "https://api.mymemory.translated.net/get";
 
 const MAX_CHUNK_SIZE = 500;
 
-// Helper to split text into chunks while preserving sentence boundaries
+
 function splitIntoChunks(text: string, maxSize: number): string[] {
   const chunks: string[] = [];
   
-  // Split by sentences (., !, ?) while keeping the punctuation
+  
   const sentences = text.match(/[^.!?]*[.!?]+/g) || [text];
   let currentChunk = "";
   
@@ -44,7 +44,7 @@ function splitIntoChunks(text: string, maxSize: number): string[] {
     }
   }
   
-  // Don't forget the last chunk
+  
   if (currentChunk.trim()) {
     chunks.push(currentChunk.trim());
   }
@@ -64,7 +64,7 @@ export async function translateText(text: string, targetLang: string = "es"): Pr
   const chunks = splitIntoChunks(text, MAX_CHUNK_SIZE);
   console.log(`[translate] Splitting long text (${text.length} chars) into ${chunks.length} chunks`);
   
-  // Translate chunks with a small delay between each to avoid rate limiting
+  
   const translatedChunks: string[] = [];
   for (const chunk of chunks) {
     const translated = await translateSingle(chunk, targetLang);
@@ -74,7 +74,7 @@ export async function translateText(text: string, targetLang: string = "es"): Pr
     }
   }
   
-  // Reconstruct the text preserving original structure
+  
   return translatedChunks.join(" ");
 }
 
@@ -98,9 +98,9 @@ async function translateSingle(text: string, targetLang: string): Promise<string
           return data.translatedText;
         }
       }
-    } catch (error) {
-      continue;
-    }
+     } catch {
+       continue;
+     }
   }
 
   return translateWithMyMemory(text, targetLang);
@@ -108,7 +108,7 @@ async function translateSingle(text: string, targetLang: string): Promise<string
 
 async function translateWithMyMemory(text: string, targetLang: string): Promise<string> {
   const maxRetries = 2;
-  const baseDelay = 2000; // Longer delay for MyMemory
+  const baseDelay = 2000; 
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
@@ -126,7 +126,7 @@ async function translateWithMyMemory(text: string, targetLang: string): Promise<
 
       if (data.responseStatus === 429 || data.responseDetails?.includes("QUOTA")) {
         console.log(`[translate/mymemory] Quota exceeded`);
-        return text; // Just return original text instead of failing
+        return text; 
       }
 
       if (data.responseStatus === 200 && data.responseData?.translatedText) {
@@ -150,12 +150,12 @@ function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// Translate array of strings (genres)
+
 export async function translateArray(items: string[], targetLang: string = "es"): Promise<string[]> {
   if (!items || items.length === 0) return items;
   if (targetLang === "en") return items;
   
-  // Translate each item sequentially with small delay
+  
   const translated: string[] = [];
   for (const item of items) {
     const t = await translateText(item, targetLang);

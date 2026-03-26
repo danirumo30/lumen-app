@@ -1,7 +1,4 @@
-/**
- * Entidad de Dominio: User
- * Clase pura de TypeScript sin dependencias de infraestructura
- */
+
 export class User {
   constructor(
     public readonly id: string,
@@ -12,16 +9,12 @@ export class User {
     public readonly avatarUrl?: string,
   ) {}
 
-  /**
-   * Valida si el usuario tiene email verificado
-   */
+  
   get isEmailVerified(): boolean {
     return this.emailVerified;
   }
 
-  /**
-   * Crea una instancia de User desde datos crudos
-   */
+  
   static fromRaw(raw: {
     id: string;
     email: string;

@@ -24,7 +24,7 @@ export function MediaModal({ type, src, alt, onClose }: MediaModalProps) {
       className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 animate-in fade-in duration-200"
       onClick={onClose}
     >
-      {/* Close button */}
+      {}
       <button
         className="absolute top-4 right-4 text-white/70 hover:text-white transition-colors z-10"
         onClick={onClose}
@@ -34,7 +34,7 @@ export function MediaModal({ type, src, alt, onClose }: MediaModalProps) {
         </svg>
       </button>
 
-       {/* Content */}
+       {}
        {type === "image" ? (
          <div
            className="relative max-w-full max-h-[90vh] animate-in zoom-in-95 duration-300"

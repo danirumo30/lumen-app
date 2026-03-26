@@ -2,7 +2,7 @@ import { logger } from '@/lib/logger';
 import { NextResponse } from "next/server";
 import type { TmdbTv, TmdbWatchProvidersByCountry, TmdbWatchProvider } from '@/types/tmdb';
 
-// Local interfaces for TV detail response
+
 interface TvContentRating {
   iso_3166_1: string;
   rating: string;
@@ -53,7 +53,7 @@ interface TvCreatedBy {
   profile_path: string | null;
 }
 
-// Extended TV type with additional fields from API
+
 interface TvDetail extends TmdbTv {
   content_ratings?: TvContentRatings;
   aggregate_credits?: TvAggregateCredits;
@@ -77,7 +77,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    // Remove 'tv_' or 'tmdb_' prefix if present
+    
     const tmdbId = id.replace(/^(tv_|tmdb_)/, '');
 
     const url = new URL(request.url);

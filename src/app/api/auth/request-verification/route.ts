@@ -12,16 +12,16 @@ import { randomUUID } from 'crypto';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-// Usar Service Role Key para operaciones admin (seguro ya que es server-side)
+
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey);
 
 export async function POST(request: Request) {
   try {
     const { email } = await request.json();
 
-    // Obtener usuario por email usando Service Role Key
-    // Supabase JS client doesn't have a direct "getUserByEmail" method
-    // We need to use the admin API to list users and filter by email
+    
+    
+    
     const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers();
     
     if (listError) {
@@ -41,7 +41,7 @@ export async function POST(request: Request) {
     }
 
     const verificationToken = randomUUID();
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 horas
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); 
 
     const { error: insertError } = await supabaseAdmin
       .from('email_verifications')
@@ -72,7 +72,7 @@ export async function POST(request: Request) {
       verificationUrl,
     });
 
-    // En desarrollo, verificar si se deben enviar emails reales
+    
     const isDevelopment = process.env.NODE_ENV === 'development';
     const sendInDevelopment = process.env.SMTP_SEND_IN_DEVELOPMENT === 'true';
     
@@ -87,7 +87,7 @@ export async function POST(request: Request) {
         logger.debug(`Email enviado exitosamente a ${user.email}`);
       } catch (emailError) {
         logger.error('Error al enviar email de verificación:', emailError);
-        // No fallamos el registro si el email falla, solo logueamos el error
+        
       }
     } else {
       logger.debug(`[DEVELOPMENT] Email no enviado (simulado). Para enviar emails reales en desarrollo, configura SMTP_SEND_IN_DEVELOPMENT=true en .env.local`);

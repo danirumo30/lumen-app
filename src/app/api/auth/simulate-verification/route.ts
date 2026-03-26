@@ -2,12 +2,12 @@ import { logger } from '@/lib/logger';
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-// Usamos la service role key para operaciones admin (solo en desarrollo)
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 export async function POST(request: Request) {
-  // Verificar que estamos en desarrollo
+  
   if (process.env.NODE_ENV !== 'development') {
     return NextResponse.json(
       { error: 'Endpoint solo disponible en desarrollo' },
@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     );
   }
 
-  // Verificar que tenemos la service role key
+  
   if (!serviceRoleKey) {
     return NextResponse.json(
       { error: 'Service role key no configurada' },
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
   try {
     const { email } = await request.json();
 
-    // Buscar usuario por email usando consulta SQL directa
+    
     const { data: userData, error: userError } = await supabase
       .rpc('get_user_by_email', { email_param: email })
       .single();
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Tipado para el resultado de get_user_by_email
+    
     interface UserResult {
       id: string;
       email: string;
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
 
     const users = userData as UserResult;
 
-    // Actualizar email_confirmed_at directamente en auth.users (solo en desarrollo)
+    
     const { error: updateError } = await supabase
       .from('users')
       .update({ email_confirmed_at: new Date().toISOString() })

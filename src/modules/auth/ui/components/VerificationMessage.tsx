@@ -45,22 +45,22 @@ export default function VerificationMessage({ onClose, email }: VerificationMess
         setMessage('Email reenviado');
       } else {
         setMessage(data.error || 'Error al reenviar email');
-        // Reset timer on error so user can try again
+        
         setCanResend(true);
         setResendTimer(0);
       }
-    } catch (error) {
-      setMessage('Error de conexión');
-      setCanResend(true);
-      setResendTimer(0);
-    } finally {
+     } catch {
+       setMessage('Error de conexión');
+       setCanResend(true);
+       setResendTimer(0);
+     } finally {
       setIsLoading(false);
     }
   };
 
   return (
     <div className="p-8 text-center animate-fade-in">
-      {/* Icono de verificación con efecto de pulso suave */}
+      {}
       <div className="flex justify-center mb-6 relative">
         <div className="w-20 h-20 bg-gradient-to-br from-green-400 to-emerald-600 rounded-full flex items-center justify-center shadow-lg shadow-green-500/20 transform transition-transform hover:scale-105">
           <svg
@@ -79,7 +79,7 @@ export default function VerificationMessage({ onClose, email }: VerificationMess
         </div>
       </div>
 
-      {/* Mensaje principal */}
+      {}
       <div className="space-y-3 mb-8">
         <h3 className="text-2xl font-bold text-white tracking-tight">
           ¡Cuenta creada exitosamente!
@@ -92,14 +92,14 @@ export default function VerificationMessage({ onClose, email }: VerificationMess
         </p>
       </div>
 
-      {/* Mensaje de estado */}
+      {}
       {message && (
         <div className="mb-6 p-3 bg-zinc-800/50 border border-zinc-700 rounded-lg backdrop-blur-sm">
           <p className="text-sm text-zinc-300 break-all">{message}</p>
         </div>
       )}
 
-      {/* Botones de acciones */}
+      {}
       <div className="space-y-3">
         <button
           onClick={handleResendVerification}

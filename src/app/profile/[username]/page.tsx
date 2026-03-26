@@ -11,7 +11,6 @@ import { FollowersModal } from "@/components/profile/FollowersModal";
 import { getSupabaseClient } from "@/lib/supabase";
 import {
   useProfileStats,
-  useCurrentUserProfile,
   useProfileInvalidation,
 } from "@/modules/social/infrastructure/hooks/use-profile-stats.hook";
 import type { Follower, UserProfileWithContent, UserProfileWithStats } from "@/modules/social/domain/user-profile";
@@ -30,13 +29,13 @@ export default function ProfilePage() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [profileUserId, setProfileUserId] = useState<string | null>(null);
   
-  // React Query hooks for real-time stats
+  
   const { data: profileStats } = useProfileStats(profileUserId);
   
-  // Hook for invalidating profile stats
+  
   const { invalidate } = useProfileInvalidation();
 
-  // Merge stats into a single profile object
+  
   const profile: UserProfileWithStats | null = profileStats ?? null;
 
   const loadProfile = useCallback(async () => {
@@ -85,7 +84,7 @@ export default function ProfilePage() {
         isFollower: user ? await repository.isFollowing(profileData.id, user.id) : false,
       });
 
-      // Load followers and following lists
+      
       const [followersList, followingList] = await Promise.all([
         repository.getFollowers(profileData.id),
         repository.getFollowing(profileData.id),
@@ -105,17 +104,17 @@ export default function ProfilePage() {
     loadProfile();
   }, [loadProfile]);
 
-  // Listen for episode sync events to trigger refresh
+  
   useEffect(() => {
     const handleSyncSuccess = async () => {
       invalidate();
       
-      // Reload profile data manually for immediate update
+      
       await loadProfile();
     };
 
     const handleSyncError = () => {
-      // Invalidate profile to show error state
+      
       invalidate();
     };
 
@@ -193,7 +192,7 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-zinc-950 pt-16">
-      {/* Profile Header with Banner */}
+      {}
       <ProfileHeader
         profile={profile}
         isOwnProfile={isOwnProfile}
@@ -206,14 +205,14 @@ export default function ProfilePage() {
       />
 
       <div className="max-w-6xl mx-auto px-4 py-8">
-        {/* Profile Stats - now uses React Query with real-time updates */}
+        {}
         <ProfileStats stats={profile} />
 
-        {/* Media Tabs with Content */}
+        {}
         <MediaTabs content={content} />
       </div>
 
-      {/* Followers Modal */}
+      {}
       <FollowersModal
         isOpen={isFollowersModalOpen}
         onClose={() => setIsFollowersModalOpen(false)}

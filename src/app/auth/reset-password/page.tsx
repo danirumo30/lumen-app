@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 
-// Componente PasswordInput reutilizable con icono de mostrar/ocultar
+
 function PasswordInput({ value, onChange, placeholder, disabled, required, showRequirements }: {
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -79,7 +79,7 @@ function ResetPasswordContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get('token');
-  const email = searchParams.get('email'); // Email para redirigir con el campo pre-llenado
+  const email = searchParams.get('email'); 
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -88,7 +88,7 @@ function ResetPasswordContent() {
   const [canSubmit, setCanSubmit] = useState(true);
   const [submitTimer, setSubmitTimer] = useState(0);
 
-  // Temporizador de 10 segundos para evitar spam
+  
   useEffect(() => {
     if (submitTimer > 0) {
       const timer = setTimeout(() => {
@@ -135,7 +135,7 @@ function ResetPasswordContent() {
 
       if (response.ok) {
         setMessage('Contraseña restablecida exitosamente. Redirigiendo al login...');
-        // Redirigir al login con el email pre-llenado (usando el email de la respuesta de la API)
+        
         const redirectEmail = data.email || email;
         const redirectUrl = redirectEmail 
           ? `/login?email=${encodeURIComponent(redirectEmail)}`
@@ -145,12 +145,12 @@ function ResetPasswordContent() {
         setMessage(data.error || 'Error al restablecer la contraseña');
         setCanSubmit(true);
         setSubmitTimer(0);
-      }
-    } catch (error) {
-      setMessage('Error de conexión');
-      setCanSubmit(true);
-      setSubmitTimer(0);
-    } finally {
+       }
+     } catch {
+       setMessage('Error de conexión');
+       setCanSubmit(true);
+       setSubmitTimer(0);
+     } finally {
       setIsLoading(false);
     }
   };

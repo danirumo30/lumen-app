@@ -29,12 +29,12 @@ export async function GET(request: Request) {
     const tvData = await tvResponse.json();
     
     
-    // Extract arrays from results property (TMDB returns { results: [...] })
+    
     const movieProviders = Array.isArray(movieData?.results) ? movieData.results : [];
     const tvProviders = Array.isArray(tvData?.results) ? tvData.results : [];
     
     
-    // Combine both arrays (they are already filtered by region)
+    
     let allProviders = [...movieProviders, ...tvProviders];
 
     if (allProviders.length === 0) {
@@ -58,7 +58,7 @@ export async function GET(request: Request) {
       return NextResponse.json([]);
     }
 
-    // Deduplicate by provider_id, collecting all access types from flatrate/free/ads/rent/buy arrays
+    
     interface ProviderEntry {
       id: number;
       name: string;
@@ -82,7 +82,7 @@ export async function GET(request: Request) {
 
       const existing = providerMap.get(id);
       if (existing) {
-        // Merge types (union of sets)
+        
         types.forEach(t => existing.types.add(t));
       } else {
         providerMap.set(id, {
@@ -94,7 +94,7 @@ export async function GET(request: Request) {
       }
     });
 
-    // Custom priority order for Spain (ES)
+    
     const spainProviderOrder = [
       'Netflix',
       'Amazon Prime Video',
@@ -170,16 +170,16 @@ export async function GET(request: Request) {
       const bIndex = spainProviderOrder.indexOf(b.name);
       
       if (aIndex !== -1 && bIndex !== -1) {
-        // Both in list: sort by list order
+        
         return aIndex - bIndex;
       } else if (aIndex !== -1) {
-        // Only a in list: a comes first
+        
         return -1;
       } else if (bIndex !== -1) {
-        // Only b in list: b comes first
+        
         return 1;
       } else {
-        // Neither in list: alphabetical
+        
         return a.name.localeCompare(b.name);
       }
     });
@@ -188,7 +188,7 @@ export async function GET(request: Request) {
       id: p.id,
       name: p.name,
       logoUrl: p.logoUrl,
-      types: Array.from(p.types), // Convert Set<string> to string[]
+      types: Array.from(p.types), 
     }));
 
     return NextResponse.json(result);

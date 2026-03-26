@@ -85,7 +85,7 @@ export async function POST(request: Request) {
     }
 
     const userClient = createUserClient(token);
-    // Admin client for writing (bypasses RLS)
+    
     const adminClient = createAdminClient();
 
     const { data: { user }, error: userError } = await userClient.auth.getUser();
@@ -98,9 +98,9 @@ export async function POST(request: Request) {
     const mediaId = `movie_${tmdbId}`;
     const movieMinutes = (movieData?.runtime || 90);
 
-    // First, ensure the movie exists in media table (admin to bypass RLS)
+    
     if (watched && movieData) {
-      // Extract poster path from full URL if present
+      
       const posterPath = movieData.posterPath 
         ? movieData.posterPath.replace("https://image.tmdb.org/t/p/w500", "")
         : null;
@@ -130,17 +130,15 @@ export async function POST(request: Request) {
       .select("is_watched, is_favorite, is_planned, rating, progress_minutes")
       .eq("user_id", user.id)
       .eq("media_id", mediaId)
-      .single();
+       .single();
 
-    const wasWatched = existing?.is_watched ?? false;
-
-    if (watched) {
+     if (watched) {
       if (existing) {
         const { error } = await adminClient
           .from("user_media_tracking")
           .update({ 
             is_watched: true,
-            progress_minutes: movieMinutes, // Save runtime for stats calculation
+            progress_minutes: movieMinutes, 
             updated_at: new Date().toISOString(),
           })
           .eq("user_id", user.id)
@@ -160,7 +158,7 @@ export async function POST(request: Request) {
             is_watched: true,
             is_favorite: false,
             is_planned: false,
-            progress_minutes: movieMinutes, // Save runtime for stats calculation
+            progress_minutes: movieMinutes, 
           });
 
         if (error) {
@@ -170,12 +168,12 @@ export async function POST(request: Request) {
       }
     } else {
       if (existing && (existing.is_favorite || existing.is_planned || existing.rating)) {
-        // Keep record but remove watched and clear progress
+        
         const { error } = await adminClient
           .from("user_media_tracking")
           .update({ 
             is_watched: false,
-            progress_minutes: 0, // Clear progress
+            progress_minutes: 0, 
             updated_at: new Date().toISOString(),
           })
           .eq("user_id", user.id)

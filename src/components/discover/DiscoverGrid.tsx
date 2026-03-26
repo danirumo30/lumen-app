@@ -22,8 +22,7 @@ interface SearchResult {
   releaseDate?: string;
   overview?: string;
   genres?: string[];
-  platforms?: string[];
-  username?: string;
+   username?: string;
   avatarUrl?: string | null;
   providers?: StreamingProvider[];
   platformLogos?: PlatformLogo[];
@@ -42,7 +41,7 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
 
-  // Reset page when query, type, or filters change
+  
   useEffect(() => {
     setPage(1);
     setHasMore(false);
@@ -80,7 +79,7 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
         if (filters.providerIds && filters.providerIds.length > 0) {
           filterParams.providerIds = filters.providerIds;
         }
-        // accessType removed - not used
+        
         if (filters.sortBy) {
           filterParams.sortBy = filters.sortBy;
           if (filters.sortDirection) filterParams.sortDirection = filters.sortDirection;
@@ -108,7 +107,7 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
           users: data.users?.length || 0,
         });
 
-        // Combine results based on type (no client-side filtering needed, backend handles providerIds)
+        
         let newResults: SearchResult[] = [];
         if (type === "all") {
           newResults = [
@@ -124,9 +123,9 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
         } else if (type === "game") {
           newResults = data.games || [];
         }
-        // Note: type "user" is not a selectable tab, only appears in "all"
+        
 
-        // Directly use results (already filtered by backend)
+        
         if (page === 1) {
           setResults(newResults);
         } else {
@@ -199,9 +198,8 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
               posterUrl={result.posterUrl}
               voteAverage={result.voteAverage}
               releaseDate={result.releaseDate}
-              genres={result.genres}
-              platforms={result.platforms}
-              username={result.username}
+               genres={result.genres}
+               username={result.username}
               avatarUrl={result.avatarUrl}
                providers={result.providers}
               platformLogos={result.platformLogos}

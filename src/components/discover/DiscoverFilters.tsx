@@ -9,7 +9,7 @@ export interface DiscoverFilters {
   yearTo?: number;
   minRating?: number;
   platform?: string;
-  providerIds?: number[]; // Streaming platform IDs (Netflix, Amazon, etc.)
+  providerIds?: number[]; 
   sortBy?: "relevance" | "rating" | "year" | "popularity";
   sortDirection?: "asc" | "desc";
 }
@@ -19,7 +19,7 @@ interface DiscoverFiltersProps {
   filters: DiscoverFilters;
   onChange: (filters: DiscoverFilters) => void;
   query?: string;
-  // Streaming provider filter props (for movies/tv only)
+  
   availableProviders?: Array<{ id: number; name: string; logoUrl: string | null }>;
   isLoadingProviders?: boolean;
   providersError?: string | null;
@@ -27,21 +27,20 @@ interface DiscoverFiltersProps {
 }
 
 interface FilterDropdownProps {
-  label: string;
-  options: { value: string; label: string; isCurrent?: boolean }[];
-  value: string | string[] | undefined;
-  onChange: (value: string | string[] | undefined) => void;
-  icon?: React.ReactNode;
-  scrollToValue?: string;
-  sortDirection?: "asc" | "desc";
-  onSortDirectionChange?: (direction: "asc" | "desc") => void;
-  disabled?: boolean;
-  title?: string;
-  dropdownId: string;
-  isOpen: boolean;
-  onOpenChange: (id: string, open: boolean) => void;
-  multiSelect?: boolean;
-}
+   label: string;
+   options: { value: string; label: string; isCurrent?: boolean }[];
+   value: string | string[] | undefined;
+   onChange: (value: string | string[] | undefined) => void;
+   icon?: React.ReactNode;
+   scrollToValue?: string;
+   sortDirection?: "asc" | "desc";
+   disabled?: boolean;
+   title?: string;
+   dropdownId: string;
+   isOpen: boolean;
+   onOpenChange: (id: string, open: boolean) => void;
+   multiSelect?: boolean;
+ }
 
 const genres = {
   movie: ["Acción", "Animación", "Aventura", "Bélica", "Ciencia ficción", "Comedia", "Crimen", "Documental", "Drama", "Familia", "Fantasía", "Historia", "Misterio", "Música", "Película de TV", "Romance", "Suspense", "Terror", "Western"],
@@ -63,10 +62,10 @@ const sortOptions = [
 
 const currentYear = new Date().getFullYear();
 
-// Different year ranges for different media types (descending order: newest first)
-const movieYears = Array.from({ length: currentYear - 1900 + 6 }, (_, i) => currentYear + 5 - i); // 2031 down to 1900
-const tvYears = Array.from({ length: currentYear - 1900 + 6 }, (_, i) => currentYear + 5 - i);   // 2031 down to 1900
-const gameYears = Array.from({ length: currentYear - 1950 + 4 }, (_, i) => currentYear + 3 - i); // 2029 down to 1950
+
+const movieYears = Array.from({ length: currentYear - 1900 + 6 }, (_, i) => currentYear + 5 - i); 
+const tvYears = Array.from({ length: currentYear - 1900 + 6 }, (_, i) => currentYear + 5 - i);   
+const gameYears = Array.from({ length: currentYear - 1950 + 4 }, (_, i) => currentYear + 3 - i); 
 
 function getYearsForType(type: MediaType): number[] {
   switch (type) {
@@ -86,7 +85,6 @@ function FilterDropdown(props: FilterDropdownProps) {
     icon,
     scrollToValue,
     sortDirection,
-    onSortDirectionChange,
     disabled = false,
     title,
     dropdownId,
@@ -121,7 +119,7 @@ function FilterDropdown(props: FilterDropdownProps) {
     }
   }, [isOpen]);
 
-  // Cerrar al hacer scroll/resize
+  
   useEffect(() => {
     if (!isOpen) return;
     const closeOnScroll = () => {
@@ -195,7 +193,7 @@ function FilterDropdown(props: FilterDropdownProps) {
       if (selected) return selected.label;
     }
     return label === "Ordenar" ? "Ordenar Por" : label;
-  }, [label, value, selectedValues, options]);
+  }, [label, value, selectedValues, options, multiSelect]);
 
    const getAccentGradient = (label: string) => {
      if (label.includes("Género")) return "from-amber-500 to-orange-600";
@@ -303,7 +301,7 @@ export function DiscoverFiltersComponent({
 
   const handleDropdownToggle = (id: string, isOpen: boolean) => {
     if (isOpen) {
-      // Al abrir un dropdown, cerrar cualquier otro
+      
       setOpenDropdownId(id);
     } else {
       if (openDropdownId === id) {
@@ -312,7 +310,7 @@ export function DiscoverFiltersComponent({
     }
   };
 
-   // Si el tipo es "all" o "user", no mostrar filtros (pero los hooks ya se ejecutaron)
+   
   if (type === "all" || type === "user") {
     return null;
   }
@@ -334,7 +332,8 @@ export function DiscoverFiltersComponent({
 
   const updateFilter = <K extends keyof DiscoverFilters>(key: K, value: DiscoverFilters[K]) => {
     if (value === undefined || value === null) {
-      const { [key]: removed, ...rest } = filters;
+      const rest = { ...filters };
+      delete rest[key];
       onChange(rest);
     } else {
       onChange({ ...filters, [key]: value });
@@ -364,7 +363,7 @@ export function DiscoverFiltersComponent({
     <div
       className="flex-shrink-0"
     >
-       {/* Filter Bar - Always visible */}
+       {}
        <div
          className="flex items-center justify-start gap-2 overflow-x-auto hide-scrollbar snap-x snap-mandatory relative z-20"
          style={{
@@ -372,7 +371,7 @@ export function DiscoverFiltersComponent({
          }}
        >
 
-        {/* Genre Dropdown */}
+        {}
         {typeGenres.length > 0 && (
           <div className="flex-shrink-0 snap-start">
             <FilterDropdown
@@ -394,34 +393,34 @@ export function DiscoverFiltersComponent({
           </div>
         )}
 
-        {/* Streaming Provider Filter - only for movie/tv */}
+        {}
         {type !== "game" && (
           <>
-            {/* Loading state */}
+            {}
             {isLoadingProviders && (
               <div className="flex-shrink-0 px-3 py-1.5 rounded-lg bg-zinc-800 text-zinc-400 border border-zinc-700/50">
                 ⏳ Cargando proveedores...
               </div>
             )}
 
-            {/* Error state */}
+            {}
             {providersError && !isLoadingProviders && (
               <div className="flex-shrink-0 px-3 py-1.5 rounded-lg bg-red-900/30 text-red-400 border border-red-700/50 max-w-xs">
                 ⚠️ Error: {providersError}
               </div>
             )}
 
-            {/* Empty state (no error, not loading, but empty) */}
+            {}
             {!isLoadingProviders && !providersError && availableProviders && availableProviders.length === 0 && (
               <div className="flex-shrink-0 px-3 py-1.5 rounded-lg bg-zinc-800 text-zinc-500 italic border border-zinc-700/50">
                 No hay proveedores disponibles
               </div>
             )}
 
-            {/* Normal: providers exist */}
+            {}
             {!isLoadingProviders && !providersError && availableProviders && availableProviders.length > 0 && (
               <>
-                {/* Provider dropdown */}
+                {}
                 <div className="flex-shrink-0 snap-start">
                  <FilterDropdown
                    label="Plataforma"
@@ -453,7 +452,7 @@ export function DiscoverFiltersComponent({
            </>
          )}
 
-        {/* Platform Dropdown (for games) */}
+        {}
         {type === "game" && typePlatforms.length > 0 && (
           <div className="flex-shrink-0 snap-start">
             <FilterDropdown
@@ -473,7 +472,7 @@ export function DiscoverFiltersComponent({
           </div>
         )}
 
-        {/* Year filter: single dropdown for search in movies/tv; dual dropdowns otherwise */}
+        {}
         {isMovieOrTv && isSearching ? (
           <div className="flex-shrink-0 snap-start">
             <FilterDropdown
@@ -482,9 +481,10 @@ export function DiscoverFiltersComponent({
               value={filters.yearFrom ? String(filters.yearFrom) : undefined}
               onChange={(value) => {
                 updateFilter("yearFrom", !value || value === "all" ? undefined : parseInt(value as string));
-                // Clear yearTo to avoid mixing modes
+                
                 if (filters.yearTo) {
-                  const { yearTo, ...rest } = filters;
+                  const rest = { ...filters };
+                  delete rest.yearTo;
                   onChange(rest);
                 }
               }}
@@ -501,7 +501,7 @@ export function DiscoverFiltersComponent({
           </div>
         ) : (
           <>
-            {/* Year From */}
+            {}
             <div className="flex-shrink-0 snap-start">
               <FilterDropdown
                 label="Desde"
@@ -521,7 +521,7 @@ export function DiscoverFiltersComponent({
                 }
               />
             </div>
-            {/* Year To */}
+            {}
             <div className="flex-shrink-0 snap-start">
               <FilterDropdown
                 label="Hasta"
@@ -539,7 +539,7 @@ export function DiscoverFiltersComponent({
           </>
         )}
 
-        {/* Sort By */}
+        {}
         <div className="flex-shrink-0 snap-start">
           <FilterDropdown
             label="Ordenar"
@@ -550,17 +550,18 @@ export function DiscoverFiltersComponent({
                 if (filters.sortBy === value) {
                   updateFilter("sortDirection", filters.sortDirection === "asc" ? "desc" : "asc");
                 } else {
-                  // New option: update both sortBy and sortDirection in one go
+                  
                   onChange({ ...filters, sortBy: value as DiscoverFilters["sortBy"], sortDirection: "asc" });
                 }
-              } else {
-                const { sortBy, sortDirection, ...rest } = filters;
-                onChange(rest);
-              }
-            }}
-            sortDirection={filters.sortDirection}
-            onSortDirectionChange={(direction) => updateFilter("sortDirection", direction)}
-            disabled={isSortDisabled}
+               } else {
+                 const rest = { ...filters };
+                 delete rest.sortBy;
+                 delete rest.sortDirection;
+                 onChange(rest);
+               }
+             }}
+             sortDirection={filters.sortDirection}
+             disabled={isSortDisabled}
             title={isSortDisabled ? "No disponible durante búsqueda" : undefined}
             dropdownId="sort"
             isOpen={openDropdownId === "sort"}
@@ -573,7 +574,7 @@ export function DiscoverFiltersComponent({
           />
         </div>
 
-         {/* Clear Filters */}
+         {}
          {hasActiveFilters && (
            <div className="flex-shrink-0 snap-start">
              <button

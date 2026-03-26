@@ -1,11 +1,11 @@
 import nodemailer from 'nodemailer';
 import { getBaseUrl } from '@/lib/get-base-url';
 
-// Configurar transporter de Nodemailer
+
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: Number(process.env.SMTP_PORT) || 587,
-  secure: false, // true para 465, false para otros puertos
+  secure: false, 
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
@@ -19,10 +19,7 @@ interface SendEmailParams {
   text?: string;
 }
 
-/**
- * Servicio para enviar emails usando Nodemailer
- * Sigue las buenas prácticas de email-and-password-best-practices
- */
+
 export async function sendEmail({ to, subject, html, text }: SendEmailParams) {
   const fromEmail = process.env.SMTP_FROM_EMAIL || 'noreply@lumen-app.com';
 
@@ -34,7 +31,7 @@ export async function sendEmail({ to, subject, html, text }: SendEmailParams) {
     to,
     subject,
     html,
-    text: text || html.replace(/<[^>]*>/g, ''), // Texto plano como fallback
+    text: text || html.replace(/<[^>]*>/g, ''), 
   };
 
   try {
@@ -47,9 +44,7 @@ export async function sendEmail({ to, subject, html, text }: SendEmailParams) {
   }
 }
 
-/**
- * Genera HTML del email de verificación con estilo de Lumen
- */
+
 export function generateVerificationEmailHtml({
   userName,
   verificationUrl,
@@ -242,9 +237,7 @@ export function generateVerificationEmailHtml({
   `;
 }
 
-/**
- * Genera texto plano del email de verificación
- */
+
 export function generateVerificationEmailText({
   userName,
   verificationUrl,
@@ -271,9 +264,7 @@ Este email fue enviado automáticamente. Por favor, no respondas a este mensaje.
   `.trim();
 }
 
-/**
- * Genera HTML del email de restablecimiento de contraseña
- */
+
 export function generatePasswordResetEmailHtml({
   userName,
   resetUrl,
@@ -443,9 +434,7 @@ export function generatePasswordResetEmailHtml({
   `;
 }
 
-/**
- * Genera texto plano del email de restablecimiento de contraseña
- */
+
 export function generatePasswordResetEmailText({
   userName,
   resetUrl,

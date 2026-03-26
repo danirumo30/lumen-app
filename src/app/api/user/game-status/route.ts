@@ -80,11 +80,11 @@ export async function GET(request: Request) {
       logger.error("[game-status GET] Error:", error);
     }
 
-    // Favorite is always independent - check separately
+    
     const isFavorite = data?.is_favorite ?? false;
     
-    // Determine play status based on flags
-    // Priority: completed > playing > planned > dropped
+    
+    
     let playStatus: GameStatus = null;
     if (data) {
       if (data.is_watched) {
@@ -94,7 +94,7 @@ export async function GET(request: Request) {
       } else if (data.is_planned) {
         playStatus = "planned";
       } else if (data.progress_minutes > 0) {
-        // Has progress but not planned/watched = dropped
+        
         playStatus = "dropped";
       }
     }
@@ -134,7 +134,7 @@ export async function POST(request: Request) {
     }
 
     const userClient = createUserClient(token);
-    // Admin client for writing (bypasses RLS)
+    
     const adminClient = createAdminClient();
 
     const { data: { user }, error: userError } = await userClient.auth.getUser();
@@ -173,7 +173,7 @@ export async function POST(request: Request) {
     }
 
     if (status !== undefined && status !== null) {
-      // Clear any existing play status first
+      
       updateFields.is_watched = false;
       updateFields.is_planned = false;
       
@@ -181,7 +181,7 @@ export async function POST(request: Request) {
         case "completed":
           updateFields.is_watched = true;
           updateFields.progress_minutes = existing?.progress_minutes || 60;
-          updateFields.updated_at = new Date().toISOString(); // Set completed date via updated_at
+          updateFields.updated_at = new Date().toISOString(); 
           break;
         case "playing":
           updateFields.is_planned = true;
@@ -189,20 +189,20 @@ export async function POST(request: Request) {
           break;
         case "planned":
           updateFields.is_planned = true;
-          updateFields.progress_minutes = 0; // Reset progress for planned
+          updateFields.progress_minutes = 0; 
           break;
         case "dropped":
           break;
         case "favorite":
-          // Just favorite, don't touch play status
+          
           break;
       }
     }
 
     if (playtimeMinutes !== undefined && playtimeMinutes > 0) {
-      // REPLACE, not add
+      
       updateFields.progress_minutes = playtimeMinutes;
-      // Also set playing status if not already set
+      
       if (!existing?.is_planned && !existing?.is_watched) {
         updateFields.is_planned = true;
       }
@@ -214,7 +214,7 @@ export async function POST(request: Request) {
 
 
     if (gameData && (Object.keys(updateFields).length > 1 || !existing)) {
-      // Extract just the IGDB path portion
+      
       let posterPath: string | null = null;
       if (gameData?.coverUrl) {
         posterPath = gameData.coverUrl.replace("https://images.igdb.com", "");

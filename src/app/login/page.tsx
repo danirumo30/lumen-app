@@ -4,7 +4,7 @@ import { useState, useEffect, FormEvent, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/modules/auth/infrastructure/contexts/AuthContext';
 
-// Componente PasswordInput reutilizable con icono de mostrar/ocultar
+
 function PasswordInput({ value, onChange, placeholder, disabled, required }: {
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -50,32 +50,30 @@ function LoginPageContent() {
   const router = useRouter();
   const { signIn, isLoading, error, clearError } = useAuth();
   
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [isReady, setIsReady] = useState(false);
+  
+  const [email, setEmail] = useState<string>(() => {
+    if (typeof window === 'undefined') return '';
+    const params = new URLSearchParams(window.location.search);
+    return params.get('email') || '';
+  });
+  
+   const [password, setPassword] = useState('');
+   
+   const [successMessage] = useState<string | null>(() => {
+     if (typeof window === 'undefined') return null;
+     const params = new URLSearchParams(window.location.search);
+     return params.get('verified') === 'true' 
+       ? '¡Email verificado correctamente! Ahora solo necesitas ingresar tu contraseña.' 
+       : null;
+   });
 
+  
   useEffect(() => {
-    const emailParam = searchParams.get('email');
     const verifiedParam = searchParams.get('verified');
-    
-    console.log(`[LoginPage] emailParam: ${emailParam}, verifiedParam: ${verifiedParam}`);
-    
-    if (emailParam) {
-      setEmail(emailParam);
-    }
-    
     if (verifiedParam === 'true') {
-      setSuccessMessage('¡Email verificado correctamente! Ahora solo necesitas ingresar tu contraseña.');
       window.history.replaceState({}, document.title, window.location.pathname);
     }
-    
-    setIsReady(true);
   }, [searchParams]);
-
-  if (!isReady) {
-    return <div className="min-h-screen flex items-center justify-center bg-zinc-950">Cargando...</div>;
-  }
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -85,14 +83,14 @@ function LoginPageContent() {
       await signIn(email, password);
       router.push('/');
     } catch {
-      // Error ya manejado en AuthContext
+      
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-zinc-950 p-4">
       <div className="w-full max-w-md bg-zinc-950">
-        {/* Header */}
+        {}
         <div className="mb-6">
           <h1 className="text-2xl font-semibold text-zinc-100">Iniciar Sesión</h1>
           <p className="mt-2 text-sm text-zinc-500">
@@ -100,24 +98,24 @@ function LoginPageContent() {
           </p>
         </div>
 
-        {/* Form Container */}
+        {}
         <div className="bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden">
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
-            {/* Success Message */}
+            {}
             {successMessage && (
               <div className="p-3 bg-green-900/30 border border-green-800 rounded-lg">
                 <p className="text-green-400 text-sm">{successMessage}</p>
               </div>
             )}
 
-            {/* Error Message */}
+            {}
             {error && (
               <div className="p-3 bg-red-900/30 border border-red-800 rounded-lg">
                 <p className="text-red-400 text-sm">{error}</p>
               </div>
             )}
 
-            {/* Email */}
+            {}
             <div>
               <label className="block text-sm font-medium text-zinc-400 mb-2">
                 Email
@@ -133,7 +131,7 @@ function LoginPageContent() {
               />
             </div>
 
-            {/* Password */}
+            {}
             <div>
               <label className="block text-sm font-medium text-zinc-400 mb-2">
                 Contraseña
@@ -147,7 +145,7 @@ function LoginPageContent() {
               />
             </div>
 
-            {/* Submit Button */}
+            {}
             <button
               type="submit"
               disabled={isLoading}
@@ -183,7 +181,7 @@ function LoginPageContent() {
             </button>
           </form>
 
-          {/* Footer */}
+          {}
           <div className="px-6 py-4 bg-zinc-900/50 border-t border-zinc-800">
             <p className="text-center text-sm text-zinc-500">
               ¿No tienes cuenta?{' '}

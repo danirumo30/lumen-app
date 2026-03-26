@@ -7,10 +7,7 @@ interface QueryProviderProps {
   children: ReactNode;
 }
 
-/**
- * Profile query key factory
- * Used for invalidating profile-related queries after episode mutations
- */
+
 export const profileKeys = {
   all: ["profile"] as const,
   stats: (userId: string) => ["profile", "stats", userId] as const,
@@ -24,15 +21,15 @@ export function QueryProvider({ children }: QueryProviderProps) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 60 * 1000, // 1 minute default
-            gcTime: 30 * 60 * 1000, // 30 minutes
+            staleTime: 60 * 1000, 
+            gcTime: 30 * 60 * 1000, 
             retry: 1,
-            refetchOnWindowFocus: false, // We handle invalidation manually
+            refetchOnWindowFocus: false, 
           },
           mutations: {
             retry: 3,
             retryDelay: (attemptIndex: number) =>
-              Math.min(1000 * Math.pow(2, attemptIndex), 30000), // 1s, 2s, 4s, max 30s
+              Math.min(1000 * Math.pow(2, attemptIndex), 30000), 
           },
         },
       }),

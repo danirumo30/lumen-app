@@ -29,7 +29,7 @@ export default function HomePage() {
   const [games, setGames] = useState<TrendingItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { user, isLoading: authLoading } = useAuth();
+   const { user } = useAuth();
 
   useEffect(() => {
     async function fetchData() {
@@ -85,9 +85,9 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-zinc-950">
-      {/* Hero Section - starts right after fixed header */}
+      {}
       <section className="relative pt-16 overflow-hidden">
-        {/* Gradient backgrounds */}
+        {}
         <div className="absolute inset-0 bg-gradient-to-b from-indigo-500/20 via-zinc-950 to-zinc-950" />
         
         <div className="relative max-w-7xl mx-auto px-6 py-16">
@@ -152,7 +152,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Carousels */}
+      {}
       <main className="max-w-7xl mx-auto px-6">
         <Carousel
           title="Películas en tendencia"
@@ -193,7 +193,7 @@ export default function HomePage() {
         />
       </main>
 
-      {/* Footer CTA */}
+      {}
       <section className="max-w-7xl mx-auto px-6 mt-16 pb-12">
         <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-indigo-600/20 to-purple-600/20 border border-indigo-500/20 p-8 md:p-12">
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxjaXJjbGUgY3g9IjMwIiBjeT0iMzAiIHI9IjMiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wMykiLz48L2c+PC9zdmc+')] opacity-50" />

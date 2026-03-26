@@ -1,6 +1,4 @@
-/**
- * Supabase user profile types
- */
+
 
 export interface SupabaseUser {
   id: string;

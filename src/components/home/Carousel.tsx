@@ -30,7 +30,7 @@ interface CarouselItem {
   platformLogos?: PlatformLogo[];
 }
 
-// Skeleton shimmer para loading state
+
 function CarouselSkeleton() {
   return (
     <div className="flex gap-4">
@@ -40,7 +40,7 @@ function CarouselSkeleton() {
           className="flex-shrink-0 w-44 animate-pulse"
         >
           <div className="aspect-[2/3] rounded-2xl bg-gradient-to-br from-zinc-800 via-zinc-700 to-zinc-800 relative overflow-hidden">
-            {/* Shimmer effect */}
+            {}
             <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/5 to-transparent" />
           </div>
         </div>
@@ -85,7 +85,7 @@ export function Carousel({ title, subtitle, items, variant = "movies", isLoading
   if (isLoading) {
     return (
       <section className="mb-12">
-        {/* Header skeleton */}
+        {}
         <div className="flex items-end justify-between mb-6">
           <div className="flex items-center gap-3">
             {config.icon}
@@ -106,7 +106,7 @@ export function Carousel({ title, subtitle, items, variant = "movies", isLoading
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Header */}
+      {}
       <div className="flex items-end justify-between mb-6 px-1">
         <div className="flex items-center gap-3">
           {config.icon}
@@ -120,7 +120,7 @@ export function Carousel({ title, subtitle, items, variant = "movies", isLoading
           </div>
         </div>
         
-        {/* Glassmorphism Navigation Buttons */}
+        {}
         <div className="flex gap-1.5 opacity-0 group-hover/carousel:opacity-100 transition-all duration-300">
           <button
             onClick={() => containerRef.current?.scrollBy({ left: -300, behavior: "smooth" })}
@@ -143,7 +143,7 @@ export function Carousel({ title, subtitle, items, variant = "movies", isLoading
         </div>
       </div>
 
-      {/* Scrollable Container - usa scroll nativo en mobile */}
+      {}
       <div
         ref={containerRef}
         className={`flex gap-3 snap-x snap-mandatory carousel-scroll touch-native-scroll ${isHovered ? 'is-scrolling' : ''}`}
@@ -156,11 +156,11 @@ export function Carousel({ title, subtitle, items, variant = "movies", isLoading
           paddingBottom: "16px",
         }}
       >
-        {/* Left padding for fade effect */}
+        {}
         <div className="flex-shrink-0 w-1" />
 
-        {items.map((item, index) => {
-          // Determine the correct base path based on variant
+        {items.map((item) => {
+          
           const basePath = variant === "tv" ? "/tv" : variant === "games" ? "/game" : "/movie";
           
           return (
@@ -169,10 +169,10 @@ export function Carousel({ title, subtitle, items, variant = "movies", isLoading
               href={`${basePath}/${item.id}`}
               className="flex-shrink-0 w-40 snap-start group/item"
             >
-            {/* Poster Card - Ultra Premium */}
+            {}
             <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-zinc-900/50 border border-white/[0.03] transition-all duration-500 ease-out group-hover/item:scale-[1.02] group-hover/item:border-white/[0.08]">
                
-              {/* Subtle perimeter glow on hover */}
+              {}
               <div className="absolute inset-0 rounded-xl opacity-0 group-hover/item:opacity-100 transition-opacity duration-500 pointer-events-none">
                 <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/[0.03] via-transparent to-white/[0.02]" />
                 <div className="absolute inset-[-1px] rounded-xl bg-gradient-to-br from-white/[0.05] via-transparent to-transparent" />
@@ -193,7 +193,7 @@ export function Carousel({ title, subtitle, items, variant = "movies", isLoading
                 </div>
               )}
                
-              {/* Glassmorphism Rating Badge */}
+              {}
               {item.rating && (
                 <div className="absolute top-2 right-2 px-2 py-1 rounded-lg bg-black/40 backdrop-blur-xl border border-white/10">
                   <div className="flex items-center gap-1">
@@ -207,7 +207,7 @@ export function Carousel({ title, subtitle, items, variant = "movies", isLoading
                 </div>
               )}
 
-               {/* Platform/Provider Logos for Movies/TV */}
+               {}
                {variant !== "games" && item.providers && item.providers.length > 0 && (
                  <div className="absolute bottom-2 left-2 right-2 flex gap-1">
                    {item.providers.slice(0, 4).map((provider, idx) => (
@@ -228,7 +228,7 @@ export function Carousel({ title, subtitle, items, variant = "movies", isLoading
                  </div>
                )}
 
-               {/* Platform Icons for Games - using local PNG icons */}
+               {}
                {variant === "games" && item.platformLogos && item.platformLogos.length > 0 && (
                  <div className="absolute bottom-2 left-2 right-2 flex gap-1">
                    {item.platformLogos.slice(0, 4).map((platform, idx) => (
@@ -237,19 +237,19 @@ export function Carousel({ title, subtitle, items, variant = "movies", isLoading
                        className="relative w-6 h-6 flex items-center justify-center"
                        title={platform.name}
                      >
-                       <Image
-                         src={getPlatformIcon(platform.name, platform.id)}
-                         alt={platform.name}
-                         fill
-                         className="object-contain"
-                         sizes="24px"
-                       />
+                        <Image
+                          src={getPlatformIcon(platform.name)}
+                          alt={platform.name}
+                          fill
+                          className="object-contain"
+                          sizes="24px"
+                        />
                      </div>
                    ))}
                  </div>
                )}
  
-              {/* Elegant Hover Overlay */}
+              {}
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover/item:opacity-100 transition-all duration-400 flex flex-col justify-end p-3">
                 <h3 className="text-xs font-medium text-white/95 tracking-tight line-clamp-2 leading-tight mb-2">
                   {item.title}
@@ -266,7 +266,7 @@ export function Carousel({ title, subtitle, items, variant = "movies", isLoading
           );
         })}
 
-        {/* Right padding for fade effect */}
+        {}
         <div className="flex-shrink-0 w-1" />
       </div>
     </section>

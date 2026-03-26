@@ -8,9 +8,9 @@ interface ProfileStatsProps {
 
 const formatTime = (minutes: number): string => {
   const minutesInHour = 60;
-  const minutesInDay = 60 * 24; // 1440
-  const minutesInMonth = 60 * 24 * 30; // 43200
-  const minutesInYear = 60 * 24 * 365; // 525600
+  const minutesInDay = 60 * 24; 
+  const minutesInMonth = 60 * 24 * 30; 
+  const minutesInYear = 60 * 24 * 365; 
 
   if (minutes >= minutesInYear) {
     const years = Math.floor(minutes / minutesInYear);
@@ -41,7 +41,7 @@ const formatTime = (minutes: number): string => {
       return `${days}d`;
     }
   } else {
-    // Horas / Minutos
+    
     const hours = Math.floor(minutes / minutesInHour);
     const mins = Math.floor(minutes % minutesInHour);
 
@@ -155,12 +155,12 @@ export function ProfileStats({ stats }: ProfileStatsProps) {
 
   return (
     <div className="mb-6 sm:mb-8">
-      {/* Header */}
+      {}
       <div className="flex items-center justify-between mb-3 sm:mb-4 px-1">
         <h2 className="text-base sm:text-lg font-semibold text-white/90 tracking-tight">Estadísticas</h2>
       </div>
 
-      {/* Stats Horizontal Scroll */}
+      {}
       <div
         ref={containerRef}
         {...handlers}
@@ -173,7 +173,7 @@ export function ProfileStats({ stats }: ProfileStatsProps) {
             className="flex-shrink-0 w-[180px] bg-zinc-900/50 backdrop-blur-sm rounded-xl p-3 border border-white/[0.03] hover:border-white/[0.06] transition-all"
           >
             <div className="flex items-center gap-2.5">
-              {/* Static color class instead of dynamic bg-${color} */}
+              {}
               <div className={`p-1.5 rounded-lg ${colorStyles[stat.colorKey]}`}>
                 {stat.icon}
               </div>
@@ -186,7 +186,7 @@ export function ProfileStats({ stats }: ProfileStatsProps) {
         ))}
       </div>
 
-      {/* Hide scrollbar styles */}
+      {}
       <style jsx global>{`
         .stats-scroll-container::-webkit-scrollbar {
           display: none !important;

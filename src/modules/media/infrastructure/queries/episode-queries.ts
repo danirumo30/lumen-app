@@ -1,20 +1,13 @@
-/**
- * Episode API Query Functions
- * 
- * Handles all communication with the /api/user/episode-status endpoint.
- */
+
 
 import { supabase } from "@/lib/supabase";
 import type {
-  WatchedEpisode,
   WatchedEpisodesResponse,
   EpisodeToggle,
   BatchToggleResponse,
 } from "@/modules/media/domain/episode.types";
 
-/**
- * Get authorization headers with current session token
- */
+
 async function getAuthHeaders(): Promise<HeadersInit> {
   const { data: { session } } = await supabase.auth.getSession();
   
@@ -29,12 +22,7 @@ async function getAuthHeaders(): Promise<HeadersInit> {
   return headers;
 }
 
-/**
- * Fetch all watched episodes for a TV show
- * 
- * @param tmdbId - The TMDB ID of the TV show
- * @returns Array of watched episodes with season and episode numbers
- */
+
 export async function fetchWatchedEpisodes(
   tmdbId: number
 ): Promise<WatchedEpisodesResponse> {
@@ -54,15 +42,7 @@ export async function fetchWatchedEpisodes(
   return data;
 }
 
-/**
- * Toggle a single episode's watched status
- * 
- * @param tmdbId - The TMDB ID of the TV show
- * @param season - Season number
- * @param episode - Episode number
- * @param watched - Whether to mark as watched or not
- * @param runtime - Episode runtime in minutes (for stats calculation)
- */
+
 export async function toggleEpisode(
   tmdbId: number,
   season: number,
@@ -96,13 +76,7 @@ export async function toggleEpisode(
   return response.json();
 }
 
-/**
- * Toggle multiple episodes at once (batch operation)
- * 
- * @param tmdbId - The TMDB ID of the TV show
- * @param episodes - Array of episode toggles
- * @returns Batch operation result
- */
+
 export async function toggleEpisodesBatch(
   tmdbId: number,
   episodes: EpisodeToggle[]
@@ -130,13 +104,7 @@ export async function toggleEpisodesBatch(
   return response.json();
 }
 
-/**
- * Mark or unmark all episodes for a TV show
- * 
- * @param tmdbId - The TMDB ID of the TV show
- * @param episodeDetails - Array with season, episode, and runtime for each episode
- * @param mark - Whether to mark all (true) or unmark all (false)
- */
+
 export async function toggleAllEpisodes(
   tmdbId: number,
   episodeDetails: Array<{
@@ -156,10 +124,7 @@ export async function toggleAllEpisodes(
   return toggleEpisodesBatch(tmdbId, episodes);
 }
 
-/**
- * Update series watched status (marks the series as "started watching")
- * This is separate from episode tracking
- */
+
 export async function updateSeriesWatchedStatus(
   tmdbId: number,
   watched: boolean,

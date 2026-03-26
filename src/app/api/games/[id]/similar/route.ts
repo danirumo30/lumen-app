@@ -38,7 +38,7 @@ interface SimilarResponse {
 }
 
 const similarCache = new Map<string, { data: SimilarResponse; timestamp: number }>();
-const CACHE_TTL = 1000 * 60 * 30; // 30 minutes
+const CACHE_TTL = 1000 * 60 * 30; 
 
 async function getFreshAccessToken(): Promise<string> {
   const tokenResponse = await fetch(
@@ -105,7 +105,7 @@ export async function GET(
       return NextResponse.json(cached.data);
     }
 
-    // Step 1: Get the game to extract similar_games and genres IDs
+    
     const gameRes = await fetchWithTokenRefresh(
       "https://api.igdb.com/v4/games",
       `fields id, name, similar_games, genres; where id = ${igdbId}; limit 1;`,
@@ -120,12 +120,12 @@ export async function GET(
     const currentGame = games[0];
 
     const similarIds = currentGame.similar_games || [];
-    // Remove the current game from similar
+    
     const filteredSimilarIds = similarIds.filter((id: number) => id !== igdbId);
 
     let allSimilarGames: IgdbGameWithCover[] = [];
 
-    // Step 2: If we have similar_games, fetch them directly
+    
     if (filteredSimilarIds.length > 0) {
       const idsString = filteredSimilarIds.join(",");
       const similarRes = await fetchWithTokenRefresh(
@@ -140,7 +140,7 @@ export async function GET(
       }
     }
 
-     // Step 3: If not enough similar games, fall back to genre-based search
+     
      if (allSimilarGames.length < 5 && currentGame.genres && currentGame.genres.length > 0) {
       const genreIds = currentGame.genres.map((g: { id: number }) => g.id).join(",");
       
@@ -154,7 +154,7 @@ export async function GET(
         const genreGames = await genreBasedRes.json() as IgdbGameWithCover[];
         const filteredGenreGames = genreGames.filter((g) => g.id !== igdbId && !g.version_parent);
 
-        // Merge, avoiding duplicates
+        
         const existingIds = new Set(allSimilarGames.map((g) => g.id));
         for (const game of filteredGenreGames) {
           if (!existingIds.has(game.id)) {
@@ -166,7 +166,7 @@ export async function GET(
 
     const formattedGames = allSimilarGames.slice(0, 15)
       .filter((g) => {
-        // Only include main games (category 0 or undefined), exclude DLCs, expansions, etc.
+        
         return g.category === undefined || g.category === 0;
       })
       .map((game) => ({

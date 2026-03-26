@@ -33,7 +33,7 @@ interface FranchiseDetailsResponse {
 }
 
 const franchiseDetailsCache = new Map<string, { data: FranchiseDetailsResponse; timestamp: number }>();
-const CACHE_TTL = 1000 * 60 * 30; // 30 minutes
+const CACHE_TTL = 1000 * 60 * 30; 
 
 async function getFreshAccessToken(): Promise<string> {
   const tokenResponse = await fetch(
@@ -85,47 +85,21 @@ async function fetchWithTokenRefresh(
 function mapCategoryToType(category: number): "main" | "dlc" | "expansion" | "edition" {
   switch (category) {
     case 0:
-      return "main"; // main_game
+      return "main"; 
     case 4:
-      return "expansion"; // expansion
+      return "expansion"; 
     case 6:
-      return "edition"; // edition
+      return "edition"; 
     case 7:
-      return "edition"; // remake
+      return "edition"; 
     case 8:
-      return "edition"; // port
+      return "edition"; 
     default:
-      // Bundles and others could be treated as DLC
+      
       return "dlc";
   }
 }
 
-// Platform names mapping for common platforms
-const platformNames: Record<number, string[]> = {
-  6: ["PC", "Windows"], // PC (Windows)
-  48: ["PC", "PlayStation"], // PlayStation
-  49: ["PC", "Xbox"], // Xbox
-  130: ["Nintendo", "Switch"], // Nintendo Switch
-  167: ["PlayStation 5"], // PlayStation 5
-  169: ["Xbox Series"], // Xbox Series X/S
-  170: ["Nintendo", "Switch"], // Nintendo Switch
-  11: ["PC", "PlayStation"], // PlayStation 3
-  12: ["PC", "Xbox"], // Xbox 360
-  37: ["Nintendo", "3DS"],
-  38: ["Nintendo", "DS"],
-  39: ["Nintendo", "Wii"],
-  41: ["Nintendo", "Wii U"],
-  64: ["PC", "Linux"],
-  65: ["PC", "macOS"],
-  74: ["PC", "PlayStation"], // PlayStation 4
-  76: ["PC", "Xbox"], // Xbox One
-};
-
-// Normalize platform to our filter categories
-function mapPlatformToFilterCategory(platformId: number): string[] {
-  const mapped = platformNames[platformId] || [];
-  return mapped;
-}
 
 export async function GET(
   request: Request,
@@ -145,7 +119,7 @@ export async function GET(
       return NextResponse.json(cached.data);
     }
 
-    // Step 1: Get the game to find its collections and franchises
+    
     const gameRes = await fetchWithTokenRefresh(
       "https://api.igdb.com/v4/games",
       `fields id, name, collections, franchises; where id = ${igdbId}; limit 1;`,
@@ -206,8 +180,8 @@ export async function GET(
       return NextResponse.json({ details: [] });
     }
 
-    // Query all game details with category and platforms
-    // IGDB uses parentheses () not brackets [] for arrays
+    
+    
     const idsString = gameIds.join(",");
     const detailsRes = await fetchWithTokenRefresh(
       "https://api.igdb.com/v4/games",
@@ -244,7 +218,7 @@ export async function GET(
      }
 
      const details = detailsGames
-       .filter((g) => !g.version_parent) // Exclude child versions
+       .filter((g) => !g.version_parent) 
        .map((g) => {
          const type = mapCategoryToType(g.category || 0);
          const platformNames = (g.platforms || []).map((p) => 

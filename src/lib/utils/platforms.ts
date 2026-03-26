@@ -1,8 +1,4 @@
-/**
- * Platform icon mapping utility.
- * Maps platform names to local icon paths using string matching.
- * @module platforms
- */
+
 
 export interface PlatformLogo {
   id: number;
@@ -12,39 +8,20 @@ export interface PlatformLogo {
   uniqueKey?: string;
 }
 
-/**
- * Maps a platform name to its corresponding icon path.
- * Uses fuzzy matching on platform name to identify the correct icon.
- * @param platformName - The platform name (case-insensitive)
- * @param fallbackId - Optional fallback platform ID (currently unused, reserved for future)
- * @returns Path to the platform icon asset
- *
- * @example
- * ```ts
- * getPlatformIcon("PlayStation 5") // returns "/icons/platforms/playstation.png"
- * getPlatformIcon("Windows") // returns "/icons/platforms/windows.png"
- * ```
- *
- * @remarks
- * This function uses substring matching rather than exact equality to handle
- * variations in platform naming from different data sources (IGDB, RAWG, etc).
- *
- * Icon assets should be placed in `/public/icons/platforms/` with the exact
- * filenames returned by this function.
- */
-export function getPlatformIcon(platformName: string | undefined, fallbackId?: number): string {
+
+export function getPlatformIcon(platformName: string | undefined): string {
   if (!platformName) {
     return "/icons/platforms/windows.png";
   }
 
   const name = platformName.toLowerCase();
 
-  // PC / Windows
+  
   if (name.includes("pc") || name.includes("windows") || name.includes("microsoft")) {
     return "/icons/platforms/windows.png";
   }
 
-  // Linux / SteamOS
+  
   if (name.includes("linux") || name.includes("steamos")) {
     return "/icons/platforms/linux.png";
   }
@@ -53,7 +30,7 @@ export function getPlatformIcon(platformName: string | undefined, fallbackId?: n
     return "/icons/platforms/macos.png";
   }
 
-  // PlayStation (all versions)
+  
   if (
     name.includes("playstation") ||
     name.includes("ps5") ||
@@ -69,7 +46,7 @@ export function getPlatformIcon(platformName: string | undefined, fallbackId?: n
     return "/icons/platforms/playstation.png";
   }
 
-  // Xbox (all versions)
+  
   if (
     name.includes("xbox") ||
     name.includes("xbox one") ||
@@ -83,7 +60,7 @@ export function getPlatformIcon(platformName: string | undefined, fallbackId?: n
     return "/icons/platforms/nintendo-switch.png";
   }
 
-  // Nintendo legacy (Game Boy, GBA, N64, GameCube, SNES, GB, etc)
+  
   if (
     name.includes("game boy") ||
     name.includes("gameboy") ||
@@ -107,7 +84,7 @@ export function getPlatformIcon(platformName: string | undefined, fallbackId?: n
     return "/icons/platforms/wiiu.png";
   }
 
-  // Nintendo DS / 3DS / DSi
+  
   if (
     name.includes("nintendo ds") ||
     name.includes("nintendo 3ds") ||

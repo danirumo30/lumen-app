@@ -10,7 +10,7 @@ interface StreamingProvider {
   id: number;
   name: string;
   logoUrl: string | null;
-  types: string[]; // TMDB types: flatrate, free, ads, rent, buy, etc.
+  types: string[]; 
 }
 
 export function DiscoverClient() {
@@ -24,7 +24,7 @@ export function DiscoverClient() {
    useEffect(() => {
      console.log("[DiscoverClient] Loading watch providers...");
      
-     // Detect browser region (e.g., "es-ES" -> "ES")
+     
      const detectRegion = () => {
        if (typeof navigator === 'undefined') return 'ES';
        const lang = navigator.language || 'en-US';
@@ -62,13 +62,13 @@ export function DiscoverClient() {
     }
   }, []);
 
-  // Clear filters when changing type
+  
   const handleTypeChange = useCallback((newType: MediaType) => {
     setSelectedType(newType);
     setFilters({});
   }, []);
 
-  // Multi-provider toggle
+  
   const handleProviderChange = useCallback((providerIds: number[]) => {
     setFilters(prev => ({
       ...prev,
@@ -76,11 +76,11 @@ export function DiscoverClient() {
     }));
   }, []);
 
-   // No availableAccessTypes needed; dropdown always shows all options when providers selected
+   
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-zinc-950 to-black pt-16">
-      {/* Background Pattern (kept minimal) */}
+      {}
       <div className="absolute inset-0 opacity-20 pointer-events-none">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-emerald-900/10 via-zinc-950 to-zinc-950" />
         <div className="absolute inset-0" style={{
@@ -89,7 +89,7 @@ export function DiscoverClient() {
       </div>
 
       <div className="relative max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
-        {/* Animated Header Accent - Floating Aurora */}
+        {}
         <div className="w-full flex justify-center mb-6">
           <div className="relative w-full max-w-3xl">
             <div className="absolute -inset-2 blur-md bg-gradient-to-r from-emerald-500/20 via-teal-500/20 to-cyan-500/20 rounded-full" />
@@ -97,30 +97,30 @@ export function DiscoverClient() {
           </div>
         </div>
 
-        {/* Tagline bajo la línea con gradiente animado */}
+        {}
         <div className="w-full flex justify-center mb-6">
           <p className="text-lg tracking-wide max-w-3xl text-center font-light animate-gradient-text">
             Encuentra tu próxima película, serie o juego favorito
           </p>
         </div>
 
-        {/* Search Bar - centered */}
+        {}
         <div className="w-full flex justify-center mb-4">
           <div className="w-full max-w-3xl">
             <DiscoverSearchBar onSearch={handleSearch} />
           </div>
         </div>
 
-        {/* Filters & Type Chips - centered block, left-aligned content */}
+        {}
         <div className="flex flex-col items-start gap-2 w-full max-w-3xl mx-auto">
-          {/* Type Chips row */}
+          {}
           <div className="flex justify-start overflow-x-auto hide-scrollbar gap-2 w-full snap-x snap-mandatory">
             <div className="snap-start">
               <DiscoverTypeChips selected={selectedType} onChange={handleTypeChange} />
             </div>
           </div>
 
-          {/* Filters row */}
+          {}
           <div className="flex justify-start overflow-x-auto hide-scrollbar gap-2 w-full snap-x snap-mandatory">
             <DiscoverFiltersComponent
                 type={selectedType}
@@ -136,7 +136,7 @@ export function DiscoverClient() {
         </div>
       </div>
 
-      {/* Results Section */}
+      {}
       <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
         <DiscoverGrid
           query={query}

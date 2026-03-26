@@ -40,11 +40,11 @@ function getContentBadge(category?: number, isStandalone?: boolean): { label: st
 }
 
 export function DLCsCarousel({ dlcs }: DLCsCarouselProps) {
+  const { containerRef, handlers } = useDragScroll({ snap: true });
+
   if (!dlcs || dlcs.length === 0) {
     return null;
   }
-
-  const { containerRef, handlers } = useDragScroll({ snap: true });
 
   return (
     <section className="mb-10">
@@ -77,7 +77,7 @@ export function DLCsCarousel({ dlcs }: DLCsCarouselProps) {
               href={`/game/${cleanId}`}
               className="flex-shrink-0 w-36 snap-start group/dlc"
             >
-               {/* Poster */}
+               {}
                <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-zinc-800 border border-white/[0.03] transition-all duration-500 group-hover/dlc:scale-[1.02] group-hover/dlc:border-white/[0.08]">
                  {dlc.posterUrl ? (
                    <Image
@@ -106,12 +106,12 @@ export function DLCsCarousel({ dlcs }: DLCsCarouselProps) {
                   </div>
                 )}
 
-                {/* Content badge */}
+                {}
                 <div className={`absolute top-2 left-2 px-2 py-0.5 rounded-md ${badge.color} backdrop-blur-sm`}>
                   <span className="text-[10px] font-semibold text-white">{badge.label}</span>
                 </div>
 
-                {/* Rating badge */}
+                {}
                 {dlc.rating && (
                   <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded-md bg-black/60 backdrop-blur-sm">
                     <span className="text-[10px] font-semibold text-white/90 tabular-nums">
@@ -121,7 +121,7 @@ export function DLCsCarousel({ dlcs }: DLCsCarouselProps) {
                 )}
               </div>
 
-              {/* Title and year */}
+              {}
               <h3 className="text-xs font-medium text-white/90 mt-2 line-clamp-2 leading-tight">
                 {dlc.name}
               </h3>
