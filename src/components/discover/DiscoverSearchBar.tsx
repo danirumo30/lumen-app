@@ -43,11 +43,11 @@ export function DiscoverSearchBar({ initialQuery = "", onSearch }: SearchBarProp
   };
 
   return (
-    <div className="relative w-full max-w-3xl mx-auto">
+    <div className="relative w-full max-w-3xl">
       <div
         className={`
           relative flex items-center bg-zinc-900/80 backdrop-blur-sm
-          border rounded-xl overflow-hidden
+          border rounded-2xl overflow-hidden
           transition-all duration-300
           ${isFocused
             ? "border-emerald-500/50 ring-1 ring-emerald-500/50 shadow-lg shadow-emerald-500/10"

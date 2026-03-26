@@ -89,14 +89,14 @@ export function DiscoverClient() {
         }} />
       </div>
 
-      <div className="relative max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-        {/* Search Bar - No header text, just the search */}
-        <div className="max-w-3xl mx-auto mb-4">
+      <div className="relative max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+        {/* Search Bar - left aligned */}
+        <div className="w-full mb-3">
           <DiscoverSearchBar onSearch={handleSearch} />
         </div>
 
-        {/* Filters & Type Chips - Left-aligned, flowing naturally */}
-        <div className="flex flex-col items-start gap-3 w-full">
+        {/* Filters & Type Chips - left-aligned, compact */}
+        <div className="flex flex-col items-start gap-2 w-full">
           {/* Type Chips row */}
           <div className="flex justify-start overflow-x-auto hide-scrollbar gap-2 w-full snap-x snap-mandatory">
             <div className="snap-start">
@@ -121,7 +121,7 @@ export function DiscoverClient() {
       </div>
 
       {/* Results Section */}
-      <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 mt-4">
+      <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
         <DiscoverGrid
           query={query}
           type={selectedType}
