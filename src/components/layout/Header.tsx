@@ -59,30 +59,37 @@ export default function Header() {
             </span>
           </Link>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-6 lg:space-x-8">
+           {/* Desktop Navigation */}
+           <nav className="hidden md:flex items-center space-x-6 lg:space-x-8">
+             <Link
+               href="/"
+               className="text-zinc-400 hover:text-white transition-colors text-sm font-medium relative group"
+             >
+               Inicio
+               <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-indigo-500 group-hover:w-full transition-all duration-300" />
+             </Link>
+             <Link
+               href="/discover"
+               className="text-zinc-400 hover:text-white transition-colors text-sm font-medium relative group"
+             >
+               Descubrir
+               <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-indigo-500 group-hover:w-full transition-all duration-300" />
+             </Link>
             <Link
-              href="/"
+              href="/search"
               className="text-zinc-400 hover:text-white transition-colors text-sm font-medium relative group"
             >
-              Inicio
+              Buscar
               <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-indigo-500 group-hover:w-full transition-all duration-300" />
             </Link>
-            <Link
-              href="/discover"
-              className="text-zinc-400 hover:text-white transition-colors text-sm font-medium relative group"
-            >
-              Descubrir
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-indigo-500 group-hover:w-full transition-all duration-300" />
-            </Link>
-            <Link
-              href="/rankings"
-              className="text-zinc-400 hover:text-white transition-colors text-sm font-medium relative group"
-            >
-              Rankings
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-indigo-500 group-hover:w-full transition-all duration-300" />
-            </Link>
-          </nav>
+             <Link
+               href="/rankings"
+               className="text-zinc-400 hover:text-white transition-colors text-sm font-medium relative group"
+             >
+               Rankings
+               <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-indigo-500 group-hover:w-full transition-all duration-300" />
+             </Link>
+           </nav>
 
           {/* User Menu / Login Button */}
           <div className="flex items-center space-x-2 md:space-x-4">
@@ -247,6 +254,10 @@ export default function Header() {
               <Link href="/" onClick={closeMobileMenu} className="flex items-center px-4 py-3 text-zinc-400 hover:text-white hover:bg-zinc-800/50 rounded-lg transition-colors">
                 <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
                 Inicio
+              </Link>
+              <Link href="/discover" onClick={closeMobileMenu} className="flex items-center px-4 py-3 text-zinc-400 hover:text-white hover:bg-zinc-800/50 rounded-lg transition-colors">
+                <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 22s-8-4.5-8-11.8V6l8-2.5 8 2.5v4.2c0 7.3-8 11.8-8 11.8z" /></svg>
+                Descubrir
               </Link>
               <Link href="/search" onClick={closeMobileMenu} className="flex items-center px-4 py-3 text-zinc-400 hover:text-white hover:bg-zinc-800/50 rounded-lg transition-colors">
                 <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
