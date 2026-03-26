@@ -669,7 +669,7 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
                 value={hoursInput}
                 onChange={(e) => setHoursInput(e.target.value)}
                 placeholder="0"
-                className="w-[9rem] h-8 px-3 text-center text-sm bg-transparent border-2 border-emerald-500/40 rounded-lg text-white placeholder:text-zinc-600 focus:border-emerald-400 focus:outline-none focus:bg-emerald-500/5 transition-all relative z-10 [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:hidden [&::-webkit-outer-spin-button]:hidden"
+                className="w-[150px] h-8 px-3 text-center text-sm bg-transparent border-2 border-emerald-500/40 rounded-lg text-white placeholder:text-zinc-600 focus:border-emerald-400 focus:outline-none focus:bg-emerald-500/5 transition-all relative z-10 [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:hidden [&::-webkit-outer-spin-button]:hidden"
                 min="0"
                 style={{ WebkitAppearance: 'none', appearance: 'textfield' }}
               />
@@ -686,7 +686,7 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
                   setMinsInput(val > 59 ? "59" : val.toString());
                 }}
                 placeholder="0"
-                className="w-[9rem] h-8 px-3 text-center text-sm bg-transparent border-2 border-emerald-500/40 rounded-lg text-white placeholder:text-zinc-600 focus:border-emerald-400 focus:outline-none focus:bg-emerald-500/5 transition-all relative z-10 [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:hidden [&::-webkit-outer-spin-button]:hidden"
+                className="w-[150px] h-8 px-3 text-center text-sm bg-transparent border-2 border-emerald-500/40 rounded-lg text-white placeholder:text-zinc-600 focus:border-emerald-400 focus:outline-none focus:bg-emerald-500/5 transition-all relative z-10 [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:hidden [&::-webkit-outer-spin-button]:hidden"
                 min="0"
                 max="59"
                 style={{ WebkitAppearance: 'none', appearance: 'textfield' }}
