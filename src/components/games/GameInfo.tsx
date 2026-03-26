@@ -648,62 +648,69 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
           </div>
         </div>
 
-        {/* Playtime tracker - Two separate inputs for hours and minutes */}
-        {/* Only show when playing, completed, or dropped */}
+        {/* Playtime tracker - Single line artistic control */}
         {user && (currentPlayStatus === "playing" || currentPlayStatus === "completed" || currentPlayStatus === "dropped") && (
-          <div className="mt-4 p-4 rounded-xl bg-zinc-900/50 border border-white/5">
-            {/* Header with current time */}
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-zinc-400">Tiempo de juego:</span>
-              <span className="text-white font-medium">{formatPlaytime(gameStatus.playtimeMinutes)}</span>
-            </div>
+          <div className="inline-flex items-center gap-3 px-5 py-2 rounded-lg bg-zinc-900/80 border border-emerald-500/30 backdrop-blur-md relative overflow-hidden group">
+            {/* Hover glow */}
+            <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-emerald-500/0 via-emerald-500/10 to-emerald-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             
-            {/* Input row - responsive design */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              {/* Hours input */}
-              <div className="flex-1">
-                <label className="block text-xs text-zinc-500 mb-1">Horas</label>
-                <input
-                  type="number"
-                  value={hoursInput}
-                  onChange={(e) => setHoursInput(e.target.value)}
-                  placeholder="0"
-                  className="w-full px-3 py-2 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-sm text-center [-moz-appearance:textfield]"
-                  min="0"
-                  style={{ WebkitAppearance: 'none', appearance: 'textfield' }}
-                />
-              </div>
-              
-              {/* Minutes input */}
-              <div className="flex-1">
-                <label className="block text-xs text-zinc-500 mb-1">Minutos</label>
-                <input
-                  type="number"
-                  value={minsInput}
-                  onChange={(e) => {
-                    const val = parseInt(e.target.value) || 0;
-                    // Cap at 59
-                    setMinsInput(val > 59 ? "59" : val.toString());
-                  }}
-                  placeholder="0"
-                  className="w-full px-3 py-2 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-sm text-center [-moz-appearance:textfield]"
-                  min="0"
-                  max="59"
-                  style={{ WebkitAppearance: 'none', appearance: 'textfield' }}
-                />
-              </div>
-              
-              {/* Save button */}
-              <div className="sm:self-end">
-                <button
-                  onClick={handlePlaytimeSubmit}
-                  disabled={isLoading}
-                  className="w-full sm:w-auto px-6 py-2 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-sm hover:bg-emerald-500/30 transition-colors"
-                >
-                  {isLoading ? "Guardando..." : "Guardar"}
-                </button>
-              </div>
+            {/* Current time with gradient */}
+            <span className="text-sm font-mono tabular-nums bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-400 bg-clip-text text-transparent animate-gradient-x">
+              {formatPlaytime(gameStatus.playtimeMinutes)}
+            </span>
+            
+            <div className="w-px h-5 bg-gradient-to-b from-emerald-500/50 to-emerald-500/0 rounded-full" />
+            
+            {/* Hours input */}
+            <div className="flex items-center gap-1">
+              <input
+                type="number"
+                value={hoursInput}
+                onChange={(e) => setHoursInput(e.target.value)}
+                placeholder="0"
+                className="w-24 h-8 px-2 text-center text-sm bg-transparent border-b border-emerald-500/40 text-white placeholder:text-zinc-600 focus:border-emerald-400 focus:outline-none focus:bg-emerald-500/5 transition-all [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:hidden [&::-webkit-outer-spin-button]:hidden"
+                min="0"
+                style={{ WebkitAppearance: 'none', appearance: 'textfield' }}
+              />
+              <span className="text-[10px] text-emerald-500/70 uppercase">h</span>
             </div>
+
+            {/* Minutes input */}
+            <div className="flex items-center gap-1">
+              <input
+                type="number"
+                value={minsInput}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value) || 0;
+                  setMinsInput(val > 59 ? "59" : val.toString());
+                }}
+                placeholder="0"
+                className="w-24 h-8 px-2 text-center text-sm bg-transparent border-b border-emerald-500/40 text-white placeholder:text-zinc-600 focus:border-emerald-400 focus:outline-none focus:bg-emerald-500/5 transition-all [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:hidden [&::-webkit-outer-spin-button]:hidden"
+                min="0"
+                max="59"
+                style={{ WebkitAppearance: 'none', appearance: 'textfield' }}
+              />
+              <span className="text-[10px] text-emerald-500/70 uppercase">m</span>
+            </div>
+
+            {/* Save button */}
+            <button
+              onClick={handlePlaytimeSubmit}
+              disabled={isLoading}
+              className="flex items-center justify-center w-9 h-9 rounded-full bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/20 hover:border-emerald-400 active:scale-95 transition-all disabled:opacity-50 group/btn"
+              title={isLoading ? "Guardando..." : "Guardar"}
+            >
+              {isLoading ? (
+                <svg className="w-4 h-4 text-emerald-400 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="2"/>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                </svg>
+              ) : (
+                <svg className="w-4 h-4 text-emerald-400 group-hover/btn:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+            </button>
           </div>
         )}
       </div>
