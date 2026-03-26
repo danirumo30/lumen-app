@@ -437,7 +437,7 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
   const currentFavorite = gameStatus.isFavorite;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-8">
+    <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-8">
       {/* Cover */}
       <div className="relative">
         <div className="sticky top-24">
@@ -586,52 +586,31 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
 
         {/* Status selector */}
         <div className="border-t border-white/5 pt-6">
-          {/* All status buttons in one row - Favorite FIRST */}
-          <div className="flex flex-wrap gap-2">
-            <span className="text-xs text-zinc-500 w-full mb-1">Estado</span>
+          <span className="text-xs text-zinc-500 w-full mb-1 block">Estado</span>
 
-            {/* Favorite button - independent, first position */}
+          {/* Mobile: 2-column grid | Desktop: horizontal flex */}
+          <div className="grid grid-cols-2 lg:flex lg:flex-wrap gap-2">
+            {/* Mobile row 1: Favorite + Platinum */}
             <button
               onClick={() => handleFavoriteClick()}
               disabled={isLoading}
               className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all ${currentFavorite
-                  ? `${statusConfig.favorite.bg} ${statusConfig.favorite.text} border ${statusConfig.favorite.border}`
-                  : "bg-zinc-800/80 text-zinc-300 border border-zinc-700/50 hover:bg-zinc-700/80"
+                ? `${statusConfig.favorite.bg} ${statusConfig.favorite.text} border ${statusConfig.favorite.border}`
+                : "bg-zinc-800/80 text-zinc-300 border border-zinc-700/50 hover:bg-zinc-700/80"
                 }`}
             >
               {statusConfig.favorite.icon}
               {statusConfig.favorite.label}
             </button>
 
-            {/* Play Status buttons - mutually exclusive */}
-            {["playing", "completed", "dropped", "planned"].map((key) => {
-              const config = statusConfig[key as keyof typeof statusConfig];
-              const isActive = currentPlayStatus === key;
-              return (
-                <button
-                  key={key}
-                  onClick={() => handlePlayStatusClick(isActive ? null : key)}
-                  disabled={isLoading}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all ${isActive
-                      ? `${config.bg} ${config.text} border ${config.border}`
-                      : "bg-zinc-800/80 text-zinc-300 border border-zinc-700/50 hover:bg-zinc-700/80"
-                    }`}
-                >
-                  {config.icon}
-                  {config.label}
-                </button>
-              );
-            })}
-
-            {/* Platinum trophy button */}
             <button
               onClick={() => handlePlatinumClick()}
-              disabled={isLoading}
+              disabled={isLoading || (currentPlayStatus !== "completed" && currentPlayStatus !== "playing")}
               className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all ${hasPlatinum
-                  ? "bg-gradient-to-r from-violet-500/30 to-amber-500/30 text-amber-300 border border-amber-500/40"
-                  : "bg-zinc-800/80 text-zinc-400 border border-zinc-700/50 hover:bg-zinc-700/80 hover:text-zinc-300"
-                }`}
-              title={hasPlatinum ? "Trofeo de platino conseguido" : "Marcar como completado con platino"}
+                ? "bg-gradient-to-r from-violet-500/30 to-amber-500/30 text-amber-300 border border-amber-500/40"
+                : "bg-zinc-800/80 text-zinc-400 border border-zinc-700/50 hover:bg-zinc-700/80 hover:text-zinc-300"
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
+              title={hasPlatinum ? "Trofeo de platino conseguido" : "Disponible solo cuando el juego está completado o en progreso"}
             >
               <img
                 src="/icons/platforms/platino.png"
@@ -640,74 +619,130 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
                 height={18}
                 className={hasPlatinum ? "" : "grayscale opacity-50"}
               />
-              <span className="hidden sm:inline">Platino</span>
+              <span className="">Platino</span>
             </button>
+
+            {/* Mobile row 2: Playing + Completed */}
+            {["playing", "completed"].map((key) => {
+              const config = statusConfig[key as keyof typeof statusConfig];
+              const isActive = currentPlayStatus === key;
+              return (
+                <button
+                  key={key}
+                  onClick={() => handlePlayStatusClick(isActive ? null : key)}
+                  disabled={isLoading}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all ${isActive
+                    ? `${config.bg} ${config.text} border ${config.border}`
+                    : "bg-zinc-800/80 text-zinc-300 border border-zinc-700/50 hover:bg-zinc-700/80"
+                    }`}
+                >
+                  {config.icon}
+                  {config.label}
+                </button>
+              );
+            })}
+
+            {/* Mobile row 3: Dropped + Planned */}
+            {["dropped", "planned"].map((key) => {
+              const config = statusConfig[key as keyof typeof statusConfig];
+              const isActive = currentPlayStatus === key;
+              return (
+                <button
+                  key={key}
+                  onClick={() => handlePlayStatusClick(isActive ? null : key)}
+                  disabled={isLoading}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all ${isActive
+                    ? `${config.bg} ${config.text} border ${config.border}`
+                    : "bg-zinc-800/80 text-zinc-300 border border-zinc-700/50 hover:bg-zinc-700/80"
+                    }`}
+                >
+                  {config.icon}
+                  {config.label}
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        {/* Playtime tracker - spacious alignment */}
+        {/* Playtime tracker */}
         {user && (currentPlayStatus === "playing" || currentPlayStatus === "completed" || currentPlayStatus === "dropped") && (
-          <div className="inline-flex items-center px-2 sm:px-8 py-1 sm:py-2 gap-2 sm:gap-0 rounded-lg bg-zinc-900/80 border border-emerald-500/30 backdrop-blur-md relative overflow-hidden group">
-            {/* Hover glow */}
-            <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-emerald-500/0 via-emerald-500/10 to-emerald-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+          <div className="w-full md:max-w-[320px] lg:w-fit flex flex-col sm:flex-row items-center gap-2 sm:gap-3 p-3 rounded-xl bg-gradient-to-br from-zinc-900/90 via-zinc-800/50 to-zinc-900/90 border border-emerald-500/30 shadow-lg shadow-emerald-500/10 backdrop-blur-xl relative overflow-hidden group animate-fade-in-up">
+            
+            {/* Decorative background glow */}
+            <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 via-transparent to-teal-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            
+            {/* Decorative corner accents */}
+            <div className="absolute top-0 left-0 w-6 h-6 border-l border-t border-emerald-500/40 rounded-tl-lg" />
+            <div className="absolute bottom-0 right-0 w-6 h-6 border-r border-b border-emerald-500/40 rounded-br-lg" />
 
-            {/* Time display */}
-            <span className="text-sm font-mono tabular-nums bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-400 bg-clip-text text-transparent animate-gradient-x min-w-[70px] sm:min-w-[90px] mr-2 sm:mr-8">
-              {formatPlaytime(gameStatus.playtimeMinutes)}
-            </span>
-
-            <div className="hidden sm:block w-px h-5 bg-gradient-to-b from-emerald-500/50 to-emerald-500/0 rounded-full mr-8" />
-
-            {/* Hours with label */}
-            <div className="flex items-center gap-1 sm:gap-2 mr-1 sm:mr-6">
-              <span className="text-[10px] text-emerald-500/70 uppercase tracking-widest">Horas</span>
-              <input
-                type="number"
-                value={hoursInput}
-                onChange={(e) => setHoursInput(e.target.value)}
-                placeholder="0"
-                className="w-16 sm:w-[150px] h-8 px-3 text-center text-sm bg-transparent border-2 border-emerald-500/40 rounded-lg text-white placeholder:text-zinc-600 focus:border-emerald-400 focus:outline-none focus:bg-emerald-500/5 transition-all relative z-10 [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:hidden [&::-webkit-outer-spin-button]:hidden"
-                min="0"
-                style={{ WebkitAppearance: 'none', appearance: 'textfield' }}
-              />
+            {/* Sección Izquierda: Tiempo Total */}
+            <div className="flex flex-row sm:flex-col items-center sm:items-start justify-between w-full sm:w-auto gap-2 border-b sm:border-b-0 sm:border-r border-emerald-500/20 pb-2 sm:pb-0 sm:pr-4 relative z-10">
+              <span className="text-[9px] text-emerald-400/70 uppercase tracking-[0.2em] font-bold animate-pulse">Jugado</span>
+              <div className="flex items-baseline gap-1">
+                <span className="text-base font-mono tabular-nums bg-gradient-to-r from-emerald-300 via-teal-300 to-cyan-300 bg-clip-text text-transparent animate-gradient-text">
+                  {formatPlaytime(gameStatus.playtimeMinutes)}
+                </span>
+                <span className="text-[10px] text-emerald-500/60 font-medium">TOTAL</span>
+              </div>
             </div>
 
-            {/* Minutes with label */}
-            <div className="flex items-center gap-1 sm:gap-2 mr-1 sm:mr-6">
-              <span className="text-[10px] text-emerald-500/70 uppercase tracking-widest">Minutos</span>
-              <input
-                type="number"
-                value={minsInput}
-                onChange={(e) => {
-                  const val = parseInt(e.target.value) || 0;
-                  setMinsInput(val > 59 ? "59" : val.toString());
-                }}
-                placeholder="0"
-                className="w-16 sm:w-[150px] h-8 px-3 text-center text-sm bg-transparent border-2 border-emerald-500/40 rounded-lg text-white placeholder:text-zinc-600 focus:border-emerald-400 focus:outline-none focus:bg-emerald-500/5 transition-all relative z-10 [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:hidden [&::-webkit-outer-spin-button]:hidden"
-                min="0"
-                max="59"
-                style={{ WebkitAppearance: 'none', appearance: 'textfield' }}
-              />
-            </div>
+            {/* Sección Derecha: Inputs y Botón */}
+            <div className="flex items-center justify-between w-full sm:w-auto gap-2 relative z-10">
+              <div className="flex items-center gap-2">
+                {/* Input Horas */}
+                <div className="relative group/input">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 rounded-lg opacity-0 group-focus-within/input:opacity-100 transition-opacity duration-300 blur" />
+                  <input
+                    type="number"
+                    value={hoursInput}
+                    onChange={(e) => setHoursInput(e.target.value)}
+                    className="relative w-12 h-8 text-center text-xs font-mono bg-zinc-900/90 border border-emerald-500/30 rounded-lg text-white focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/50 focus:outline-none transition-all duration-300 hover:border-emerald-500/50 hover:shadow-lg hover:shadow-emerald-500/10 appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+                    placeholder="0"
+                  />
+                  <span className="absolute -top-1.5 left-1 px-1 bg-zinc-900/95 text-[8px] text-emerald-500/60 uppercase font-bold border border-emerald-500/20 rounded-xs">H</span>
+                  
+                  {/* Focus glow effect */}
+                  <div className="absolute inset-0 rounded-lg pointer-events-none opacity-0 focus-within:opacity-100 transition-opacity duration-300" style={{ boxShadow: '0 0 12px rgba(16, 185, 129, 0.3)' }} />
+                </div>
 
-            {/* Save button */}
-            <button
-              onClick={handlePlaytimeSubmit}
-              disabled={isLoading}
-              className="flex items-center justify-center w-10 h-10 sm:w-10 sm:h-10 rounded-full bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 group/btn"
-              title={isLoading ? "Guardando..." : "Guardar"}
-            >
-              {isLoading ? (
-                <svg className="w-4 h-4 sm:w-4 sm:h-4 text-emerald-400 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="2" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
-              ) : (
-                <svg className="w-4 h-4 sm:w-4 sm:h-4 text-emerald-400 group-hover/btn:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                </svg>
-              )}
-            </button>
+                {/* Input Minutos */}
+                <div className="relative group/input">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 rounded-lg opacity-0 group-focus-within/input:opacity-100 transition-opacity duration-300 blur" />
+                  <input
+                    type="number"
+                    value={minsInput}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value) || 0;
+                      setMinsInput(val > 59 ? "59" : val.toString());
+                    }}
+                    className="relative w-12 h-8 text-center text-xs font-mono bg-zinc-900/90 border border-emerald-500/30 rounded-lg text-white focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/50 focus:outline-none transition-all duration-300 hover:border-emerald-500/50 hover:shadow-lg hover:shadow-emerald-500/10 appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+                    placeholder="0"
+                  />
+                  <span className="absolute -top-1.5 left-1 px-1 bg-zinc-900/95 text-[8px] text-emerald-500/60 uppercase font-bold border border-emerald-500/20 rounded-xs">M</span>
+                  
+                  {/* Focus glow effect */}
+                  <div className="absolute inset-0 rounded-lg pointer-events-none opacity-0 focus-within:opacity-100 transition-opacity duration-300" style={{ boxShadow: '0 0 12px rgba(16, 185, 129, 0.3)' }} />
+                </div>
+              </div>
+
+              {/* Botón Guardar - con animaciones mejoradas */}
+              <button
+                onClick={handlePlaytimeSubmit}
+                disabled={isLoading}
+                className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 via-emerald-500 to-teal-600 text-black flex items-center justify-center hover:from-emerald-400 hover:via-emerald-400 hover:to-teal-500 active:scale-95 transition-all duration-300 shadow-md shadow-emerald-500/30 hover:shadow-emerald-400/50 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 relative overflow-hidden group/button"
+              >
+                {/* Shine effect on hover */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover/button:translate-x-full transition-transform duration-700" />
+                
+                {isLoading ? (
+                  <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                ) : (
+                  <svg className="w-5 h-5 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+              </button>
+            </div>
           </div>
         )}
       </div>
