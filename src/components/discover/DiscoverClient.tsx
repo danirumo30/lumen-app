@@ -90,13 +90,15 @@ export function DiscoverClient() {
       </div>
 
       <div className="relative max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
-        {/* Search Bar - left aligned */}
-        <div className="w-full mb-3">
-          <DiscoverSearchBar onSearch={handleSearch} />
+        {/* Search Bar - centered */}
+        <div className="w-full flex justify-center mb-3">
+          <div className="w-full max-w-3xl">
+            <DiscoverSearchBar onSearch={handleSearch} />
+          </div>
         </div>
 
-        {/* Filters & Type Chips - left-aligned, compact */}
-        <div className="flex flex-col items-start gap-2 w-full">
+        {/* Filters & Type Chips - centered block, left-aligned content */}
+        <div className="flex flex-col items-start gap-2 w-full max-w-3xl mx-auto">
           {/* Type Chips row */}
           <div className="flex justify-start overflow-x-auto hide-scrollbar gap-2 w-full snap-x snap-mandatory">
             <div className="snap-start">

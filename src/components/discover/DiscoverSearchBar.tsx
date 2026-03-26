@@ -43,17 +43,17 @@ export function DiscoverSearchBar({ initialQuery = "", onSearch }: SearchBarProp
   };
 
   return (
-    <div className="relative w-full max-w-3xl">
-      <div
-        className={`
-          relative flex items-center bg-zinc-900/80 backdrop-blur-sm
-          border rounded-2xl overflow-hidden
-          transition-all duration-300
-          ${isFocused
-            ? "border-emerald-500/50 ring-1 ring-emerald-500/50 shadow-lg shadow-emerald-500/10"
-            : "border-zinc-800 hover:border-zinc-700"}
-        `}
-      >
+    <div className="relative w-full max-w-3xl mx-auto">
+        <div
+          className={`
+            relative flex items-center bg-zinc-900/80 backdrop-blur-sm
+            border rounded-lg overflow-hidden
+            transition-all duration-300
+            ${isFocused
+              ? "border-emerald-500/50 ring-1 ring-emerald-500/50 shadow-lg shadow-emerald-500/10"
+              : "border-zinc-800 hover:border-zinc-700"}
+          `}
+        >
         {/* Search Icon */}
         <div className="pl-4">
           <svg
