@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
+const TMDB_API_KEY = process.env.TMDB_API_KEY!;
+const TMDB_BASE_URL = "https://api.themoviedb.org/3";
+
 export const runtime = "nodejs";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -76,7 +79,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { tmdbId, favorite } = body;
+    const { tmdbId, favorite, tvData } = body;
 
     if (!tmdbId) {
       return NextResponse.json({ error: "tmdbId required" }, { status: 400 });
@@ -103,6 +106,71 @@ export async function POST(request: Request) {
     }
 
     const mediaId = `tv_${tmdbId}`;
+
+    // Build mediaInsert object with available data or fetch from TMDB
+    let title = tvData?.title || null;
+    let originalTitle = tvData?.originalTitle || null;
+    let releaseYear = tvData?.releaseYear || null;
+    let releaseDate = tvData?.firstAirDate || null;
+    let runtime = tvData?.episodeRunTime || null;
+    let posterPath = tvData?.posterPath 
+      ? tvData.posterPath.replace("https://image.tmdb.org/t/p/w500", "")
+      : null;
+
+    // If title is missing, fetch minimum data from TMDB
+    if (!title) {
+      try {
+        const response = await fetch(
+          `${TMDB_BASE_URL}/tv/${tmdbId}?api_key=${TMDB_API_KEY}&language=es-ES`
+        );
+        
+        if (response.ok) {
+          const tv = await response.json();
+          title = tv.name || `Serie ${tmdbId}`;
+          originalTitle = originalTitle || tv.original_name;
+          if (tv.first_air_date) {
+            releaseYear = releaseYear || parseInt(tv.first_air_date.substring(0, 4));
+            releaseDate = releaseDate || tv.first_air_date;
+          }
+          // episode_run_time is an array, take first if available
+          runtime = runtime || (tv.episode_run_time && tv.episode_run_time[0]) || null;
+          posterPath = posterPath || (tv.poster_path ? tv.poster_path.replace(/^t\.*/, "") : null);
+        } else {
+          title = `Serie ${tmdbId}`;
+        }
+      } catch (error) {
+        console.error("[tv-favorite POST] TMDB fetch error:", error);
+        title = `Serie ${tmdbId}`;
+      }
+    }
+
+    // Ensure title is not null/undefined
+    if (!title) {
+      title = `Serie ${tmdbId}`;
+    }
+
+    // Construct final media object
+    const mediaInsert = {
+      id: mediaId,
+      type: "tv",
+      title,
+      original_title: originalTitle,
+      release_year: releaseYear,
+      release_date: releaseDate,
+      runtime_minutes: runtime,
+      poster_path: posterPath,
+    };
+
+    // Upsert media record unconditionally
+    const { error: mediaError } = await adminClient
+      .from("media")
+      .upsert(mediaInsert, {
+        onConflict: "id",
+      });
+
+    if (mediaError) {
+      console.error("[tv-favorite POST] Media upsert error:", mediaError);
+    }
 
      // Get current state
      const { data: existing } = await userClient

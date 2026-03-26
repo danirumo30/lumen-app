@@ -209,12 +209,8 @@ export async function POST(request: Request) {
 
     // Handle playtime update
     if (playtimeMinutes !== undefined && playtimeMinutes > 0) {
-      if (existing?.progress_minutes && playtimeMinutes > 0) {
-        // Add to existing
-        updateFields.progress_minutes = existing.progress_minutes + playtimeMinutes;
-      } else {
-        updateFields.progress_minutes = playtimeMinutes;
-      }
+      // REPLACE, not add
+      updateFields.progress_minutes = playtimeMinutes;
       // Also set playing status if not already set
       if (!existing?.is_planned && !existing?.is_watched) {
         updateFields.is_planned = true;

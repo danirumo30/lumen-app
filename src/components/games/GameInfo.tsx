@@ -66,37 +66,37 @@ const defaultPlatformIcon = (
 // Helper to get icon path for a platform
 function getPlatformIconPath(platform: string): string | null {
   const lowerPlatform = platform.toLowerCase();
-  
+
   // Try exact match first
   if (platformIcons[platform]) {
     return platformIcons[platform];
   }
-  
+
   // Try partial matches for PlayStation
   if (lowerPlatform.includes("playstation") || lowerPlatform === "ps5" || lowerPlatform === "ps4" || lowerPlatform === "ps3" || lowerPlatform === "ps2" || lowerPlatform === "ps") {
     return platformIcons["PlayStation 5"];
   }
-  
+
   // Try partial matches for Xbox
   if (lowerPlatform.includes("xbox")) {
     return platformIcons["Xbox"];
   }
-  
+
   // Try partial matches for Nintendo
   if (lowerPlatform.includes("nintendo") || lowerPlatform.includes("switch")) {
     return platformIcons["Nintendo Switch"];
   }
-  
+
   // Try partial matches for PC
   if (lowerPlatform.includes("pc") || lowerPlatform.includes("windows")) {
     return platformIcons["PC"];
   }
-  
+
   // macOS
   if (lowerPlatform.includes("mac") || lowerPlatform.includes("os x")) {
     return platformIcons["macOS"];
   }
-  
+
   // Try partial matches for mobile
   if (lowerPlatform.includes("ios") || lowerPlatform.includes("iphone") || lowerPlatform.includes("ipad")) {
     return platformIcons["iOS"];
@@ -104,12 +104,12 @@ function getPlatformIconPath(platform: string): string | null {
   if (lowerPlatform.includes("android")) {
     return platformIcons["Android"];
   }
-  
+
   // Try partial matches for web
   if (lowerPlatform.includes("web") || lowerPlatform.includes("browser")) {
     return platformIcons["Web"];
   }
-  
+
   return null;
 }
 
@@ -117,7 +117,7 @@ const statusConfig = {
   favorite: {
     label: "Favorito",
     icon: (
-      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
         <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
       </svg>
     ),
@@ -213,10 +213,10 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const igdbId = typeof game.igdbId === 'number' ? game.igdbId : parseInt(game.igdbId);
-      
+
       const response = await fetch("/api/user/game-status", {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${session?.access_token || ""}`,
         },
@@ -258,11 +258,11 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const igdbId = typeof game.igdbId === 'number' ? game.igdbId : parseInt(game.igdbId);
-      
+
       const newFavorite = !gameStatus.isFavorite;
       const response = await fetch("/api/user/game-status", {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${session?.access_token || ""}`,
         },
@@ -299,13 +299,13 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const newPlatinum = !hasPlatinum;
-      
+
       // Ensure igdbId is a number
       const igdbId = typeof game.igdbId === 'number' ? game.igdbId : parseInt(game.igdbId);
-      
+
       const response = await fetch("/api/user/game-status", {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${session?.access_token || ""}`,
         },
@@ -349,14 +349,14 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
     setIsLoading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      
+
       // Ensure igdbId is a number
       const igdbId = typeof game.igdbId === 'number' ? game.igdbId : parseInt(game.igdbId);
       console.log("[GameInfo] Sending request with igdbId:", igdbId);
-      
+
       const response = await fetch("/api/user/game-status", {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${session?.access_token || ""}`,
         },
@@ -403,7 +403,7 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
     const hours = parseInt(hoursInput) || 0;
     const mins = parseInt(minsInput) || 0;
     const totalMinutes = (hours * 60) + mins;
-    
+
     if (totalMinutes <= 0) return;
 
     setIsLoading(true);
@@ -411,7 +411,7 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
       const { data: { session } } = await supabase.auth.getSession();
       const response = await fetch("/api/user/game-status", {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${session?.access_token || ""}`,
         },
@@ -474,7 +474,7 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
               <span className="text-zinc-600">•</span>
               <span className="flex items-center gap-1">
                 <svg className="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                 </svg>
                 <span className="font-semibold text-white">{game.rating.toFixed(1)}</span>
               </span>
@@ -548,39 +548,39 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
               Lanzamiento: <span className="text-white">{game.releaseDate ? formatDate(game.releaseDate) : game.releaseYear ? game.releaseYear.toString() : "Desconocida"}</span>
             </span>
           </div>
-            
-            {/* Status-specific dates */}
-            {gameStatus.playStatus === "playing" && gameStatus.startedAt && (
-              <div className="flex items-center gap-2">
-                <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                </svg>
-                <span className="text-zinc-400">
-                  Empezado: <span className="text-emerald-400">{formatDate(gameStatus.startedAt)}</span>
-                </span>
-              </div>
-            )}
-            
-            {gameStatus.playStatus === "completed" && gameStatus.completedAt && (
-              <div className="flex items-center gap-2">
-                <svg className="w-4 h-4 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span className="text-zinc-400">
-                  Completado: <span className="text-cyan-400">{formatDate(gameStatus.completedAt)}</span>
-                </span>
-              </div>
-            )}
-            
-            {gameStatus.playStatus === "dropped" && gameStatus.startedAt && (
-              <div className="flex items-center gap-2">
-                <svg className="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-                <span className="text-zinc-400">
-                  Abandonado: <span className="text-orange-400">{formatDate(gameStatus.startedAt)}</span>
-                </span>
-              </div>
+
+          {/* Status-specific dates */}
+          {gameStatus.playStatus === "playing" && gameStatus.startedAt && (
+            <div className="flex items-center gap-2">
+              <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+              </svg>
+              <span className="text-zinc-400">
+                Empezado: <span className="text-emerald-400">{formatDate(gameStatus.startedAt)}</span>
+              </span>
+            </div>
+          )}
+
+          {gameStatus.playStatus === "completed" && gameStatus.completedAt && (
+            <div className="flex items-center gap-2">
+              <svg className="w-4 h-4 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <span className="text-zinc-400">
+                Completado: <span className="text-cyan-400">{formatDate(gameStatus.completedAt)}</span>
+              </span>
+            </div>
+          )}
+
+          {gameStatus.playStatus === "dropped" && gameStatus.startedAt && (
+            <div className="flex items-center gap-2">
+              <svg className="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              <span className="text-zinc-400">
+                Abandonado: <span className="text-orange-400">{formatDate(gameStatus.startedAt)}</span>
+              </span>
+            </div>
           )}
         </div>
 
@@ -589,16 +589,15 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
           {/* All status buttons in one row - Favorite FIRST */}
           <div className="flex flex-wrap gap-2">
             <span className="text-xs text-zinc-500 w-full mb-1">Estado</span>
-            
+
             {/* Favorite button - independent, first position */}
             <button
               onClick={() => handleFavoriteClick()}
               disabled={isLoading}
-              className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all ${
-                currentFavorite
+              className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all ${currentFavorite
                   ? `${statusConfig.favorite.bg} ${statusConfig.favorite.text} border ${statusConfig.favorite.border}`
                   : "bg-zinc-800/80 text-zinc-300 border border-zinc-700/50 hover:bg-zinc-700/80"
-              }`}
+                }`}
             >
               {statusConfig.favorite.icon}
               {statusConfig.favorite.label}
@@ -613,11 +612,10 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
                   key={key}
                   onClick={() => handlePlayStatusClick(isActive ? null : key)}
                   disabled={isLoading}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all ${
-                    isActive
+                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all ${isActive
                       ? `${config.bg} ${config.text} border ${config.border}`
                       : "bg-zinc-800/80 text-zinc-300 border border-zinc-700/50 hover:bg-zinc-700/80"
-                  }`}
+                    }`}
                 >
                   {config.icon}
                   {config.label}
@@ -629,18 +627,17 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
             <button
               onClick={() => handlePlatinumClick()}
               disabled={isLoading}
-              className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all ${
-                hasPlatinum
+              className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all ${hasPlatinum
                   ? "bg-gradient-to-r from-violet-500/30 to-amber-500/30 text-amber-300 border border-amber-500/40"
                   : "bg-zinc-800/80 text-zinc-400 border border-zinc-700/50 hover:bg-zinc-700/80 hover:text-zinc-300"
-              }`}
+                }`}
               title={hasPlatinum ? "Trofeo de platino conseguido" : "Marcar como completado con platino"}
             >
-              <img 
-                src="/icons/platforms/platino.png" 
-                alt="Platino" 
-                width={18} 
-                height={18} 
+              <img
+                src="/icons/platforms/platino.png"
+                alt="Platino"
+                width={18}
+                height={18}
                 className={hasPlatinum ? "" : "grayscale opacity-50"}
               />
               <span className="hidden sm:inline">Platino</span>
@@ -650,33 +647,33 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
 
         {/* Playtime tracker - spacious alignment */}
         {user && (currentPlayStatus === "playing" || currentPlayStatus === "completed" || currentPlayStatus === "dropped") && (
-          <div className="w-full flex items-center px-4 sm:px-6 py-1.5 sm:py-2 rounded-lg bg-zinc-900/80 border border-emerald-500/30 backdrop-blur-md relative overflow-hidden group">
+          <div className="inline-flex items-center px-2 sm:px-8 py-1 sm:py-2 gap-2 sm:gap-0 rounded-lg bg-zinc-900/80 border border-emerald-500/30 backdrop-blur-md relative overflow-hidden group">
             {/* Hover glow */}
             <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-emerald-500/0 via-emerald-500/10 to-emerald-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-            
+
             {/* Time display */}
-            <span className="text-sm font-mono tabular-nums bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-400 bg-clip-text text-transparent animate-gradient-x min-w-[70px] sm:min-w-[90px] mr-3 sm:mr-8">
+            <span className="text-sm font-mono tabular-nums bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-400 bg-clip-text text-transparent animate-gradient-x min-w-[70px] sm:min-w-[90px] mr-2 sm:mr-8">
               {formatPlaytime(gameStatus.playtimeMinutes)}
             </span>
-            
-            <div className="w-px h-5 bg-gradient-to-b from-emerald-500/50 to-emerald-500/0 rounded-full mr-3 sm:mr-8" />
-            
+
+            <div className="hidden sm:block w-px h-5 bg-gradient-to-b from-emerald-500/50 to-emerald-500/0 rounded-full mr-8" />
+
             {/* Hours with label */}
-            <div className="flex items-center gap-2 mr-2 sm:mr-6">
+            <div className="flex items-center gap-1 sm:gap-2 mr-1 sm:mr-6">
               <span className="text-[10px] text-emerald-500/70 uppercase tracking-widest">Horas</span>
               <input
                 type="number"
                 value={hoursInput}
                 onChange={(e) => setHoursInput(e.target.value)}
                 placeholder="0"
-                className="w-20 sm:w-[150px] h-8 px-3 text-center text-sm bg-transparent border-2 border-emerald-500/40 rounded-lg text-white placeholder:text-zinc-600 focus:border-emerald-400 focus:outline-none focus:bg-emerald-500/5 transition-all relative z-10 [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:hidden [&::-webkit-outer-spin-button]:hidden"
+                className="w-16 sm:w-[150px] h-8 px-3 text-center text-sm bg-transparent border-2 border-emerald-500/40 rounded-lg text-white placeholder:text-zinc-600 focus:border-emerald-400 focus:outline-none focus:bg-emerald-500/5 transition-all relative z-10 [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:hidden [&::-webkit-outer-spin-button]:hidden"
                 min="0"
                 style={{ WebkitAppearance: 'none', appearance: 'textfield' }}
               />
             </div>
 
             {/* Minutes with label */}
-            <div className="flex items-center gap-2 mr-2 sm:mr-6">
+            <div className="flex items-center gap-1 sm:gap-2 mr-1 sm:mr-6">
               <span className="text-[10px] text-emerald-500/70 uppercase tracking-widest">Minutos</span>
               <input
                 type="number"
@@ -686,7 +683,7 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
                   setMinsInput(val > 59 ? "59" : val.toString());
                 }}
                 placeholder="0"
-                className="w-20 sm:w-[150px] h-8 px-3 text-center text-sm bg-transparent border-2 border-emerald-500/40 rounded-lg text-white placeholder:text-zinc-600 focus:border-emerald-400 focus:outline-none focus:bg-emerald-500/5 transition-all relative z-10 [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:hidden [&::-webkit-outer-spin-button]:hidden"
+                className="w-16 sm:w-[150px] h-8 px-3 text-center text-sm bg-transparent border-2 border-emerald-500/40 rounded-lg text-white placeholder:text-zinc-600 focus:border-emerald-400 focus:outline-none focus:bg-emerald-500/5 transition-all relative z-10 [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:hidden [&::-webkit-outer-spin-button]:hidden"
                 min="0"
                 max="59"
                 style={{ WebkitAppearance: 'none', appearance: 'textfield' }}
@@ -697,16 +694,16 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
             <button
               onClick={handlePlaytimeSubmit}
               disabled={isLoading}
-              className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 group/btn"
+              className="flex items-center justify-center w-10 h-10 sm:w-10 sm:h-10 rounded-full bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 group/btn"
               title={isLoading ? "Guardando..." : "Guardar"}
             >
               {isLoading ? (
-                <svg className="w-4 h-4 text-emerald-400 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="2"/>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                <svg className="w-4 h-4 sm:w-4 sm:h-4 text-emerald-400 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="2" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                 </svg>
               ) : (
-                <svg className="w-4 h-4 text-emerald-400 group-hover/btn:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 sm:w-4 sm:h-4 text-emerald-400 group-hover/btn:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                 </svg>
               )}
