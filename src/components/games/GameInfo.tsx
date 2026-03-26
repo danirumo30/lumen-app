@@ -650,33 +650,33 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
 
         {/* Playtime tracker - spacious alignment */}
         {user && (currentPlayStatus === "playing" || currentPlayStatus === "completed" || currentPlayStatus === "dropped") && (
-          <div className="inline-flex items-center px-8 py-2 rounded-lg bg-zinc-900/80 border border-emerald-500/30 backdrop-blur-md relative overflow-hidden group">
+          <div className="w-full flex items-center px-4 sm:px-6 py-1.5 sm:py-2 rounded-lg bg-zinc-900/80 border border-emerald-500/30 backdrop-blur-md relative overflow-hidden group">
             {/* Hover glow */}
             <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-emerald-500/0 via-emerald-500/10 to-emerald-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
             
             {/* Time display */}
-            <span className="text-sm font-mono tabular-nums bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-400 bg-clip-text text-transparent animate-gradient-x min-w-[90px] mr-8">
+            <span className="text-sm font-mono tabular-nums bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-400 bg-clip-text text-transparent animate-gradient-x min-w-[70px] sm:min-w-[90px] mr-3 sm:mr-8">
               {formatPlaytime(gameStatus.playtimeMinutes)}
             </span>
             
-            <div className="w-px h-5 bg-gradient-to-b from-emerald-500/50 to-emerald-500/0 rounded-full mr-8" />
+            <div className="w-px h-5 bg-gradient-to-b from-emerald-500/50 to-emerald-500/0 rounded-full mr-3 sm:mr-8" />
             
             {/* Hours with label */}
-            <div className="flex items-center gap-2 mr-6">
+            <div className="flex items-center gap-2 mr-2 sm:mr-6">
               <span className="text-[10px] text-emerald-500/70 uppercase tracking-widest">Horas</span>
               <input
                 type="number"
                 value={hoursInput}
                 onChange={(e) => setHoursInput(e.target.value)}
                 placeholder="0"
-                className="w-[150px] h-8 px-3 text-center text-sm bg-transparent border-2 border-emerald-500/40 rounded-lg text-white placeholder:text-zinc-600 focus:border-emerald-400 focus:outline-none focus:bg-emerald-500/5 transition-all relative z-10 [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:hidden [&::-webkit-outer-spin-button]:hidden"
+                className="w-20 sm:w-[150px] h-8 px-3 text-center text-sm bg-transparent border-2 border-emerald-500/40 rounded-lg text-white placeholder:text-zinc-600 focus:border-emerald-400 focus:outline-none focus:bg-emerald-500/5 transition-all relative z-10 [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:hidden [&::-webkit-outer-spin-button]:hidden"
                 min="0"
                 style={{ WebkitAppearance: 'none', appearance: 'textfield' }}
               />
             </div>
 
             {/* Minutes with label */}
-            <div className="flex items-center gap-2 mr-6">
+            <div className="flex items-center gap-2 mr-2 sm:mr-6">
               <span className="text-[10px] text-emerald-500/70 uppercase tracking-widest">Minutos</span>
               <input
                 type="number"
@@ -686,7 +686,7 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
                   setMinsInput(val > 59 ? "59" : val.toString());
                 }}
                 placeholder="0"
-                className="w-[150px] h-8 px-3 text-center text-sm bg-transparent border-2 border-emerald-500/40 rounded-lg text-white placeholder:text-zinc-600 focus:border-emerald-400 focus:outline-none focus:bg-emerald-500/5 transition-all relative z-10 [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:hidden [&::-webkit-outer-spin-button]:hidden"
+                className="w-20 sm:w-[150px] h-8 px-3 text-center text-sm bg-transparent border-2 border-emerald-500/40 rounded-lg text-white placeholder:text-zinc-600 focus:border-emerald-400 focus:outline-none focus:bg-emerald-500/5 transition-all relative z-10 [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:hidden [&::-webkit-outer-spin-button]:hidden"
                 min="0"
                 max="59"
                 style={{ WebkitAppearance: 'none', appearance: 'textfield' }}
@@ -697,7 +697,7 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
             <button
               onClick={handlePlaytimeSubmit}
               disabled={isLoading}
-              className="flex items-center justify-center w-10 h-10 rounded-full bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 group/btn"
+              className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 group/btn"
               title={isLoading ? "Guardando..." : "Guardar"}
             >
               {isLoading ? (
