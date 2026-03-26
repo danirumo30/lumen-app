@@ -87,7 +87,6 @@ function CarouselSection({ title, icon, mediaList }: CarouselSectionProps) {
             scrollBehavior: "smooth",
             WebkitOverflowScrolling: "touch",
             paddingBottom: "16px",
-            touchAction: "pan-x",
           }}
         >
           {mediaList.map((media) => (

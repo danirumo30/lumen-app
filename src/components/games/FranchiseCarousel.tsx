@@ -65,7 +65,6 @@ export function FranchiseCarousel({ franchise, games, currentGameId }: Franchise
           paddingBottom: "16px",
           paddingLeft: "4px",
           paddingRight: "4px",
-          touchAction: "pan-x",
         }}
       >
         {games.slice(0, 20).map((game) => {

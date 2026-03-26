@@ -63,7 +63,6 @@ export function DLCsCarousel({ dlcs }: DLCsCarouselProps) {
           paddingBottom: "16px",
           paddingLeft: "4px",
           paddingRight: "4px",
-          touchAction: "pan-x",
         }}
         onClickCapture={handlers.onClick}
       >

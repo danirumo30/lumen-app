@@ -37,7 +37,6 @@ export function BaseCarousel({ title, children, className = "" }: BaseCarouselPr
           paddingBottom: "16px",
           paddingLeft: "4px",
           paddingRight: "4px",
-          touchAction: "pan-x",
         }}
         onClickCapture={handlers.onClick}
       >

@@ -62,7 +62,6 @@ export function Carousel({ title, icon, children, emptyMessage }: CarouselProps)
             scrollBehavior: "smooth",
             WebkitOverflowScrolling: "touch",
             paddingBottom: "16px",
-            touchAction: "pan-x",
           }}
         >
           {children}

@@ -3,7 +3,13 @@
   overflow-y: hidden;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
-  touch-action: pan-x;
+}
+
+/* Desktop only: enable horizontal pan and grab cursor */
+@media (hover: hover) and (pointer: fine) {
+  .drag-scroll-container {
+    touch-action: pan-x;
+  }
 }
 
 /* Desktop: enable grab cursor for custom drag */
