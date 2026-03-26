@@ -91,15 +91,22 @@ export function DiscoverClient() {
 
       <div className="relative max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
         {/* Animated Header Accent - Floating Aurora */}
-        <div className="flex justify-center mb-4">
-          <div className="relative">
-            <div className="absolute -inset-2 blur-md bg-gradient-to-r from-emerald-500/30 via-teal-500/30 to-cyan-500/30 rounded-full animate-pulse" />
-            <div className="relative h-1 w-32 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 rounded-full animate-gradient-x" />
+        <div className="w-full flex justify-center mb-6">
+          <div className="relative w-full max-w-3xl">
+            <div className="absolute -inset-2 blur-md bg-gradient-to-r from-emerald-500/20 via-teal-500/20 to-cyan-500/20 rounded-full" />
+            <div className="relative h-[2px] w-full bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 rounded-full animate-gradient-x" />
           </div>
         </div>
 
+        {/* Tagline bajo la línea */}
+        <div className="w-full flex justify-center mb-5">
+          <p className="text-zinc-400 text-sm tracking-wide max-w-3xl text-center">
+            Encuentra tu próxima película, serie o juego favorito
+          </p>
+        </div>
+
         {/* Search Bar - centered */}
-        <div className="w-full flex justify-center mb-3">
+        <div className="w-full flex justify-center mb-4">
           <div className="w-full max-w-3xl">
             <DiscoverSearchBar onSearch={handleSearch} />
           </div>
