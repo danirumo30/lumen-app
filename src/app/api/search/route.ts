@@ -709,7 +709,7 @@ async function getTrendingGames(filters?: SearchFilters, limit: number = 10) {
     const token = IGDB_ACCESS_TOKEN || await getIgdbToken();
 
     // Build IGDB query with filters if provided
-    let whereClause = " where first_release_date != null";
+    let whereClause = " where rating != null & first_release_date != null & first_release_date >= 1735689600";
     const conditions: string[] = [];
 
     if (filters?.genre) {
@@ -744,7 +744,7 @@ async function getTrendingGames(filters?: SearchFilters, limit: number = 10) {
 
     // Request platforms with logo info
     const offset = 0; // No pagination for trending
-    const queryBody = `fields id, name, cover.url, first_release_date, rating, genres.name, platforms.id, platforms.name, platforms.platform_logo.image_id;${whereClause}${sortClause} limit ${limit};`;
+    const queryBody = `fields id, name, cover.url, first_release_date, rating, genres.name, platforms.id, platforms.name, platforms.platform_logo.image_id;${whereClause};${sortClause}; limit ${limit};`;
 
     const response = await fetch("https://api.igdb.com/v4/games", {
       method: "POST",
