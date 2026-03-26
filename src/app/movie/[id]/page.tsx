@@ -80,52 +80,52 @@ export default function MovieDetailPage({ params }: { params: Promise<{ id: stri
     return match ? match[2] : null;
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Get session for auth headers
-        const { data: { session } } = await supabase.auth.getSession();
-        const authHeaders = {
-          "Authorization": `Bearer ${session?.access_token || ""}`,
-        };
+   useEffect(() => {
+     const fetchData = async () => {
+       try {
+         // Get session for auth headers
+         const { data: { session } } = await supabase.auth.getSession();
+         const authHeaders = {
+           "Authorization": `Bearer ${session?.access_token || ""}`,
+         };
 
-        // Extract TMDB ID for API calls
-        const tmdbId = extractTmdbId(id) || id;
-        
-        // Fetch movie details, credits, similar, watched status, and favorite status in parallel
-        const [movieRes, creditsRes, similarRes, watchedRes, favoriteRes] = await Promise.all([
-          fetch(`/api/movie/${id}`),
-          fetch(`/api/movie/${id}/credits`),
-          fetch(`/api/movie/${id}/similar`),
-          fetch(`/api/user/movie-status?tmdbId=${tmdbId}`, { headers: authHeaders }),
-          fetch(`/api/user/movie-favorite?tmdbId=${tmdbId}`, { headers: authHeaders }),
-        ]);
+         // Extract TMDB ID for API calls
+         const tmdbId = extractTmdbId(id) || id;
+         
+         // Fetch movie details, credits, similar, watched status, and favorite status in parallel
+         const [movieRes, creditsRes, similarRes, watchedRes, favoriteRes] = await Promise.all([
+           fetch(`/api/movie/${id}`),
+           fetch(`/api/movie/${id}/credits`),
+           fetch(`/api/movie/${id}/similar`),
+           fetch(`/api/user/movie-status?tmdbId=${tmdbId}`, { headers: authHeaders }),
+           fetch(`/api/user/movie-favorite?tmdbId=${tmdbId}`, { headers: authHeaders }),
+         ]);
 
-        if (!movieRes.ok) {
-          throw new Error("Failed to fetch movie");
-        }
+         if (!movieRes.ok) {
+           throw new Error("Failed to fetch movie");
+         }
 
-        const movieData = await movieRes.json();
-        const creditsData = await creditsRes.json();
-        const similarData = await similarRes.json();
-        const watchedData = await watchedRes.json();
-        const favoriteData = await favoriteRes.json();
+         const movieData = await movieRes.json();
+         const creditsData = await creditsRes.json();
+         const similarData = await similarRes.json();
+         const watchedData = await watchedRes.json();
+         const favoriteData = await favoriteRes.json();
 
-        setMovie(movieData);
-        setCast(creditsData.cast || []);
-        setSimilar(similarData.results || []);
-        setWatchedStatus(watchedData);
-        setFavoriteStatus(favoriteData);
-      } catch (err) {
-        console.error("Error fetching movie data:", err);
-        setError("Failed to load movie details");
-      } finally {
-        setIsLoading(false);
-      }
-    };
+         setMovie(movieData);
+         setCast(creditsData.cast || []);
+         setSimilar(similarData.results || []);
+         setWatchedStatus(watchedData);
+         setFavoriteStatus(favoriteData);
+       } catch (err) {
+         console.error("Error fetching movie data:", err);
+         setError("Failed to load movie details");
+       } finally {
+         setIsLoading(false);
+       }
+     };
 
-    fetchData();
-  }, [id]);
+     fetchData();
+   }, [id]);
 
   if (isLoading) {
     return (

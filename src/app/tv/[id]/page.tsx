@@ -675,43 +675,44 @@ export default function TvDetailPage({ params }: { params: Promise<{ id: string 
   // DATA LOADING
   // ========================================
   
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const { data: sessionData } = await supabase.auth.getSession();
-        setSession(sessionData?.session || null);
+   useEffect(() => {
+     const fetchData = async () => {
+       try {
+         const { data: sessionData } = await supabase.auth.getSession();
+         const authHeaders = {
+           "Authorization": `Bearer ${sessionData?.session?.access_token || ""}`,
+         };
+         setSession(sessionData?.session || null);
 
-        const tmdbId = id.replace(/^(tv_|tmdb_)/, '');
+         const tmdbId = id.replace(/^(tv_|tmdb_)/, '');
 
-        const [tvRes, similarRes, favoriteRes] = await Promise.all([
-          fetch(`/api/tv/${id}`),
-          fetch(`/api/tv/${id}/similar`),
-          sessionData?.session?.access_token 
-            ? fetchWithAuth(`/api/user/tv-favorite?tmdbId=${tmdbId}`)
-            : Promise.resolve({ ok: true, json: () => Promise.resolve({ favorite: false }) }),
-        ]);
+         const [tvRes, similarRes, favoriteRes] = await Promise.all([
+           fetch(`/api/tv/${id}`),
+           fetch(`/api/tv/${id}/similar`),
+           fetch(`/api/user/tv-favorite?tmdbId=${tmdbId}`, { headers: authHeaders }),
+         ]);
 
-        if (!tvRes.ok) {
-          throw new Error("Failed to fetch TV show");
-        }
+         if (!tvRes.ok) {
+           throw new Error("Failed to fetch TV show");
+         }
 
-        const tvData = await tvRes.json();
-        const similarData = await similarRes.json();
-        const favoriteData = await favoriteRes.json();
+         const tvData = await tvRes.json();
+         const similarData = await similarRes.json();
+         const favoriteData = await favoriteRes.json();
 
-        setTv(tvData);
-        setSimilar(similarData.results || []);
-        setFavoriteStatus(favoriteData);
-      } catch (err) {
-        console.error("Error fetching TV show data:", err);
-        setError("Failed to load TV show details");
-      } finally {
-        setIsLoading(false);
-      }
-    };
+         setTv(tvData);
+         setSimilar(similarData.results || []);
+         setFavoriteStatus(favoriteData);
+       } catch (err) {
+         console.error("Error fetching TV show data:", err);
+         setError("Failed to load TV show details");
+       } finally {
+         setIsLoading(false);
+       }
+     };
 
-    fetchData();
-  }, [id]);
+     fetchData();
+   }, [id]);
 
   // Load episodes when TV show is loaded
   useEffect(() => {
