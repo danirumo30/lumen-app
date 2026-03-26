@@ -85,54 +85,61 @@ export function DiscoverClient() {
       <div className="relative overflow-visible">
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-30">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-900/20 via-zinc-950 to-zinc-950" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-emerald-900/20 via-zinc-950 to-zinc-950" />
           <div className="absolute inset-0" style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23f59e0b' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2334d399' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
           }} />
         </div>
 
         <div className="relative max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
           {/* Header */}
-          <div className="text-center mb-6">
-            <h1 className="text-4xl sm:text-5xl font-bold text-white mb-3">
-              Desc<span className="text-amber-400">ubrir</span>
+          <div className="text-center mb-8">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight mb-4">
+              <span className="bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 bg-clip-text text-transparent">
+                Descubrir
+              </span>
             </h1>
-            <p className="text-zinc-400 text-lg">
-              Películas, series, juegos y más
+            <p className="text-zinc-400 text-lg max-w-2xl mx-auto">
+              Explora películas, series, juegos y más en un solo lugar
             </p>
           </div>
 
           {/* Search Bar */}
-          <DiscoverSearchBar onSearch={handleSearch} />
-
-          {/* Type Chips - scrollable horizontal on mobile with side padding */}
-          <div className="mt-4 flex justify-center overflow-x-auto hide-scrollbar snap-x snap-mandatory px-4 sm:px-0">
-            <div className="snap-start">
-              <DiscoverTypeChips selected={selectedType} onChange={handleTypeChange} />
-            </div>
+          <div className="max-w-3xl mx-auto mb-6">
+            <DiscoverSearchBar onSearch={handleSearch} />
           </div>
 
-          {/* Filters - scrollable horizontal on mobile with side padding */}
-          <div className="mt-2 flex justify-center overflow-x-auto hide-scrollbar px-4 sm:px-0">
-            <DiscoverFiltersComponent
-                type={selectedType}
-                filters={filters}
-                onChange={setFilters}
-                query={query}
-                availableProviders={selectedType !== "game" ? availableProviders : []}
-                isLoadingProviders={isLoadingProviders}
-                providersError={providersError}
-                onProviderChange={handleProviderChange}
-              />
+          {/* Combined container for tabs and filters */}
+          <div className="flex flex-col items-center gap-3">
+            {/* Type Chips row */}
+            <div className="flex justify-start sm:justify-center overflow-x-auto hide-scrollbar px-4 sm:px-0 gap-2 w-full snap-x snap-mandatory">
+              <div className="snap-start">
+                <DiscoverTypeChips selected={selectedType} onChange={handleTypeChange} />
+              </div>
+            </div>
+
+            {/* Filters row */}
+            <div className="flex justify-start sm:justify-center overflow-x-auto hide-scrollbar px-4 sm:px-0 gap-2 w-full snap-x snap-mandatory">
+              <DiscoverFiltersComponent
+                  type={selectedType}
+                  filters={filters}
+                  onChange={setFilters}
+                  query={query}
+                  availableProviders={selectedType !== "game" ? availableProviders : []}
+                  isLoadingProviders={isLoadingProviders}
+                  providersError={providersError}
+                  onProviderChange={handleProviderChange}
+                />
+            </div>
           </div>
         </div>
       </div>
 
       {/* Results Section */}
-      <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
-        <DiscoverGrid 
-          query={query} 
-          type={selectedType} 
+      <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+        <DiscoverGrid
+          query={query}
+          type={selectedType}
           filters={filters}
         />
       </div>

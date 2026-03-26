@@ -43,22 +43,21 @@ export function DiscoverSearchBar({ initialQuery = "", onSearch }: SearchBarProp
   };
 
   return (
-    <div className="relative w-full max-w-lg mx-auto sm:max-w-2xl">
+    <div className="relative w-full max-w-3xl mx-auto">
       <div
         className={`
-          relative flex items-center bg-zinc-900/80 backdrop-blur-xl
-          border rounded-2xl overflow-hidden
+          relative flex items-center bg-zinc-900/80 backdrop-blur-sm
+          border rounded-xl overflow-hidden
           transition-all duration-300
-          ${isFocused 
-            ? "border-amber-500/50 shadow-lg shadow-amber-500/10" 
-            : "border-zinc-800 hover:border-zinc-700"
-          }
+          ${isFocused
+            ? "border-emerald-500/50 ring-1 ring-emerald-500/50 shadow-lg shadow-emerald-500/10"
+            : "border-zinc-800 hover:border-zinc-700"}
         `}
       >
         {/* Search Icon */}
-        <div className="pl-5 pr-3">
+        <div className="pl-4">
           <svg
-            className={`w-5 h-5 transition-colors ${isFocused ? "text-amber-400" : "text-zinc-500"}`}
+            className={`w-5 h-5 transition-colors ${isFocused ? "text-emerald-400" : "text-zinc-500"}`}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -79,9 +78,9 @@ export function DiscoverSearchBar({ initialQuery = "", onSearch }: SearchBarProp
           onChange={handleChange}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setTimeout(() => setIsFocused(false), 200)}
-          placeholder="Buscar..."
-          title="Buscar películas, series, juegos, usuarios..."
-          className="flex-1 py-4 bg-transparent text-white placeholder-zinc-500 focus:outline-none text-lg"
+          placeholder="Buscar películas, series, juegos..."
+          title="Buscar en Descubrir"
+          className="flex-1 bg-transparent py-3 px-4 text-white placeholder-zinc-500 focus:outline-none text-base"
         />
 
         {/* Clear Button */}
@@ -109,7 +108,7 @@ export function DiscoverSearchBar({ initialQuery = "", onSearch }: SearchBarProp
 
       {/* Quick suggestions */}
       {isFocused && !query && (
-        <div className="absolute top-full left-0 right-0 mt-2 p-4 bg-zinc-900/95 backdrop-blur-xl border border-zinc-800 rounded-xl z-50">
+        <div className="absolute top-full left-0 right-0 mt-2 p-4 bg-zinc-900/95 backdrop-blur-xl border border-zinc-800 rounded-lg z-50">
           <p className="text-xs text-zinc-500 uppercase tracking-wider mb-3">
             Búsquedas populares
           </p>
@@ -118,7 +117,7 @@ export function DiscoverSearchBar({ initialQuery = "", onSearch }: SearchBarProp
               <button
                 key={term}
                 onClick={() => handleSuggestionClick(term)}
-                className="px-3 py-1.5 text-sm text-zinc-400 bg-zinc-800/80 rounded-lg 
+                className="px-3 py-1.5 text-sm text-zinc-400 bg-zinc-800/80 rounded-lg
                   hover:bg-zinc-700 hover:text-white transition-all"
               >
                 {term}

@@ -205,49 +205,55 @@ function FilterDropdown(props: FilterDropdownProps) {
     return label === "Ordenar" ? "Ordenar Por" : label;
   }, [label, value, selectedValues, options]);
 
-  // Get accent color based on type
-  const accentClass = label.includes("Género")
-    ? "bg-amber-600 text-white shadow-lg shadow-amber-600/25"
-    : label.includes("Plataforma")
-    ? "bg-violet-600 text-white shadow-lg shadow-violet-600/25"
-    : label.includes("Ordenar")
-    ? "bg-cyan-600 text-white shadow-lg shadow-cyan-600/25"
-    : "bg-zinc-700 text-white shadow-lg shadow-zinc-700/25";
+   // Get accent color gradient based on label
+   const getAccentGradient = (label: string) => {
+     if (label.includes("Género")) return "from-amber-500 to-orange-600";
+     if (label.includes("Plataforma")) return "from-violet-500 to-fuchsia-600";
+     if (label.includes("Ordenar")) return "from-cyan-500 to-blue-600";
+     return "from-emerald-500 to-teal-600";
+   };
 
-  return (
-    <div ref={dropdownRef} className="relative z-20">
-        <button
-          onClick={handleToggle}
-          onTouchStart={(e) => e.stopPropagation()}
-          disabled={disabled}
-          title={title}
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-medium transition-all duration-200 ${
-            value && (!Array.isArray(value) ? value : (value as string[]).length > 0)
-              ? accentClass
-              : "bg-zinc-800/60 text-zinc-400 hover:bg-zinc-700 hover:text-white border border-zinc-700/50"
-          } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-        >
-          {icon && (
-            <span className={`w-4 h-4 ${sortDirection ? 'transition-transform duration-200' : ''} ${sortDirection === 'asc' ? 'rotate-180' : ''}`}>
-              {icon}
-            </span>
-          )}
-          <span>{displayLabel}</span>
-          <svg
-            className={`w-4 h-4 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
+   const accentGradient = label.includes("Género") || label.includes("Plataforma") || label.includes("Ordenar")
+    ? getAccentGradient(label)
+    : "from-emerald-500 to-teal-600";
+
+   return (
+     <div ref={dropdownRef} className="relative z-20">
+         <button
+           onClick={handleToggle}
+           onTouchStart={(e) => e.stopPropagation()}
+           disabled={disabled}
+           title={title}
+           className={`
+             flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium
+             border transition-all duration-300
+             ${value && (!Array.isArray(value) ? value : (value as string[]).length > 0)
+               ? `bg-gradient-to-r ${accentGradient} text-white shadow-lg border-transparent`
+               : "bg-zinc-900/60 text-zinc-400 border border-zinc-800 hover:bg-zinc-800 hover:text-white"
+             } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
+           `}
+         >
+           {icon && (
+             <span className={`w-4 h-4 ${sortDirection ? 'transition-transform duration-200' : ''} ${sortDirection === 'asc' ? 'rotate-180' : ''}`}>
+               {icon}
+             </span>
+           )}
+           <span>{displayLabel}</span>
+           <svg
+             className={`w-4 h-4 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+             fill="none"
+             stroke="currentColor"
+             viewBox="0 0 24 24"
+           >
+             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+           </svg>
+         </button>
 
       {isOpen && (
         <div
           ref={listRef}
           onTouchStart={(e) => e.stopPropagation()}
-          className="fixed z-[9999] py-2 bg-emerald-900/98 backdrop-blur-xl border border-emerald-500/50 rounded-xl shadow-2xl animate-dropdownIn overflow-y-auto dropdown-scrollbar"
+          className="fixed z-[9999] py-2 bg-emerald-900/98 backdrop-blur-xl border border-emerald-500/50 rounded-lg shadow-2xl animate-dropdownIn overflow-y-auto dropdown-scrollbar"
           style={{
             ...menuStyle,
             maxHeight: '50vh',
@@ -369,7 +375,7 @@ export function DiscoverFiltersComponent({
 
   return (
     <div
-      className="w-full"
+      className="flex-shrink-0"
     >
       {/* Filter Bar - Always visible like franchise page */}
       <div
@@ -378,25 +384,25 @@ export function DiscoverFiltersComponent({
           touchAction: openDropdownId ? 'pan-y' : 'auto', // Disable horizontal scroll when any dropdown open
         }}
       >
-        {/* Toggle Button */}
-        <div className="flex-shrink-0 snap-start">
-          <button
-            disabled
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-medium transition-all duration-200 ${
-              openDropdownId !== null || hasActiveFilters
-                ? "bg-amber-600 text-white shadow-lg shadow-amber-600/25"
-                : "bg-zinc-800/60 text-zinc-400 border border-zinc-700/50"
-            } opacity-60 cursor-not-allowed`}
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-            </svg>
-            <span>Filtros</span>
-            {hasActiveFilters && (
-              <span className="w-2 h-2 bg-white rounded-full" />
-            )}
-          </button>
-        </div>
+         {/* Toggle Button */}
+         <div className="flex-shrink-0 snap-start">
+           <button
+             disabled
+             className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-300 border ${
+               hasActiveFilters
+                 ? "bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg border-transparent"
+                 : "bg-zinc-900/60 text-zinc-400 border border-zinc-800 opacity-50"
+             } cursor-not-allowed`}
+           >
+             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+             </svg>
+             <span>Filtros</span>
+             {hasActiveFilters && (
+               <span className="w-2 h-2 bg-white rounded-full" />
+             )}
+           </button>
+         </div>
 
         {/* Genre Dropdown */}
         {typeGenres.length > 0 && (
@@ -425,21 +431,21 @@ export function DiscoverFiltersComponent({
           <>
             {/* Loading state */}
             {isLoadingProviders && (
-              <div className="flex-shrink-0 px-3 py-1.5 rounded-xl bg-zinc-800 text-zinc-400 border border-zinc-700/50">
+              <div className="flex-shrink-0 px-3 py-1.5 rounded-lg bg-zinc-800 text-zinc-400 border border-zinc-700/50">
                 ⏳ Cargando proveedores...
               </div>
             )}
 
             {/* Error state */}
             {providersError && !isLoadingProviders && (
-              <div className="flex-shrink-0 px-3 py-1.5 rounded-xl bg-red-900/30 text-red-400 border border-red-700/50 max-w-xs">
+              <div className="flex-shrink-0 px-3 py-1.5 rounded-lg bg-red-900/30 text-red-400 border border-red-700/50 max-w-xs">
                 ⚠️ Error: {providersError}
               </div>
             )}
 
             {/* Empty state (no error, not loading, but empty) */}
             {!isLoadingProviders && !providersError && availableProviders && availableProviders.length === 0 && (
-              <div className="flex-shrink-0 px-3 py-1.5 rounded-xl bg-zinc-800 text-zinc-500 italic border border-zinc-700/50">
+              <div className="flex-shrink-0 px-3 py-1.5 rounded-lg bg-zinc-800 text-zinc-500 italic border border-zinc-700/50">
                 No hay proveedores disponibles
               </div>
             )}
@@ -601,17 +607,17 @@ export function DiscoverFiltersComponent({
           />
         </div>
 
-        {/* Clear Filters */}
-        {hasActiveFilters && (
-          <div className="flex-shrink-0 snap-start">
-            <button
-              onClick={() => onChange({})}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-medium transition-all duration-200 bg-red-600/20 text-red-400 border border-red-600/30 hover:bg-red-600/30"
-            >
-              Limpiar
-            </button>
-          </div>
-        )}
+         {/* Clear Filters */}
+         {hasActiveFilters && (
+           <div className="flex-shrink-0 snap-start">
+             <button
+               onClick={() => onChange({})}
+               className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 bg-red-600/20 text-red-400 border border-red-600/30 hover:bg-red-600/30"
+             >
+               Limpiar
+             </button>
+           </div>
+         )}
       </div>
     </div>
   );
