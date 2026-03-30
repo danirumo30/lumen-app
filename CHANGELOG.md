@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.0.0](https://github.com/danirumo30/lumen-app/compare/lumen-app-v1.2.0...lumen-app-v2.0.0) (2026-03-30)
+
+
+### ⚠ BREAKING CHANGES
+
+* None. All changes additive/internal.
+
+### Features
+
+* clean architecture migration & documentation ([#26](https://github.com/danirumo30/lumen-app/issues/26)) ([b7b0177](https://github.com/danirumo30/lumen-app/commit/b7b017736f9c405b9b765459e0f6a9bb143c0e57))
+
 ## [1.2.0](https://github.com/danirumo30/lumen-app/compare/lumen-app-v1.1.0...lumen-app-v1.2.0) (2026-03-23)
 
 
