@@ -1,12 +1,12 @@
-import { logger } from '@/lib/logger';
+import { logger } from '@/shared/logger';
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { 
   sendEmail, 
   generateVerificationEmailHtml, 
   generateVerificationEmailText 
-} from '@/modules/auth/infrastructure/email/nodemailer.service';
-import { getBaseUrl } from '@/lib/get-base-url';
+} from '@/infrastructure/persistence/supabase/auth/email/nodemailer.service';
+import { getBaseUrl } from '@/shared/get-base-url';
 import { randomUUID } from 'crypto';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -110,5 +110,9 @@ export async function POST(request: Request) {
     );
   }
 }
+
+
+
+
 
 

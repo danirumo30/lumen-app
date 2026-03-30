@@ -13,3 +13,7 @@ export const metadata = {
 export default function DiscoverPage() {
   return <DiscoverClient />;
 }
+
+
+
+

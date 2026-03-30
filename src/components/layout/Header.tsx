@@ -4,8 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useAuth } from '@/modules/auth/infrastructure/contexts/AuthContext';
-import LoginModal from '@/modules/auth/ui/components/LoginModal';
+import { useAuth } from '@/infrastructure/contexts/AuthContext';
+import LoginModal from '@/components/auth/LoginModal';
 
 export default function Header() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -310,4 +310,8 @@ export default function Header() {
     </>
   );
 }
+
+
+
+
 

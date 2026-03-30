@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { Modal } from "@/components/ui/Modal";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/infrastructure/supabase/client";
 
 interface Episode {
   id: number;
@@ -466,4 +466,8 @@ export function EpisodesAccordion({
     </div>
   );
 }
+
+
+
+
 

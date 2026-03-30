@@ -13,3 +13,7 @@ export default function ErrorPage({ error, reset }: { error: Error; reset: () =>
     </div>
   );
 }
+
+
+
+

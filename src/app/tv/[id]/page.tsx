@@ -10,12 +10,12 @@ import { EpisodesAccordion } from "@/components/tv/EpisodesAccordion";
 import { SimilarMediaCarousel } from "@/components/tv/SimilarTvCarousel";
 import { CastCarousel } from "@/components/movie/CastCarousel";
 import { ErrorToast, useToasts } from "@/components/ui/Toast";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/infrastructure/supabase/client";
 import {
   useWatchedEpisodeSet,
   useEpisodeToggle,
   episodeKeys,
-} from "@/modules/media/infrastructure/hooks";
+} from "@/infrastructure/hooks";
 
 
 interface EpisodeData {

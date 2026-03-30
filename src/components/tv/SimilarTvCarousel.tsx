@@ -94,3 +94,7 @@ export function SimilarMediaCarousel({ items, type = "movie" }: SimilarMediaCaro
     </BaseCarousel>
   );
 }
+
+
+
+

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { Modal } from "@/components/ui/Modal";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/infrastructure/supabase/client";
 import { WatchProvidersSection, type WatchProvider } from "@/components/shared/WatchProvidersSection";
 
 interface TvShow {
@@ -309,3 +309,7 @@ export function TvInfo({
     </>
   );
 }
+
+
+
+

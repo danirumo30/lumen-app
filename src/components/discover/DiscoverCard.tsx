@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import { getPlatformIcon, type PlatformLogo } from "@/lib/utils/platforms";
+import { getPlatformIcon, type PlatformLogo } from "@/shared/platforms";
 
 interface StreamingProvider {
   id: number;
@@ -231,4 +231,8 @@ export function DiscoverCard({
     </Link>
   );
 }
+
+
+
+
 

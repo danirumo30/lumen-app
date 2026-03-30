@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { useDragScroll } from "./useDragScroll";
-import { getPlatformIcon, type PlatformLogo } from "@/lib/utils/platforms";
+import { getPlatformIcon, type PlatformLogo } from "@/shared/platforms";
 
 interface StreamingProvider {
   id: number;
@@ -272,3 +272,7 @@ export function Carousel({ title, subtitle, items, variant = "movies", isLoading
     </section>
   );
 }
+
+
+
+

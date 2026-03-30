@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { useAuth } from "@/modules/auth/infrastructure/contexts/AuthContext";
+import { useAuth } from "@/infrastructure/contexts/AuthContext";
 import { Modal } from "@/components/ui/Modal";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/infrastructure/supabase/client";
 import { WatchProvidersSection, type WatchProvider } from "@/components/shared/WatchProvidersSection";
 
 interface Movie {
@@ -383,3 +383,7 @@ export function MovieInfo({ movie, watchedStatus, favoriteStatus, onWatchedChang
     </div>
   );
 }
+
+
+
+

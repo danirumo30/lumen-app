@@ -86,3 +86,7 @@ export function SimilarMoviesCarousel({ movies }: SimilarMoviesCarouselProps) {
     </BaseCarousel>
   );
 }
+
+
+
+

@@ -146,3 +146,7 @@ export function FranchiseCarousel({ franchise, games, currentGameId }: Franchise
     </section>
   );
 }
+
+
+
+

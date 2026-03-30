@@ -2,9 +2,9 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import { useAuth } from "@/modules/auth/infrastructure/contexts/AuthContext";
+import { useAuth } from "@/infrastructure/contexts/AuthContext";
 import { Modal } from "@/components/ui/Modal";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/infrastructure/supabase/client";
 
 interface Game {
   id: string;
@@ -735,4 +735,8 @@ export function GameInfo({ game, gameStatus, onStatusChange, onPlaytimeChange, o
     </div>
   );
 }
+
+
+
+
 

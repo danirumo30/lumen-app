@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import type { Media } from "@/modules/shared/domain/media";
+import type { Media } from '@/domain/shared/value-objects/media-id';
 
 interface MediaCardProps {
   media: Media;
@@ -86,11 +86,11 @@ export function MediaCard({ media }: MediaCardProps) {
   const getHref = () => {
     switch (media.type) {
       case "movie":
-        return `/movie/${media.id}`;
+        return `/movie/${media.id.value}`;
       case "tv":
-        return `/tv/${media.id}`;
+        return `/tv/${media.id.value}`;
       case "game":
-        return `/game/${media.id}`;
+        return `/game/${media.id.value}`;
       default:
         return null;
     }
@@ -170,3 +170,7 @@ export function MediaCard({ media }: MediaCardProps) {
     </div>
   );
 }
+
+
+
+

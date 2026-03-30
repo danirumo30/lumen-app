@@ -1,4 +1,4 @@
-import { logger } from '@/lib/logger';
+import { logger } from '@/shared/logger';
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
@@ -200,4 +200,8 @@ export async function POST(request: Request) {
     );
   }
 }
+
+
+
+
 

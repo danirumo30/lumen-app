@@ -124,3 +124,7 @@ export function DiscoverSearchBar({ initialQuery = "", onSearch }: SearchBarProp
   );
 }
 
+
+
+
+

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { UserProfileWithStats } from "@/modules/social/domain/user-profile";
+import type { UserProfileWithStats } from '@/domain/social/entities/user-profile.entity';
 
 interface ProfileHeaderProps {
   profile: UserProfileWithStats;
@@ -120,3 +120,7 @@ export function ProfileHeader({
     </div>
   );
 }
+
+
+
+

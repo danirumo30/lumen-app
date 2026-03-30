@@ -5,7 +5,7 @@ import { DiscoverCard } from "./DiscoverCard";
 import { DiscoverSkeleton } from "./DiscoverSkeleton";
 import { MediaType } from "./DiscoverTypeChips";
 import { DiscoverFilters } from "./DiscoverFilters";
-import type { PlatformLogo } from "@/lib/utils/platforms";
+import type { PlatformLogo } from "@/shared/platforms";
 
 interface StreamingProvider {
   id: number;
@@ -222,5 +222,9 @@ export function DiscoverGrid({ query, type, filters }: DiscoverGridProps) {
     </div>
   );
 }
+
+
+
+
 
 

@@ -65,3 +65,7 @@ export function CastCarousel({ cast }: CastCarouselProps) {
     </BaseCarousel>
   );
 }
+
+
+
+

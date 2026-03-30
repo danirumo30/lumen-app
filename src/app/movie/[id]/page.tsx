@@ -6,7 +6,7 @@ import Link from "next/link";
 import { MovieInfo } from "@/components/movie/MovieInfo";
 import { CastCarousel } from "@/components/movie/CastCarousel";
 import { SimilarMoviesCarousel } from "@/components/movie/SimilarMoviesCarousel";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/infrastructure/supabase/client";
 
 interface Movie {
   id: string;

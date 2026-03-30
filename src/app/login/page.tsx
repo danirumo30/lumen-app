@@ -2,7 +2,7 @@
 
 import { useState, useEffect, FormEvent, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useAuth } from '@/modules/auth/infrastructure/contexts/AuthContext';
+import { useAuth } from '@/infrastructure/contexts/AuthContext';
 
 
 function PasswordInput({ value, onChange, placeholder, disabled, required }: {
@@ -207,4 +207,8 @@ export default function LoginPage() {
     </Suspense>
   );
 }
+
+
+
+
 

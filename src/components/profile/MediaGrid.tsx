@@ -1,5 +1,5 @@
 import Image from "next/image";
-import type { Media } from "@/modules/shared/domain/media";
+import type { Media } from '@/domain/shared/value-objects/media-id';
 
 interface MediaGridProps {
   mediaList: Media[];
@@ -20,7 +20,7 @@ export function MediaGrid({ mediaList }: MediaGridProps) {
   return (
     <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-3 md:gap-4">
       {mediaList.map((media) => (
-        <MediaCard key={media.id} media={media} />
+        <MediaCard key={media.id.value} media={media} />
       ))}
     </div>
   );
@@ -69,3 +69,7 @@ function MediaCard({ media }: MediaCardProps) {
     </div>
   );
 }
+
+
+
+

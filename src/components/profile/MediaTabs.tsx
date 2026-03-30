@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import type { UserProfileWithContent } from "@/modules/social/domain/user-profile";
-import type { Media } from "@/modules/shared/domain/media";
+import type { UserProfileWithContent } from '@/domain/social/entities/user-profile.entity';
+import type { Media } from '@/domain/shared/value-objects/media-id';
 import { MediaCard } from "./MediaCard";
 import { useDragScroll } from "../home/useDragScroll";
 
@@ -89,7 +89,7 @@ function CarouselSection({ title, icon, mediaList }: CarouselSectionProps) {
           }}
         >
           {mediaList.map((media) => (
-            <MediaCard key={media.id} media={media} />
+            <MediaCard key={media.id.value} media={media} />
           ))}
         </div>
       ) : (
@@ -150,4 +150,8 @@ export function MediaTabs({ content }: MediaTabsProps) {
     </div>
   );
 }
+
+
+
+
 

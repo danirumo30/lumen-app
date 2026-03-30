@@ -121,3 +121,7 @@ export function GameMediaCarousel({ images, videos }: GameMediaCarouselProps) {
     </>
   );
 }
+
+
+
+

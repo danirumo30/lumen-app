@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useAuth } from "@/modules/auth/infrastructure/contexts/AuthContext";
+import { useAuth } from "@/infrastructure/contexts/AuthContext";
 import { Carousel } from "@/components/home/Carousel";
 import { HomepageSkeleton } from "@/components/home/CarouselSkeleton";
 
@@ -242,4 +242,8 @@ export default function HomePage() {
     </div>
   );
 }
+
+
+
+
 

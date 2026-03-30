@@ -1,4 +1,4 @@
-import { logger } from '@/lib/logger';
+import { logger } from '@/shared/logger';
 import { NextResponse } from "next/server";
 
 const IGDB_ACCESS_TOKEN = process.env.IGDB_ACCESS_TOKEN || "";

@@ -1,4 +1,4 @@
-import { logger } from '@/lib/logger';
+import { logger } from '@/shared/logger';
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import type { TmdbMovie, TmdbSearchResult, TmdbTv } from '@/types/tmdb';
@@ -953,6 +953,10 @@ export async function GET(request: Request) {
     );
   }
 }
+
+
+
+
 
 
 

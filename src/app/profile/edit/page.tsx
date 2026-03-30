@@ -3,11 +3,11 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 
-import { SupabaseUserProfileRepository } from "@/modules/social/infrastructure/repositories/supabase-user-profile.repository";
-import { getSupabaseClient } from "@/lib/supabase";
-import { uploadFile, generateUniqueFileName, validateImageFile } from "@/lib/storage";
-import type { UpdateProfileData, UserProfile } from "@/modules/social/domain/user-profile";
-import { useAuth } from "@/modules/auth/infrastructure/contexts/AuthContext";
+import { SupabaseUserProfileRepository } from "@/infrastructure/persistence/supabase/social/supabase-user-profile.repository";
+import { getSupabaseClient } from "@/infrastructure/supabase/client";
+import { uploadFile, generateUniqueFileName, validateImageFile } from "@/infrastructure/storage/storage";
+ import type { UpdateProfileData } from '@/domain/social/entities/user-profile.entity';
+import { useAuth } from "@/infrastructure/contexts/AuthContext";
 
 export default function ProfileEditPage() {
   const router = useRouter();
@@ -26,7 +26,7 @@ export default function ProfileEditPage() {
     username: "",
   });
 
-  const [originalData, setOriginalData] = useState<UserProfile | null>(null);
+   const [originalUsername, setOriginalUsername] = useState<string>("");
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
 
@@ -52,12 +52,12 @@ export default function ProfileEditPage() {
           return;
         }
 
-        setOriginalData(profile);
-        setFormData({
-          avatarUrl: profile.avatarUrl || "",
-          bannerUrl: profile.bannerUrl || "",
-          username: profile.username,
-        });
+         setOriginalUsername(profile.username);
+         setFormData({
+           avatarUrl: profile.avatarUrl || "",
+           bannerUrl: profile.bannerUrl || "",
+           username: profile.username,
+         });
       } catch (err) {
         setError("Error al cargar el perfil");
         console.error(err);
@@ -149,11 +149,11 @@ export default function ProfileEditPage() {
         throw new Error("Usuario no autenticado");
       }
 
-      if (formData.username !== originalData?.username) {
-        const isAvailable = await repository.isUsernameAvailable(
-          formData.username!,
-          user.id,
-        );
+       if (formData.username !== originalUsername) {
+         const isAvailable = await repository.isUsernameAvailable(
+           formData.username!,
+           user.id,
+         );
 
         if (!isAvailable) {
           throw new Error("El nombre de usuario ya está en uso");
@@ -179,8 +179,8 @@ export default function ProfileEditPage() {
       
       
 
-      setSuccess("Perfil actualizado correctamente");
-      setOriginalData({ ...originalData!, ...formData });
+       setSuccess("Perfil actualizado correctamente");
+       setOriginalUsername(formData.username ?? "");
 
       setAvatarPreview(null);
       setBannerPreview(null);
@@ -410,5 +410,9 @@ export default function ProfileEditPage() {
     </div>
   );
 }
+
+
+
+
 
 

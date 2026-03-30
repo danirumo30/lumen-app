@@ -87,3 +87,7 @@ export function DiscoverTypeChips({ selected, onChange }: TypeChipsProps) {
     </div>
   );
 }
+
+
+
+

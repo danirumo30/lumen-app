@@ -45,3 +45,7 @@ export function BaseCarousel({ title, children, className = "" }: BaseCarouselPr
     </section>
   );
 };
+
+
+
+

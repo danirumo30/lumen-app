@@ -1,0 +1,92 @@
+
+> lumen-app@1.1.0 lint
+> eslint
+
+
+C:\Users\danir\Desktop\El Universo de la Mierda\Programs\lumen-app\.agents\skills\typescript-expert\references\utility-types.ts
+   68:65  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  169:60  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  174:82  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  181:61  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  231:15  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  240:15  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  298:54  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  319:33  warning  '_value' is defined but never used        @typescript-eslint/no-unused-vars
+
+C:\Users\danir\Desktop\El Universo de la Mierda\Programs\lumen-app\scripts\clean-comments.js
+   8:12  error    A `require()` style import is forbidden               @typescript-eslint/no-require-imports
+   9:14  error    A `require()` style import is forbidden               @typescript-eslint/no-require-imports
+  23:7   warning  'isCommentedCode' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\danir\Desktop\El Universo de la Mierda\Programs\lumen-app\scripts\clean-debug-logs.js
+   9:12  error    A `require()` style import is forbidden                 @typescript-eslint/no-require-imports
+  10:14  error    A `require()` style import is forbidden                 @typescript-eslint/no-require-imports
+  35:7   warning  'removablePatterns' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\danir\Desktop\El Universo de la Mierda\Programs\lumen-app\scripts\clean-noise.js
+   9:12  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  10:14  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+C:\Users\danir\Desktop\El Universo de la Mierda\Programs\lumen-app\scripts\migrate-lib.js
+  1:12  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  2:14  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+C:\Users\danir\Desktop\El Universo de la Mierda\Programs\lumen-app\scripts\migrate-logger.js
+  8:12  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  9:14  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+C:\Users\danir\Desktop\El Universo de la Mierda\Programs\lumen-app\scripts\migrate-logger.ts
+  12:7  warning  '__filename' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\danir\Desktop\El Universo de la Mierda\Programs\lumen-app\scripts\migrate-modules-imports.js
+  1:12  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  2:14  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+C:\Users\danir\Desktop\El Universo de la Mierda\Programs\lumen-app\scripts\replace-any.js
+   9:12  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  10:14  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+C:\Users\danir\Desktop\El Universo de la Mierda\Programs\lumen-app\src\infrastructure\persistence\supabase\media\supabase-user-media.repository.ts
+  5:3  warning  'UserMediaRating' is defined but never used       @typescript-eslint/no-unused-vars
+  6:3  warning  'MediaProgressMinutes' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\danir\Desktop\El Universo de la Mierda\Programs\lumen-app\src\infrastructure\persistence\supabase\social\supabase-user-profile.repository.ts
+  18:10  warning  'extractTmdbId' is defined but never used             @typescript-eslint/no-unused-vars
+  24:16  warning  'fetchAndUpdatePosterPath' is defined but never used  @typescript-eslint/no-unused-vars
+  81:11  warning  'MediaRow' is defined but never used                  @typescript-eslint/no-unused-vars
+
+C:\Users\danir\Desktop\El Universo de la Mierda\Programs\lumen-app\tests\e2e\movie-detail.spec.ts
+  187:13  warning  'classBefore' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\danir\Desktop\El Universo de la Mierda\Programs\lumen-app\tests\e2e\tv-auto-activation.spec.ts
+   62:7   warning  'TV_TITLE' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  104:14  warning  'e' is defined but never used                  @typescript-eslint/no-unused-vars
+  433:78  warning  'page' is defined but never used               @typescript-eslint/no-unused-vars
+
+C:\Users\danir\Desktop\El Universo de la Mierda\Programs\lumen-app\tests\e2e\tv-tracking.spec.ts
+  293:11  warning  'episodeContent' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\danir\Desktop\El Universo de la Mierda\Programs\lumen-app\tests\integration\api\auth-api.test.ts
+  1:32  warning  'beforeAll' is defined but never used  @typescript-eslint/no-unused-vars
+  1:43  warning  'afterAll' is defined but never used   @typescript-eslint/no-unused-vars
+
+C:\Users\danir\Desktop\El Universo de la Mierda\Programs\lumen-app\tests\integration\api\tv-tracking.test.ts
+   6:32  warning  'beforeAll' is defined but never used     @typescript-eslint/no-unused-vars
+   6:43  warning  'afterAll' is defined but never used      @typescript-eslint/no-unused-vars
+   6:53  warning  'beforeEach' is defined but never used    @typescript-eslint/no-unused-vars
+  84:14  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\danir\Desktop\El Universo de la Mierda\Programs\lumen-app\tests\unit\domain\media\user-media-state.test.ts
+  58:13  warning  'state' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\danir\Desktop\El Universo de la Mierda\Programs\lumen-app\tests\unit\domain\social\user-profile.entity.test.ts
+    3:11  warning  'Username' is defined but never used      @typescript-eslint/no-unused-vars
+    4:11  warning  'UserStats' is defined but never used     @typescript-eslint/no-unused-vars
+  126:36  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\danir\Desktop\El Universo de la Mierda\Programs\lumen-app\tests\unit\modules\media\movie-domain.test.ts
+  155:12  warning  'isStateConsistent' is defined but never used  @typescript-eslint/no-unused-vars
+
+Ô£û 46 problems (23 errors, 23 warnings)
+
+

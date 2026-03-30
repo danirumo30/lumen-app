@@ -9,7 +9,7 @@ import { GameMediaCarousel } from "@/components/games/GameMediaCarousel";
 import { SimilarGamesCarousel } from "@/components/games/SimilarGamesCarousel";
 import { FranchiseCarousel } from "@/components/games/FranchiseCarousel";
 import { DLCsCarousel } from "@/components/games/DLCsCarousel";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/infrastructure/supabase/client";
 
 interface Game {
   id: string;

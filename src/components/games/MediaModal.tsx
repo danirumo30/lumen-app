@@ -66,3 +66,7 @@ export function MediaModal({ type, src, alt, onClose }: MediaModalProps) {
   );
 }
 
+
+
+
+

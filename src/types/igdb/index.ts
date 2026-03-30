@@ -188,3 +188,7 @@ export interface GameResponse {
   genres?: IgdbGenre[];
   themes?: IgdbTheme[];
 }
+
+
+
+

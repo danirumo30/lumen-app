@@ -1,6 +1,6 @@
-import { logger } from '@/lib/logger';
+import { logger } from '@/shared/logger';
 import { NextResponse } from "next/server";
-import { mapGenresToSpanish } from "@/lib/translate";
+import { mapGenresToSpanish } from "@/shared/translate";
 
 const IGDB_ACCESS_TOKEN = process.env.IGDB_ACCESS_TOKEN || "";
 const IGDB_CLIENT_ID = process.env.TWITCH_CLIENT_ID || "";

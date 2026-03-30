@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import type { Follower } from "@/modules/social/domain/user-profile";
+import type { Follower } from '@/domain/social/entities/user-profile.entity';
 
 interface FollowersModalProps {
   isOpen: boolean;
@@ -132,3 +132,7 @@ export function FollowersModal({
     </div>
   );
 }
+
+
+
+
