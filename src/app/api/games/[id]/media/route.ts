@@ -1,3 +1,4 @@
+import { logger } from '@/shared/logger';
 import { NextResponse } from "next/server";
 
 const IGDB_ACCESS_TOKEN = process.env.IGDB_ACCESS_TOKEN || "";
@@ -5,9 +6,19 @@ const IGDB_CLIENT_ID = process.env.TWITCH_CLIENT_ID || "";
 
 export const runtime = "nodejs";
 
-// Cache for media
-const mediaCache = new Map<string, { data: any; timestamp: number }>();
-const CACHE_TTL = 1000 * 60 * 30; // 30 minutes
+interface ImageResult {
+  url: string;
+  type: "screenshot" | "artwork";
+  width: number;
+  height: number;
+}
+
+interface MediaResponse {
+  images: ImageResult[];
+}
+
+const mediaCache = new Map<string, { data: MediaResponse; timestamp: number }>();
+const CACHE_TTL = 1000 * 60 * 30; 
 
 async function getFreshAccessToken(): Promise<string> {
   const tokenResponse = await fetch(
@@ -93,14 +104,12 @@ export async function GET(
       return NextResponse.json({ error: "Invalid IGDB ID" }, { status: 400 });
     }
 
-    // Check cache
     const cacheKey = `media_${igdbId}`;
     const cached = mediaCache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
       return NextResponse.json(cached.data);
     }
 
-    // Fetch screenshots and artworks in parallel
     const [screenshotsRes, artworksRes] = await Promise.all([
       fetchGameMedia(IGDB_ACCESS_TOKEN, igdbId),
       fetchGameArtworks(IGDB_ACCESS_TOKEN, igdbId),
@@ -113,7 +122,6 @@ export async function GET(
     const screenshots = await screenshotsRes.json();
     const artworks = await artworksRes.json();
 
-    // Combine and format images
     const images = [
       ...screenshots.map((s: { url: string; width: number; height: number }) => ({
         url: `https:${s.url.replace("t_thumb", "t_720p")}`,
@@ -134,10 +142,11 @@ export async function GET(
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error("Error fetching game media:", error);
+    logger.error("Error fetching game media:", error);
     return NextResponse.json(
       { error: "Failed to fetch game media", images: [] },
       { status: 500 }
     );
   }
 }
+

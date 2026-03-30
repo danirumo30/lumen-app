@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Modal } from "@/components/ui/Modal";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/infrastructure/supabase/client";
 
 interface Episode {
   id: number;
@@ -73,11 +74,10 @@ interface Season {
 }
 
 interface EpisodesAccordionProps {
-  tvId: string;
   tvTmdId: number;
   seasons: Season[];
   watchedEpisodes: Set<string>;
-  /** Get episodes for a specific season - provided by parent to centralize loading */
+  
   getEpisodesForSeason: (seasonNumber: number) => Episode[];
   isSeasonComplete: (seasonNumber: number, episodes: Episode[]) => boolean;
   onEpisodeToggle: (seasonNumber: number, episodeNumber: number, watched: boolean) => void;
@@ -87,7 +87,6 @@ interface EpisodesAccordionProps {
 }
 
 export function EpisodesAccordion({ 
-  tvId, 
   tvTmdId, 
   seasons, 
   watchedEpisodes,
@@ -104,7 +103,6 @@ export function EpisodesAccordion({
   const getEpisodeKey = (season: number, episode: number) => `tv_${tvTmdId}_s${season}_e${episode}`;
   const isEpisodeWatched = (season: number, episode: number) => watchedEpisodes.has(getEpisodeKey(season, episode));
 
-  // Filter out specials season if there are other seasons
   const displaySeasons = seasons.filter(s => {
     if (s.seasonNumber === 0 && seasons.length > 1) return false;
     return true;
@@ -139,7 +137,7 @@ export function EpisodesAccordion({
     if (episodes.length > 0) {
       return episodes.filter(ep => isEpisodeWatched(ep.seasonNumber, ep.episodeNumber)).length;
     } else {
-      // Fallback: count using episode count from season prop
+      
       const season = seasons.find(s => s.seasonNumber === seasonNumber);
       if (!season) return 0;
       let count = 0;
@@ -150,7 +148,7 @@ export function EpisodesAccordion({
     }
   };
 
-  // Mark all episodes across all seasons
+  
   const handleMarkAllEpisodes = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
@@ -161,7 +159,7 @@ export function EpisodesAccordion({
     if (onMarkAllEpisodes) {
       onMarkAllEpisodes();
     } else {
-      // Fallback: mark each season as watched
+      
       for (const season of displaySeasons) {
         await onSeasonToggle(season.seasonNumber, true);
       }
@@ -201,7 +199,7 @@ export function EpisodesAccordion({
         const hasEpisodes = seasonEpisodes.length > 0;
         const totalInSeason = seasonEpisodes.length || season.episodeCount;
         const watchedInSeason = getWatchedCount(season.seasonNumber);
-        // Use the parent's isSeasonComplete callback for accurate status
+        
         const seasonComplete = isSeasonComplete(season.seasonNumber, seasonEpisodes);
 
         return (
@@ -209,19 +207,25 @@ export function EpisodesAccordion({
             key={season.seasonNumber}
             className="bg-zinc-900/50 rounded-xl border border-white/[0.05] overflow-hidden"
           >
-            {/* Season Header */}
+            {}
             <div className="px-4 py-4 flex items-center justify-between hover:bg-white/[0.02] transition-colors">
-              {/* Left side - poster with mark button + title (clickeable) */}
+              {}
               <div className="flex items-center gap-3 sm:gap-4 flex-1">
-                {/* Poster container with mark button overlay - visible on both mobile and desktop */}
+                {}
                 <div className="relative flex-shrink-0">
                   <button
                     onClick={() => toggleSeason(season.seasonNumber)}
                     className="block"
                   >
-                    {season.posterPath ? (
-                      <img src={season.posterPath} alt={season.name} className="w-10 h-14 sm:w-12 sm:h-16 object-cover rounded-lg" />
-                    ) : (
+                     {season.posterPath ? (
+                       <Image
+                         src={season.posterPath}
+                         alt={season.name}
+                         width={48}
+                         height={64}
+                         className="object-cover rounded-lg"
+                       />
+                     ) : (
                       <div className="w-10 h-14 sm:w-12 sm:h-16 bg-zinc-800 rounded-lg flex items-center justify-center">
                         <svg className="w-5 h-5 sm:w-6 sm:h-6 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -230,7 +234,7 @@ export function EpisodesAccordion({
                     )}
                   </button>
                   
-                  {/* Mark season button - visible on both mobile and desktop */}
+                  {}
                   <button
                     onClick={async (e) => {
                       e.stopPropagation();
@@ -260,7 +264,7 @@ export function EpisodesAccordion({
                   </button>
                 </div>
                 
-                {/* Season info (clickeable) */}
+                {}
                 <button
                   onClick={() => toggleSeason(season.seasonNumber)}
                   className="flex-1 text-left min-w-0"
@@ -287,7 +291,7 @@ export function EpisodesAccordion({
                 </button>
               </div>
               
-              {/* Arrow button - explicit click target for expand/collapse */}
+              {}
               <button
                 onClick={() => toggleSeason(season.seasonNumber)}
                 className={`w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors flex-shrink-0`}
@@ -304,7 +308,7 @@ export function EpisodesAccordion({
               </button>
             </div>
 
-            {/* Episodes List */}
+            {}
             {isExpanded && (
               <div className="border-t border-white/[0.05]">
                 {!hasEpisodes ? (
@@ -319,14 +323,17 @@ export function EpisodesAccordion({
                       return (
                         <div key={episode.id} className="p-3 sm:p-4 hover:bg-white/[0.02] transition-colors">
                           <div className="flex gap-2 sm:gap-4">
-                            {/* Episode thumbnail - responsive sizes */}
-                            {episode.stillPath ? (
-                              <img
-                                src={episode.stillPath}
-                                alt={episode.name}
-                                className={`w-20 h-14 sm:w-28 sm:h-[72px] object-cover rounded-lg flex-shrink-0 transition-all ${watched ? "opacity-60" : ""}`}
-                              />
-                            ) : (
+                             {}
+                             {episode.stillPath ? (
+                               <Image
+                                 src={episode.stillPath}
+                                 alt={episode.name}
+                                 width={112}  
+                                 height={72}   
+                                 className={`object-cover rounded-lg flex-shrink-0 transition-all ${watched ? "opacity-60" : ""}`}
+                                 sizes="(max-width: 640px) 80px, 112px"
+                               />
+                             ) : (
                               <div className={`w-20 h-14 sm:w-28 sm:h-[72px] rounded-lg flex-shrink-0 flex items-center justify-center transition-all ${watched ? "bg-emerald-900/30 opacity-60" : "bg-zinc-800"}`}>
                                 <svg className="w-6 h-6 sm:w-8 sm:h-8 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -335,7 +342,7 @@ export function EpisodesAccordion({
                             )}
                             
                             <div className="flex-1 min-w-0">
-                              {/* Episode header */}
+                              {}
                               <div className="flex items-start justify-between gap-2 mb-1">
                                 <div className="flex items-center gap-1 sm:gap-2 flex-1 min-w-0">
                                   <span className="text-zinc-500 text-xs sm:text-sm font-mono flex-shrink-0">
@@ -352,7 +359,7 @@ export function EpisodesAccordion({
                                 </div>
                                 
                                 <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-                                  {/* Episode toggle button */}
+                                  {}
                                   <button
                                     onClick={async () => {
                                       const { data: { session } } = await supabase.auth.getSession();
@@ -384,13 +391,13 @@ export function EpisodesAccordion({
                                 </div>
                               </div>
                               
-                              {/* Meta info */}
+                              {}
                               <div className="flex items-center gap-3 text-sm text-zinc-400 mb-2">
                                 {episode.airDate && <span>{formatDate(episode.airDate)}</span>}
                                 {episode.runtime && <span>{formatRuntime(episode.runtime)}</span>}
                               </div>
                               
-                              {/* Overview */}
+                              {}
                               {episode.overview && (
                                 <p className={`text-sm leading-relaxed ${watched ? "text-zinc-500" : "text-zinc-300"} line-clamp-2`}>
                                   {episode.overview}
@@ -409,10 +416,10 @@ export function EpisodesAccordion({
         );
       })}
 
-      {/* Login Modal */}
+      {}
       <Modal isOpen={showLoginPrompt} onClose={() => setShowLoginPrompt(false)}>
         <div className="p-6">
-          {/* Close button */}
+          {}
           <button
             onClick={() => setShowLoginPrompt(false)}
             className="absolute top-4 right-4 text-zinc-400 hover:text-white transition-colors"
@@ -422,24 +429,24 @@ export function EpisodesAccordion({
             </svg>
           </button>
 
-          {/* Icon */}
+          {}
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-cyan-500/20 flex items-center justify-center">
             <svg className="w-8 h-8 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
           </div>
 
-          {/* Title */}
+          {}
           <h3 className="text-xl font-semibold text-white text-center mb-2">
             Inicia sesión para continuar
           </h3>
 
-          {/* Description */}
+          {}
           <p className="text-zinc-400 text-sm text-center mb-6">
             Marca episodios como vistos y guarda tu progreso de series.
           </p>
 
-          {/* Actions */}
+          {}
           <div className="space-y-3">
             <a
               href="/login"
@@ -459,3 +466,8 @@ export function EpisodesAccordion({
     </div>
   );
 }
+
+
+
+
+

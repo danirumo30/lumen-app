@@ -1,3 +1,4 @@
+import { logger } from '@/shared/logger';
 import { NextResponse } from "next/server";
 
 const IGDB_ACCESS_TOKEN = process.env.IGDB_ACCESS_TOKEN!;
@@ -37,22 +38,19 @@ async function fetchGames(accessToken: string, retry = false): Promise<Response>
       "Content-Type": "text/plain",
     },
     body: `
-      fields id, name, cover.url, rating, first_release_date, summary;
+      fields id, name, cover.url, rating, first_release_date, summary, platforms.id, platforms.name, platforms.platform_logo.image_id;
       where rating != null & first_release_date != null & first_release_date >= 1735689600;
       sort first_release_date desc;
       limit 20;
     `,
   });
 
-  // If 401 and haven't retried, refresh token and retry
   if (response.status === 401 && !retry) {
-    console.log("IGDB token expired, refreshing...");
+    logger.debug("IGDB token expired, refreshing...");
     const newToken = await getFreshAccessToken();
     
-    // Update process env for this request
     process.env.IGDB_ACCESS_TOKEN = newToken;
     
-    // Try again with new token
     return fetchGames(newToken, true);
   }
 
@@ -76,6 +74,7 @@ export async function GET() {
       rating?: number;
       first_release_date?: number;
       summary?: string;
+      platforms?: { id: number; name: string; platform_logo?: { image_id: string } }[];
     }) => ({
       id: `igdb_${game.id}`,
       name: game.name,
@@ -87,14 +86,28 @@ export async function GET() {
         ? new Date(game.first_release_date * 1000).toISOString().split("T")[0]
         : null,
       summary: game.summary,
+      platformLogos: game.platforms?.map((p: { id: number; name: string; platform_logo?: { image_id: string } }) => ({
+        id: p.id,
+        name: p.name,
+        
+        platformName: p.name,
+        logoUrl: p.platform_logo?.image_id 
+          ? `https://images.igdb.com/igdb/image/upload/t_micro/${p.platform_logo.image_id}.png`
+          : null,
+      })).filter((p: { logoUrl: string | null }) => p.logoUrl) || [],
     }));
 
     return NextResponse.json({ results });
   } catch (error) {
-    console.error("Error fetching trending games:", error);
+    logger.error("Error fetching trending games:", error);
     return NextResponse.json(
       { error: "Failed to fetch trending games" },
       { status: 500 }
     );
   }
 }
+
+
+
+
+

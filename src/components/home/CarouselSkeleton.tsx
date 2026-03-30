@@ -13,7 +13,7 @@ export function CarouselSkeleton({ variant = "movies" }: CarouselSkeletonProps) 
 
   return (
     <div className="mb-12 animate-pulse">
-      {/* Header Skeleton */}
+      {}
       <div className="flex items-end justify-between mb-6">
         <div>
           <div className={`w-48 h-8 rounded-lg ${accentColor}`} />
@@ -25,7 +25,7 @@ export function CarouselSkeleton({ variant = "movies" }: CarouselSkeletonProps) 
         </div>
       </div>
 
-      {/* Items Skeleton */}
+      {}
       <div className="flex gap-4">
         {Array.from({ length: 8 }).map((_, i) => (
           <div
@@ -43,10 +43,10 @@ export function CarouselSkeleton({ variant = "movies" }: CarouselSkeletonProps) 
 export function HomepageSkeleton() {
   return (
     <div className="pt-20 pb-8">
-      {/* Hero Skeleton */}
+      {}
       <div className="h-64 rounded-2xl bg-zinc-800/30 mb-12" />
 
-      {/* Carousels Skeleton */}
+      {}
       <div className="max-w-7xl mx-auto px-6">
         <CarouselSkeleton variant="movies" />
         <CarouselSkeleton variant="tv" />
@@ -55,3 +55,7 @@ export function HomepageSkeleton() {
     </div>
   );
 }
+
+
+
+

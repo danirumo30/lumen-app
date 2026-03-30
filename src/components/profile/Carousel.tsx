@@ -20,14 +20,14 @@ export function Carousel({ title, icon, children, emptyMessage }: CarouselProps)
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Header */}
+      {}
       <div className="flex items-end justify-between mb-4 px-1">
         <div className="flex items-center gap-3">
           {icon && <div className="text-zinc-400">{icon}</div>}
           <h2 className="text-lg font-semibold text-white/90 tracking-tight">{title}</h2>
         </div>
         
-        {/* Glassmorphism Navigation Buttons */}
+        {}
         <div className="flex gap-1.5 opacity-0 group-hover/carousel:opacity-100 transition-all duration-300">
           <button
             onClick={() => containerRef.current?.scrollBy({ left: -300, behavior: "smooth" })}
@@ -50,7 +50,7 @@ export function Carousel({ title, icon, children, emptyMessage }: CarouselProps)
         </div>
       </div>
 
-      {/* Carousel Content */}
+      {}
       {children ? (
         <div
           ref={containerRef}
@@ -62,7 +62,6 @@ export function Carousel({ title, icon, children, emptyMessage }: CarouselProps)
             scrollBehavior: "smooth",
             WebkitOverflowScrolling: "touch",
             paddingBottom: "16px",
-            touchAction: "pan-x",
           }}
         >
           {children}
@@ -74,7 +73,7 @@ export function Carousel({ title, icon, children, emptyMessage }: CarouselProps)
   );
 }
 
-// Icon components for media types
+
 export const MovieIcon = () => (
   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
@@ -110,3 +109,7 @@ export const CheckIcon = () => (
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 13l4 4L19 7" />
   </svg>
 );
+
+
+
+

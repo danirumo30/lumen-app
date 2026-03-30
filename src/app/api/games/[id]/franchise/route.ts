@@ -1,14 +1,47 @@
+import { logger } from '@/shared/logger';
 import { NextResponse } from "next/server";
-import { mapGenresToSpanish } from "@/lib/translate";
+import { mapGenresToSpanish } from "@/shared/translate";
 
 const IGDB_ACCESS_TOKEN = process.env.IGDB_ACCESS_TOKEN || "";
 const IGDB_CLIENT_ID = process.env.TWITCH_CLIENT_ID || "";
 
 export const runtime = "nodejs";
 
-// Cache for franchise data
-const franchiseCache = new Map<string, { data: any; timestamp: number }>();
-const CACHE_TTL = 1000 * 60 * 30; // 30 minutes
+interface GameResult {
+  id: string;
+  igdbId: number;
+  name: string;
+  posterUrl: string | null;
+  releaseDate: string | null;
+  releaseYear: number | null;
+  rating: number | null;
+  genres: string[];
+}
+
+interface IgdbGameWithCover {
+  id: number;
+  name: string;
+  cover?: { url: string };
+  rating?: number;
+  first_release_date?: number;
+  version_parent?: number | null;
+  genres?: { name: string }[];
+}
+
+interface IgdbGameMeta {
+  id: number;
+  name: string;
+  collections?: number[];
+  franchises?: number[];
+}
+
+interface FranchiseResponse {
+  franchise: { id: number; name: string } | null;
+  games: GameResult[];
+}
+
+const franchiseCache = new Map<string, { data: FranchiseResponse; timestamp: number }>();
+const CACHE_TTL = 1000 * 60 * 30; 
 
 async function getFreshAccessToken(): Promise<string> {
   const tokenResponse = await fetch(
@@ -69,14 +102,13 @@ export async function GET(
       return NextResponse.json({ error: "Invalid IGDB ID" }, { status: 400 });
     }
 
-    // Check cache
     const cacheKey = `franchise_${igdbId}`;
     const cached = franchiseCache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
       return NextResponse.json(cached.data);
     }
 
-    // Step 1: Get the game to find its collections and franchises
+    
     const gameRes = await fetchWithTokenRefresh(
       "https://api.igdb.com/v4/games",
       `fields id, name, collections, franchises; where id = ${igdbId}; limit 1;`,
@@ -87,68 +119,64 @@ export async function GET(
       throw new Error(`IGDB API error: ${gameRes.status}`);
     }
 
-    const games = await gameRes.json();
-    
-    if (!games || games.length === 0) {
-      return NextResponse.json({ franchise: null, games: [] });
-    }
+     const games = await gameRes.json() as IgdbGameMeta[];
+     
+     if (!games || games.length === 0) {
+       return NextResponse.json({ franchise: null, games: [] });
+     }
 
-    const game = games[0];
+     const game = games[0];
     
-    // Try collections first (more relevant for game series)
     const collectionIds = game.collections || [];
     const franchiseIds = game.franchises || [];
 
-    // If we have collections, use those
     if (collectionIds.length > 0) {
       const collectionId = collectionIds[0];
 
-      // Get collection name
       const collectionRes = await fetchWithTokenRefresh(
         "https://api.igdb.com/v4/collections",
         `fields name; where id = ${collectionId}; limit 1;`,
         IGDB_ACCESS_TOKEN
       );
 
-      let collectionName = "Colección";
-      if (collectionRes.ok) {
-        const collectionData = await collectionRes.json();
-        if (collectionData && collectionData[0]?.name) {
-          collectionName = collectionData[0].name;
-        }
-      }
+       let collectionName = "Colección";
+       if (collectionRes.ok) {
+         const collectionData = await collectionRes.json() as { name: string }[];
+         if (collectionData && collectionData[0]?.name) {
+           collectionName = collectionData[0].name;
+         }
+       }
 
-      // Get all games in this collection
-      const collectionGamesRes = await fetchWithTokenRefresh(
-        "https://api.igdb.com/v4/games",
-        `fields id, name, cover.url, rating, genres.name, first_release_date, version_parent; where collections = ${collectionId} & version_title = null; sort first_release_date asc; limit 50;`,
-        IGDB_ACCESS_TOKEN
-      );
+       const collectionGamesRes = await fetchWithTokenRefresh(
+         "https://api.igdb.com/v4/games",
+         `fields id, name, cover.url, rating, genres.name, first_release_date, version_parent; where collections = ${collectionId} & version_title = null; sort first_release_date asc; limit 50;`,
+         IGDB_ACCESS_TOKEN
+       );
 
-      if (!collectionGamesRes.ok) {
-        throw new Error(`IGDB API error: ${collectionGamesRes.status}`);
-      }
+       if (!collectionGamesRes.ok) {
+         throw new Error(`IGDB API error: ${collectionGamesRes.status}`);
+       }
 
-      const collectionGames = await collectionGamesRes.json();
+       const collectionGames = await collectionGamesRes.json() as IgdbGameWithCover[];
 
-      const formattedGames = collectionGames
-        .filter((g: any) => !g.version_parent)
-        .map((g: any) => ({
-          id: `igdb_${g.id}`,
-          igdbId: g.id,
-          name: g.name,
-          posterUrl: g.cover?.url
-            ? `https:${g.cover.url.replace("t_thumb", "t_cover_big")}`
-            : null,
-          releaseDate: g.first_release_date
-            ? new Date(g.first_release_date * 1000).toISOString().split("T")[0]
-            : null,
-          releaseYear: g.first_release_date
-            ? new Date(g.first_release_date * 1000).getFullYear()
-            : null,
-          rating: g.rating ? Math.round(g.rating / 10) : null,
-          genres: mapGenresToSpanish(g.genres?.map((g: { name: string }) => g.name) || []),
-        }));
+       const formattedGames = collectionGames
+         .filter((g) => !g.version_parent)
+         .map((g) => ({
+           id: `igdb_${g.id}`,
+           igdbId: g.id,
+           name: g.name,
+           posterUrl: g.cover?.url
+             ? `https:${g.cover.url.replace("t_thumb", "t_cover_big")}`
+             : null,
+           releaseDate: g.first_release_date
+             ? new Date(g.first_release_date * 1000).toISOString().split("T")[0]
+             : null,
+           releaseYear: g.first_release_date
+             ? new Date(g.first_release_date * 1000).getFullYear()
+             : null,
+           rating: g.rating ? Math.round(g.rating / 10) : null,
+           genres: mapGenresToSpanish(g.genres?.map((genre) => genre.name) || []),
+         }));
 
       const result = {
         franchise: {
@@ -161,7 +189,7 @@ export async function GET(
       return NextResponse.json(result);
     }
 
-    // Fall back to franchises if no collections
+    
     if (franchiseIds.length > 0) {
       const franchiseId = franchiseIds[0];
 
@@ -171,44 +199,44 @@ export async function GET(
         IGDB_ACCESS_TOKEN
       );
 
-      let franchiseName = "Franchise";
-      if (franchiseRes.ok) {
-        const franchiseData = await franchiseRes.json();
-        if (franchiseData && franchiseData[0]?.name) {
-          franchiseName = franchiseData[0].name;
-        }
-      }
+       let franchiseName = "Franchise";
+       if (franchiseRes.ok) {
+         const franchiseData = await franchiseRes.json() as { name: string }[];
+         if (franchiseData && franchiseData[0]?.name) {
+           franchiseName = franchiseData[0].name;
+         }
+       }
 
-      const franchiseGamesRes = await fetchWithTokenRefresh(
-        "https://api.igdb.com/v4/games",
-        `fields id, name, cover.url, rating, genres.name, first_release_date, version_parent; where franchises = ${franchiseId} & version_title = null; sort first_release_date asc; limit 50;`,
-        IGDB_ACCESS_TOKEN
-      );
+       const franchiseGamesRes = await fetchWithTokenRefresh(
+         "https://api.igdb.com/v4/games",
+         `fields id, name, cover.url, rating, genres.name, first_release_date, version_parent; where franchises = ${franchiseId} & version_title = null; sort first_release_date asc; limit 50;`,
+         IGDB_ACCESS_TOKEN
+       );
 
-      if (!franchiseGamesRes.ok) {
-        throw new Error(`IGDB API error: ${franchiseGamesRes.status}`);
-      }
+       if (!franchiseGamesRes.ok) {
+         throw new Error(`IGDB API error: ${franchiseGamesRes.status}`);
+       }
 
-      const franchiseGames = await franchiseGamesRes.json();
+       const franchiseGames = await franchiseGamesRes.json() as IgdbGameWithCover[];
 
-      const formattedGames = franchiseGames
-        .filter((g: any) => !g.version_parent)
-        .map((g: any) => ({
-          id: `igdb_${g.id}`,
-          igdbId: g.id,
-          name: g.name,
-          posterUrl: g.cover?.url
-            ? `https:${g.cover.url.replace("t_thumb", "t_cover_big")}`
-            : null,
-          releaseDate: g.first_release_date
-            ? new Date(g.first_release_date * 1000).toISOString().split("T")[0]
-            : null,
-          releaseYear: g.first_release_date
-            ? new Date(g.first_release_date * 1000).getFullYear()
-            : null,
-          rating: g.rating ? Math.round(g.rating / 10) : null,
-          genres: mapGenresToSpanish(g.genres?.map((g: { name: string }) => g.name) || []),
-        }));
+       const formattedGames = franchiseGames
+         .filter((g) => !g.version_parent)
+         .map((g) => ({
+           id: `igdb_${g.id}`,
+           igdbId: g.id,
+           name: g.name,
+           posterUrl: g.cover?.url
+             ? `https:${g.cover.url.replace("t_thumb", "t_cover_big")}`
+             : null,
+           releaseDate: g.first_release_date
+             ? new Date(g.first_release_date * 1000).toISOString().split("T")[0]
+             : null,
+           releaseYear: g.first_release_date
+             ? new Date(g.first_release_date * 1000).getFullYear()
+             : null,
+           rating: g.rating ? Math.round(g.rating / 10) : null,
+           genres: mapGenresToSpanish(g.genres?.map((genre) => genre.name) || []),
+         }));
 
       const result = {
         franchise: {
@@ -221,13 +249,14 @@ export async function GET(
       return NextResponse.json(result);
     }
 
-    // No collection or franchise found
+    
     return NextResponse.json({ franchise: null, games: [] });
   } catch (error) {
-    console.error("Error fetching franchise:", error);
+    logger.error("Error fetching franchise:", error);
     return NextResponse.json(
       { error: "Failed to fetch franchise", franchise: null, games: [] },
       { status: 500 }
     );
   }
 }
+

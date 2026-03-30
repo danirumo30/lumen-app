@@ -38,7 +38,7 @@ Actúa como un **Staff Software Engineer** experto en el ecosistema TypeScript. 
 
 3. **Feature Documentation:** Tras completar la implementación, se debe generar un archivo en `docs/features/` que actúe como manual técnico, explicando el "porqué" de las decisiones finales y cómo interactúa la feature con el resto del sistema.
 
-4. **Skill Registry:** Las lógicas complejas, transformadores de datos (ej. mappers de tiempo) o validadores de seguridad deben registrarse como archivos `.md` en `.gentle-ai/skills/` para ser reutilizados por el agente.
+4. **Skill Registry:** Las lógicas complejas, transformadores de datos (ej. mappers de tiempo) o validadores de seguridad deben registrarse como archivos `.md` en `.agents/skills/` para ser reutilizados por el agente.
 
 5. **Atomic & Semantic Commits:** Uso estricto de **Conventional Commits** (`feat:`, `fix:`, `refactor:`, `docs:`, `chore:`) para asegurar un historial de Git legible y profesional.
 
@@ -65,7 +65,7 @@ Actúa como un **Staff Software Engineer** experto en el ecosistema TypeScript. 
 - **Environment Parity:** Todo cambio debe validarse primero en el Preview Deployment generado por Vercel en el PR antes de considerarse listo para el merge final.
 
 ## 🧠 Knowledge & Skills (Agent Context)
-- **Primary Source:** Carpeta `.gentle-ai/skills/`.
+- **Primary Source:** Carpeta `.agents/skills/`.
 - **Memory Retrieval:** Antes de empezar, consulta **Engram** con: "What are the latest architectural decisions for Lumen?".
 - **Code Intelligence:** Si el usuario pregunta por lógica dispersa, usa **Context7** para mapear el flujo de datos entre módulos.
 

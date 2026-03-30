@@ -1,18 +1,31 @@
+import { logger } from '@/shared/logger';
 import { NextResponse } from "next/server";
-import { mapGenresToSpanish, mapGameModesToSpanish } from "@/lib/translate";
+import { mapGenresToSpanish, mapGameModesToSpanish, translateText } from "@/shared/translate";
 
 const IGDB_ACCESS_TOKEN = process.env.IGDB_ACCESS_TOKEN || "";
 const IGDB_CLIENT_ID = process.env.TWITCH_CLIENT_ID || "";
 const IGDB_CLIENT_SECRET = process.env.TWITCH_CLIENT_SECRET || "";
 
-console.log("[games/[id]] IGDB_ACCESS_TOKEN present:", !!IGDB_ACCESS_TOKEN);
-console.log("[games/[id]] IGDB_CLIENT_ID present:", !!IGDB_CLIENT_ID);
-
 export const runtime = "nodejs";
 
-// Simple in-memory cache for game data
-const gameCache = new Map<string, { data: any; timestamp: number }>();
-const CACHE_TTL = 1000 * 60 * 15; // 15 minutes
+interface GameResult {
+  id: string;
+  igdbId: number;
+  name: string;
+  coverUrl: string | null;
+  summary: string | null;
+  genres: string[];
+  gameModes: string[];
+  platforms: string[];
+  releaseDate: string | null;
+  releaseYear: number | null;
+  rating: number | null;
+  involvedCompanies: string[];
+}
+
+
+const gameCache = new Map<string, { data: GameResult; timestamp: number }>();
+const CACHE_TTL = 1000 * 60 * 15; 
 
 async function getFreshAccessToken(): Promise<string> {
   const tokenResponse = await fetch(
@@ -51,9 +64,8 @@ async function fetchGameById(accessToken: string, igdbId: number, retry = false)
     `,
   });
 
-  // If 401 and haven't retried, refresh token and retry
   if (response.status === 401 && !retry) {
-    console.log("IGDB token expired, refreshing...");
+    logger.debug("IGDB token expired, refreshing...");
     const newToken = await getFreshAccessToken();
     process.env.IGDB_ACCESS_TOKEN = newToken;
     return fetchGameById(newToken, igdbId, true);
@@ -68,7 +80,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    // Remove 'igdb_' prefix if present
+    
     const igdbId = parseInt(id.replace(/^igdb_/, ''));
 
     if (isNaN(igdbId)) {
@@ -78,21 +90,24 @@ export async function GET(
       );
     }
 
-    // Check cache first
-    const cacheKey = `game_${igdbId}`;
+    const acceptLanguage = request.headers.get('accept-language') || 'en';
+    const browserLang = acceptLanguage.split(',')[0].split('-')[0]; 
+    const targetLang = browserLang === 'es' ? 'es' : browserLang === 'fr' ? 'fr' : browserLang === 'de' ? 'de' : browserLang === 'it' ? 'it' : browserLang === 'pt' ? 'pt' : 'es'; 
+    
+
+    const cacheKey = `game_${igdbId}_${targetLang}`;
     const cached = gameCache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-      console.log(`[games/[id]] Cache hit for game ${igdbId}`);
+      logger.debug(`[games/[id]] Cache hit for game ${igdbId} in ${targetLang}`);
       return NextResponse.json(cached.data);
     }
 
     const igdbResponse = await fetchGameById(IGDB_ACCESS_TOKEN, igdbId);
 
-    console.log("[games/[id]] IGDB response status:", igdbResponse.status);
     
     if (!igdbResponse.ok) {
       const errorText = await igdbResponse.text();
-      console.log("[games/[id]] IGDB error response:", errorText);
+      logger.debug("[games/[id]] IGDB error response:", errorText);
       throw new Error(`IGDB API error: ${igdbResponse.status} - ${errorText}`);
     }
 
@@ -107,12 +122,21 @@ export async function GET(
 
     const game = games[0];
 
-    // Get English genres and translate to Spanish
     const englishGenres = game.genres?.map((g: { name: string }) => g.name) || [];
     const genres = mapGenresToSpanish(englishGenres);
 
-    // Don't translate summary anymore - too slow and error-prone
-    const summary: string | null = game.summary || null;
+    
+    let summary: string | null = game.summary || null;
+    const shouldTranslate = browserLang !== 'en' && summary && summary.trim() !== '';
+    
+    if (shouldTranslate) {
+      try {
+        summary = await translateText(summary!, targetLang);
+      } catch (error) {
+        logger.error("[games/[id]] Translation failed, using original:", error);
+        
+      }
+    }
 
     const result = {
       id: `igdb_${game.id}`,
@@ -135,15 +159,18 @@ export async function GET(
       involvedCompanies: game.involved_companies?.map((c: { company: { name: string } }) => c.company.name) || [],
     };
 
-    // Cache the result
     gameCache.set(cacheKey, { data: result, timestamp: Date.now() });
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error("Error fetching game details:", error);
+    logger.error("Error fetching game details:", error);
     return NextResponse.json(
       { error: "Failed to fetch game details" },
       { status: 500 }
     );
   }
 }
+
+
+
+

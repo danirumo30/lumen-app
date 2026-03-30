@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { UserProfileWithStats } from "@/modules/social/domain/user-profile";
+import type { UserProfileWithStats } from '@/domain/social/entities/user-profile.entity';
 
 interface ProfileHeaderProps {
   profile: UserProfileWithStats;
@@ -24,7 +24,7 @@ export function ProfileHeader({
 }: ProfileHeaderProps) {
   return (
     <div className="relative h-40 sm:h-48 md:h-56 lg:h-64 bg-gradient-to-r from-indigo-600 to-purple-600">
-      {/* Banner Image */}
+      {}
       {profile.bannerUrl ? (
         <div
           className="absolute inset-0 bg-cover bg-center"
@@ -34,14 +34,14 @@ export function ProfileHeader({
         <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600" />
       )}
 
-      {/* Overlay gradient */}
+      {}
       <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/80 via-zinc-950/20 to-transparent" />
 
-      {/* Profile Info Container - positioned below header */}
+      {}
       <div className="absolute bottom-0 left-0 right-0 pb-4 sm:pb-6">
         <div className="max-w-6xl mx-auto px-3 sm:px-4">
           <div className="flex items-end gap-3 sm:gap-6 w-full">
-            {/* Avatar */}
+            {}
             <div className="relative flex-shrink-0">
               <div
                 className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full border-4 border-zinc-900 bg-gradient-to-br from-indigo-500 to-purple-600 bg-cover bg-center shadow-2xl"
@@ -56,13 +56,13 @@ export function ProfileHeader({
               )}
             </div>
 
-            {/* User Info */}
+            {}
             <div className="flex-1 text-white min-w-0">
               <h1 className="text-lg sm:text-2xl md:text-3xl font-semibold tracking-tight truncate">
                 {profile.username}
               </h1>
               
-              {/* Stats Links with hover effect */}
+              {}
               <div className="flex gap-3 sm:gap-6 mt-1">
                 <button
                   onClick={onFollowersClick}
@@ -85,9 +85,9 @@ export function ProfileHeader({
               </div>
             </div>
 
-            {/* Action Buttons */}
+            {}
             <div className="flex gap-2 sm:gap-3 flex-shrink-0">
-              {/* Follow Button */}
+              {}
               {!isOwnProfile && (
                 <button
                   onClick={onFollowToggle}
@@ -101,7 +101,7 @@ export function ProfileHeader({
                 </button>
               )}
 
-              {/* Edit Profile Button */}
+              {}
               {isOwnProfile && (
                 <Link
                   href="/profile/edit"
@@ -120,3 +120,7 @@ export function ProfileHeader({
     </div>
   );
 }
+
+
+
+

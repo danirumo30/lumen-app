@@ -3,15 +3,15 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 
-import { SupabaseUserProfileRepository } from "@/modules/social/infrastructure/repositories/supabase-user-profile.repository";
-import { getSupabaseClient } from "@/lib/supabase";
-import { uploadFile, generateUniqueFileName, validateImageFile } from "@/lib/storage";
-import type { UpdateProfileData, UserProfile } from "@/modules/social/domain/user-profile";
-import { useAuth } from "@/modules/auth/infrastructure/contexts/AuthContext";
+import { SupabaseUserProfileRepository } from "@/infrastructure/persistence/supabase/social/supabase-user-profile.repository";
+import { getSupabaseClient } from "@/infrastructure/supabase/client";
+import { uploadFile, generateUniqueFileName, validateImageFile } from "@/infrastructure/storage/storage";
+ import type { UpdateProfileData } from '@/domain/social/entities/user-profile.entity';
+import { useAuth } from "@/infrastructure/contexts/AuthContext";
 
 export default function ProfileEditPage() {
   const router = useRouter();
-  const { user, updateUser } = useAuth();
+   const { updateUser } = useAuth();
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const bannerInputRef = useRef<HTMLInputElement>(null);
   
@@ -26,7 +26,7 @@ export default function ProfileEditPage() {
     username: "",
   });
 
-  const [originalData, setOriginalData] = useState<UserProfile | null>(null);
+   const [originalUsername, setOriginalUsername] = useState<string>("");
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
 
@@ -52,12 +52,12 @@ export default function ProfileEditPage() {
           return;
         }
 
-        setOriginalData(profile);
-        setFormData({
-          avatarUrl: profile.avatarUrl || "",
-          bannerUrl: profile.bannerUrl || "",
-          username: profile.username,
-        });
+         setOriginalUsername(profile.username);
+         setFormData({
+           avatarUrl: profile.avatarUrl || "",
+           bannerUrl: profile.bannerUrl || "",
+           username: profile.username,
+         });
       } catch (err) {
         setError("Error al cargar el perfil");
         console.error(err);
@@ -84,13 +84,11 @@ export default function ProfileEditPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validar archivo
     if (!validateImageFile(file)) {
       setError("Formato de imagen no válido. Usa JPG, PNG o WebP.");
       return;
     }
 
-    // Validar tamaño
     if (file.size > 5 * 1024 * 1024) {
       setError("La imagen no puede pesar más de 5MB.");
       return;
@@ -106,13 +104,10 @@ export default function ProfileEditPage() {
         throw new Error("Usuario no autenticado");
       }
 
-      // Generar nombre de archivo único
       const filePath = generateUniqueFileName(user.id, type, file.name);
 
-      // Subir archivo
       const publicUrl = await uploadFile(file, "profile-images", filePath);
 
-      // Actualizar preview y formData
       if (type === "avatar") {
         setAvatarPreview(URL.createObjectURL(file));
         setFormData((prev) => ({ ...prev, avatarUrl: publicUrl }));
@@ -154,21 +149,18 @@ export default function ProfileEditPage() {
         throw new Error("Usuario no autenticado");
       }
 
-      // Validate username availability if changed
-      if (formData.username !== originalData?.username) {
-        const isAvailable = await repository.isUsernameAvailable(
-          formData.username!,
-          user.id,
-        );
+       if (formData.username !== originalUsername) {
+         const isAvailable = await repository.isUsernameAvailable(
+           formData.username!,
+           user.id,
+         );
 
         if (!isAvailable) {
           throw new Error("El nombre de usuario ya está en uso");
         }
       }
 
-      // Update profile with uploaded images
-      // avatarPreview es solo para vista previa (URL blob local)
-      // formData.avatarUrl es la URL real de Supabase Storage
+      
       const avatarUrl = formData.avatarUrl || null;
       const bannerUrl = formData.bannerUrl || null;
       
@@ -178,24 +170,22 @@ export default function ProfileEditPage() {
         username: formData.username,
       });
 
-      // Update AuthContext so header avatar updates immediately
       updateUser({
         avatarUrl: avatarUrl || undefined,
         username: formData.username,
       });
 
-      // Note: We only update user_profiles table here.
-      // The AuthContext will read from user_profiles when needed.
-      // This ensures data persists correctly across sessions.
+      
+      
+      
 
-      setSuccess("Perfil actualizado correctamente");
-      setOriginalData({ ...originalData!, ...formData });
+       setSuccess("Perfil actualizado correctamente");
+       setOriginalUsername(formData.username ?? "");
 
-      // Clear previews
       setAvatarPreview(null);
       setBannerPreview(null);
 
-      // Redirect to profile page after 2 seconds
+      
       setTimeout(() => {
         router.push(`/profile/${formData.username}`);
       }, 2000);
@@ -234,7 +224,7 @@ export default function ProfileEditPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-8">
-            {/* Username */}
+            {}
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-zinc-400 mb-3">
                 Nombre de usuario
@@ -255,7 +245,7 @@ export default function ProfileEditPage() {
               </p>
             </div>
 
-            {/* Avatar Upload */}
+            {}
             <div>
               <label className="block text-sm font-medium text-zinc-400 mb-3">
                 Foto de perfil
@@ -303,7 +293,7 @@ export default function ProfileEditPage() {
               </div>
             </div>
 
-            {/* Banner Upload */}
+            {}
             <div>
               <label className="block text-sm font-medium text-zinc-400 mb-3">
                 Banner
@@ -363,7 +353,7 @@ export default function ProfileEditPage() {
               </p>
             </div>
 
-            {/* Preview */}
+            {}
             <div className="pt-6 border-t border-zinc-800/50">
               <h2 className="text-lg font-medium text-white mb-4">Vista previa</h2>
               <div className="relative h-40 rounded-2xl overflow-hidden bg-gradient-to-r from-indigo-600 to-purple-600">
@@ -397,7 +387,7 @@ export default function ProfileEditPage() {
               </div>
             </div>
 
-            {/* Submit Button */}
+            {}
             <div className="pt-6 flex gap-4">
               <button
                 type="submit"
@@ -420,3 +410,9 @@ export default function ProfileEditPage() {
     </div>
   );
 }
+
+
+
+
+
+

@@ -1,6 +1,5 @@
 import { describe, test, expect } from "vitest";
 
-// Simulamos la función de validación de contraseñas
 function validatePassword(password: string): boolean {
   return (
     password.length >= 8 &&
@@ -41,3 +40,4 @@ describe("Password Validation", () => {
     });
   });
 });
+

@@ -1,38 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 interface ErrorToastProps {
-  /** The error message to display */
+  
   message: string;
-  /** Called when retry is clicked */
+  
   onRetry?: () => void;
-  /** Called when toast is dismissed */
+  
   onDismiss: () => void;
-  /** How long to show the toast (ms). Default: 5000 */
+  
   duration?: number;
-  /** Type of toast: error (red) or success (green) */
+  
   type?: "error" | "success";
 }
 
-/**
- * Toast notification component for displaying error/success messages
- * 
- * Features:
- * - Auto-dismiss after duration
- * - Retry button for error toasts
- * - Animated entrance/exit
- * 
- * @example
- * ```tsx
- * <ErrorToast
- *   message="No se pudieron guardar los cambios"
- *   onRetry={() => mutation.mutate(variables)}
- *   onDismiss={() => toast.dismiss()}
- *   type="error"
- * />
- * ```
- */
+
 export function ErrorToast({
   message,
   onRetry,
@@ -43,26 +26,25 @@ export function ErrorToast({
   const [isVisible, setIsVisible] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
 
+  const handleDismiss = useCallback(() => {
+    setIsExiting(true);
+    setTimeout(() => {
+      onDismiss();
+    }, 200); 
+  }, [onDismiss]);
+
   useEffect(() => {
-    // Trigger entrance animation
     requestAnimationFrame(() => {
       setIsVisible(true);
     });
 
-    // Auto-dismiss after duration
+    
     const timer = setTimeout(() => {
       handleDismiss();
     }, duration);
 
     return () => clearTimeout(timer);
-  }, [duration]);
-
-  const handleDismiss = () => {
-    setIsExiting(true);
-    setTimeout(() => {
-      onDismiss();
-    }, 200); // Wait for exit animation
-  };
+  }, [duration, handleDismiss]);
 
   const handleRetry = () => {
     if (onRetry) {
@@ -91,7 +73,7 @@ export function ErrorToast({
       role="alert"
       aria-live="polite"
     >
-      {/* Icon */}
+      {}
       <div className={`flex-shrink-0 ${iconColor}`}>
         {type === "error" ? (
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -104,10 +86,10 @@ export function ErrorToast({
         )}
       </div>
 
-      {/* Message */}
+      {}
       <p className="flex-1 text-sm font-medium">{message}</p>
 
-      {/* Actions */}
+      {}
       <div className="flex items-center gap-2">
         {type === "error" && onRetry && (
           <button
@@ -143,38 +125,7 @@ export function ErrorToast({
   );
 }
 
-/**
- * Hook to manage a collection of toasts
- * 
- * @example
- * ```tsx
- * function MyComponent() {
- *   const { toasts, showToast, dismissToast } = useToasts();
- *   
- *   const handleSave = async () => {
- *     try {
- *       await save();
- *       showToast("Guardado exitosamente", "success");
- *     } catch {
- *       showToast("Error al guardar", "error", () => handleSave());
- *     }
- *   };
- *   
- *   return (
- *     <>
- *       <button onClick={handleSave}>Guardar</button>
- *       {toasts.map(toast => (
- *         <ErrorToast
- *           key={toast.id}
- *           {...toast}
- *           onDismiss={() => dismissToast(toast.id)}
- *         />
- *       ))}
- *     </>
- *   );
- * }
- * ```
- */
+
 interface Toast {
   id: string;
   message: string;
@@ -201,3 +152,8 @@ export function useToasts() {
 
   return { toasts, showToast, dismissToast };
 }
+
+
+
+
+

@@ -153,7 +153,6 @@ describe('Media State Transitions', () => {
 
   // Pure function: is state consistent
   function isStateConsistent(state: MediaState): boolean {
-    // If watched, can't have no activity at all
     if (state.isWatched && !state.isFavorite && !state.isPlanned && !state.rating) {
       return true; // Watched-only is valid
     }
@@ -192,3 +191,4 @@ describe('Media State Transitions', () => {
     expect(after.isPlanned).toBe(true);
   });
 });
+

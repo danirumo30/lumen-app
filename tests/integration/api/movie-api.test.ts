@@ -7,7 +7,6 @@ import { describe, it, expect } from 'vitest';
 
 const BASE_URL = process.env.TEST_BASE_URL || 'http://localhost:3000';
 
-// Test data
 const MOVIE_ID = 550; // Fight Club
 
 describe('Movie Detail API', () => {
@@ -58,7 +57,6 @@ describe('Movie Detail API', () => {
     it('should handle invalid movie ID', async () => {
       const response = await fetch(`${BASE_URL}/api/movie/999999999`);
       
-      // Should return 500 or error
       expect([200, 500]).toContain(response.status);
     });
   });
@@ -166,3 +164,4 @@ describe('User Movie Favorite API', () => {
     });
   });
 });
+

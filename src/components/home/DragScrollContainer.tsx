@@ -10,18 +10,7 @@ interface DragScrollContainerProps {
   snap?: boolean;
 }
 
-/**
- * Componente de contenedor con scroll horizontal por arrastre
- * 
- * @example
- * ```tsx
- * <DragScrollContainer snap>
- *   {items.map(item => (
- *     <div key={item.id} className="item">{item.name}</div>
- *   ))}
- * </DragScrollContainer>
- * ```
- */
+
 export function DragScrollContainer({
   children,
   className = "",
@@ -40,3 +29,7 @@ export function DragScrollContainer({
     </div>
   );
 }
+
+
+
+

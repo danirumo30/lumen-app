@@ -7,7 +7,6 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 
 const BASE_URL = process.env.TEST_BASE_URL || 'http://localhost:3000';
 
-// Test data
 const TEST_TV_ID = 1396; // Breaking Bad
 const TEST_SEASON = 1;
 
@@ -139,7 +138,6 @@ describe('User Episode Status API', () => {
     });
 
     it('should reject request without tvTmdId (validation before auth)', async () => {
-      // Get a test token (this would fail without real auth)
       const response = await fetch(`${BASE_URL}/api/user/episode-status`, {
         method: 'POST',
         headers: { 
@@ -253,3 +251,4 @@ describe('User TV Favorite API', () => {
     });
   });
 });
+

@@ -16,7 +16,6 @@ test.describe('Authentication Flow', () => {
     // Click login button in header (says "Entrar")
     await page.click('button:has-text("Entrar")');
     
-    // Verify modal is visible
     await expect(page.locator('text=Bienvenido')).toBeVisible();
   });
 
@@ -31,7 +30,6 @@ test.describe('Authentication Flow', () => {
   test('should switch between login and register', async ({ page }) => {
     await page.click('button:has-text("Entrar")');
     
-    // Click register link
     await page.click('text=Regístrate');
     
     // Verify register form is shown (use heading role to avoid ambiguity)
@@ -54,7 +52,6 @@ test.describe('Authentication Flow', () => {
     await page.click('button:has-text("Entrar")');
     await page.click('text=¿Olvidaste tu contraseña?');
     
-    // Verify forgot password form
     await expect(page.locator('text=Restablecer contraseña')).toBeVisible();
   });
 });
@@ -70,3 +67,4 @@ test.describe('Navigation', () => {
     await expect(page.locator('header')).toBeVisible();
   });
 });
+

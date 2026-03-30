@@ -1,20 +1,22 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { use } from "react";
+import Image from "next/image";
+import Link from "next/link";
 import { useQueryClient } from "@tanstack/react-query";
 import { TvInfo } from "@/components/tv/TvInfo";
 import { EpisodesAccordion } from "@/components/tv/EpisodesAccordion";
 import { SimilarMediaCarousel } from "@/components/tv/SimilarTvCarousel";
 import { CastCarousel } from "@/components/movie/CastCarousel";
 import { ErrorToast, useToasts } from "@/components/ui/Toast";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/infrastructure/supabase/client";
 import {
   useWatchedEpisodeSet,
   useEpisodeToggle,
   episodeKeys,
-} from "@/modules/media/infrastructure/hooks";
-import type { WatchedEpisode } from "@/modules/media/domain/episode.types";
+} from "@/infrastructure/hooks";
+
 
 interface EpisodeData {
   id: number;
@@ -119,7 +121,7 @@ interface SeasonEpisodes {
 export default function TvDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   
-  // React Query client for cache invalidation
+  
   const queryClient = useQueryClient();
   
   const [tv, setTv] = useState<TvShow | null>(null);
@@ -129,138 +131,111 @@ export default function TvDetailPage({ params }: { params: Promise<{ id: string 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // Episodes loaded per season
   const [seasonEpisodes, setSeasonEpisodes] = useState<SeasonEpisodes>({});
   const [isLoadingEpisodes, setIsLoadingEpisodes] = useState(false);
   
-  // Series watched status (from API)
+  
   const [seriesWatchedFromAPI, setSeriesWatchedFromAPI] = useState<boolean>(false);
   
-  // State for mark all episodes modal
+  
   const [showMarkAllModal, setShowMarkAllModal] = useState<boolean>(false);
   
-  // Toast notifications
   const { toasts, showToast, dismissToast } = useToasts();
+  const isLoadingEpisodesRef = useRef(false);
+   
+   
   
-  // Check if user is logged in
-  const isLoggedIn = !!session?.access_token;
   
-  // ========================================
-  // REACT QUERY HOOKS FOR EPISODES
-  // ========================================
   
-  // Watched episodes query (from React Query cache)
+  
   const { data: watchedSet } = useWatchedEpisodeSet(tv?.tmdbId ?? null);
   
-  // Single episode toggle mutation
+  
   const toggleMutation = useEpisodeToggle(tv?.tmdbId ?? null);
   
-  // Get episode key helper
   const getEpisodeKey = useCallback((season: number, episode: number) => {
     return `tv_${tv?.tmdbId}_s${season}_e${episode}`;
   }, [tv?.tmdbId]);
   
-  // Check if a season is complete (only based on episode marking, not series status)
   const isSeasonComplete = useCallback((seasonNumber: number, episodes: EpisodeData[]) => {
-    // Only check actual episode marking - don't use seriesWatchedFromAPI here
+    
     if (!watchedSet || episodes.length === 0) return false;
     
-    // Check if all episodes in the season are watched
     return episodes.every(ep => {
       const key = getEpisodeKey(ep.seasonNumber, ep.episodeNumber);
       return watchedSet.has(key);
     });
-  }, [watchedSet, getEpisodeKey]);
+   }, [watchedSet, getEpisodeKey]);
+   
+   const isSeriesWatched = seriesWatchedFromAPI;
   
-  // Check if ALL episodes are watched (based on actual episode marking)
-  const areAllEpisodesWatched = useCallback(() => {
-    // Only check actual episode marking
-    if (!watchedSet) return false;
-    
-    // Check if we have all episodes loaded
-    const allEpisodesLoaded = Object.values(seasonEpisodes).flat();
-    if (allEpisodesLoaded.length === 0) return false;
-    
-    return allEpisodesLoaded.every(ep => {
-      const key = getEpisodeKey(ep.seasonNumber, ep.episodeNumber);
-      return watchedSet.has(key);
-    });
-  }, [watchedSet, seasonEpisodes, getEpisodeKey]);
-  
-  // Series watched status
-  const isSeriesWatched = seriesWatchedFromAPI;
-  
-  // Total watched count
   const watchedCount = watchedSet?.size ?? 0;
   
-  // Total episodes count
   const totalEpisodes = tv?.seasons.reduce((sum, s) => sum + s.episodeCount, 0) ?? 0;
   
-  // ========================================
-  // FETCH WITH AUTH HELPER
-  // ========================================
   
-  const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
-    const headers = {
-      ...options.headers,
-      "Content-Type": "application/json",
-      ...(session?.access_token ? { "Authorization": `Bearer ${session.access_token}` } : {}),
-    };
-    return fetch(url, { ...options, headers });
-  };
   
-  // ========================================
-  // LOAD ALL EPISODES FOR A SEASON
-  // ========================================
   
-  const loadSeasonEpisodes = async (seasonNumber: number): Promise<EpisodeData[]> => {
-    if (!tv) return [];
-    
-    try {
-      const res = await fetch(`/api/tv/${tv.id}/season/${seasonNumber}`);
-      if (res.ok) {
-        const data = await res.json();
-        return data.episodes || [];
-      }
-    } catch (e) {
-      console.error("Error fetching season:", e);
-    }
-    return [];
-  };
+   const fetchWithAuth = useCallback(async (url: string, options: RequestInit = {}) => {
+     const headers = {
+       ...options.headers,
+       "Content-Type": "application/json",
+       ...(session?.access_token ? { "Authorization": `Bearer ${session.access_token}` } : {}),
+     };
+     return fetch(url, { ...options, headers });
+   }, [session]);
   
-  // Load ALL seasons episodes
-  const loadAllSeasonsEpisodes = async () => {
-    if (!tv || isLoadingEpisodes) return;
-    
-    setIsLoadingEpisodes(true);
-    try {
-      const seasonPromises = tv.seasons.map(async (season) => {
-        const episodes = await loadSeasonEpisodes(season.seasonNumber);
-        return { seasonNumber: season.seasonNumber, episodes };
-      });
+  
+  
+  
+  
+   const loadSeasonEpisodes = useCallback(async (seasonNumber: number): Promise<EpisodeData[]> => {
+     if (!tv) return [];
+     
+     try {
+       const res = await fetch(`/api/tv/${tv.id}/season/${seasonNumber}`);
+       if (res.ok) {
+         const data = await res.json();
+         return data.episodes || [];
+       }
+     } catch (e) {
+       console.error("Error fetching season:", e);
+     }
+     return [];
+   }, [tv]);
+  
+    const loadAllSeasonsEpisodes = useCallback(async () => {
+      if (!tv || isLoadingEpisodesRef.current) return;
       
-      const results = await Promise.all(seasonPromises);
-      
-      const bySeason: SeasonEpisodes = {};
-      for (const result of results) {
-        bySeason[result.seasonNumber] = result.episodes;
+      isLoadingEpisodesRef.current = true;
+      setIsLoadingEpisodes(true);
+      try {
+        const seasonPromises = tv.seasons.map(async (season) => {
+          const episodes = await loadSeasonEpisodes(season.seasonNumber);
+          return { seasonNumber: season.seasonNumber, episodes };
+        });
+        
+        const results = await Promise.all(seasonPromises);
+        
+        const bySeason: SeasonEpisodes = {};
+        for (const result of results) {
+          bySeason[result.seasonNumber] = result.episodes;
+        }
+        setSeasonEpisodes(bySeason);
+      } finally {
+        setIsLoadingEpisodes(false);
+        isLoadingEpisodesRef.current = false;
       }
-      setSeasonEpisodes(bySeason);
-    } finally {
-      setIsLoadingEpisodes(false);
-    }
-  };
+    }, [tv, loadSeasonEpisodes]);
   
-  // Get episodes for a season (from loaded data)
   const getEpisodesForSeason = (seasonNumber: number): EpisodeData[] => {
     return seasonEpisodes[seasonNumber] || [];
   };
   
-  // ========================================
-  // HANDLERS
-  // ========================================
   
-  // Mark/unmark series
+  
+  
+  
   const handleSeriesToggle = async (mark: boolean) => {
     if (!tv) return;
     
@@ -282,7 +257,7 @@ export default function TvDetailPage({ params }: { params: Promise<{ id: string 
       
       if (response.ok) {
         setSeriesWatchedFromAPI(mark);
-        // Dispatch event to update profile page
+        
         window.dispatchEvent(new CustomEvent('episode-sync-success', { detail: { type: 'series' } }));
       }
     } catch (err) {
@@ -290,7 +265,6 @@ export default function TvDetailPage({ params }: { params: Promise<{ id: string 
     }
   };
   
-  // Handle single episode toggle
   const handleEpisodeToggle = async (seasonNumber: number, episodeNumber: number, watched: boolean) => {
     const episodes = seasonEpisodes[seasonNumber];
     const episode = episodes?.find(ep => ep.episodeNumber === episodeNumber);
@@ -306,7 +280,7 @@ export default function TvDetailPage({ params }: { params: Promise<{ id: string 
         showToast("Error al actualizar episodio", "error");
       },
       onSuccess: () => {
-        // Auto-activate series if marking episode (not unmarking)
+        
         if (watched && !seriesWatchedFromAPI) {
           activateSeries();
         }
@@ -314,7 +288,7 @@ export default function TvDetailPage({ params }: { params: Promise<{ id: string 
     });
   };
   
-  // Activate series watched status
+  
   const activateSeries = async () => {
     if (!tv) {
       return;
@@ -354,15 +328,13 @@ export default function TvDetailPage({ params }: { params: Promise<{ id: string 
     }
   };
   
-  // Handle season toggle
   const handleSeasonToggle = async (seasonNumber: number, mark: boolean) => {
     const episodes = seasonEpisodes[seasonNumber];
     if (!episodes || episodes.length === 0) return;
     
     const isComplete = isSeasonComplete(seasonNumber, episodes);
-    if (mark === isComplete) return; // Already in desired state
+    if (mark === isComplete) return; 
     
-    // Build episode list
     const batchEpisodes = episodes.map(ep => ({
       season: seasonNumber,
       episode: ep.episodeNumber,
@@ -373,7 +345,7 @@ export default function TvDetailPage({ params }: { params: Promise<{ id: string 
     await toggleSeasonEpisodes(seasonNumber, batchEpisodes, mark);
   };
   
-  // Toggle multiple episodes in a season
+  
   const toggleSeasonEpisodes = async (
     seasonNumber: number, 
     episodes: Array<{ season: number; episode: number; watched: boolean; runtime?: number }>,
@@ -399,18 +371,18 @@ export default function TvDetailPage({ params }: { params: Promise<{ id: string 
         throw new Error("Failed to update episodes");
       }
       
-      // Activate series if marking episodes (and not already activated)
+      
       if (mark && !seriesWatchedFromAPI) {
         await activateSeries();
       }
       
-      // Invalidate React Query cache to refresh UI
+      
       queryClient.invalidateQueries({ queryKey: episodeKeys.watched(tv.tmdbId) });
       
-      // Dispatch event to update profile
+      
       window.dispatchEvent(new CustomEvent('episode-sync-success', { detail: { type: 'season-toggle' } }));
       
-      // Trigger profile stats invalidation
+      
       setTimeout(() => {
         queryClient.invalidateQueries({ queryKey: ["profile"] });
       }, 100);
@@ -421,13 +393,13 @@ export default function TvDetailPage({ params }: { params: Promise<{ id: string 
     }
   };
   
-  // Mark all episodes across all seasons
+  
   const handleMarkAllEpisodes = async (forceAction?: 'mark' | 'unmark') => {
     if (!tv) {
       return;
     }
     
-    // Load all episodes first if not loaded
+    
     const totalSeasons = tv.seasons.length;
     const loadedSeasons = Object.keys(seasonEpisodes).length;
     
@@ -436,7 +408,7 @@ export default function TvDetailPage({ params }: { params: Promise<{ id: string 
       await loadAllSeasonsEpisodes();
     }
     
-    // Calculate actual state from loaded episodes
+    
     let actualWatchedCount = 0;
     let actualTotalCount = 0;
     
@@ -472,29 +444,27 @@ export default function TvDetailPage({ params }: { params: Promise<{ id: string 
     
     setShowMarkAllModal(false);
     
-    if (action === 'mark') {
-      await markAllEpisodes(actualTotalCount);
-    } else {
-      await unmarkAllEpisodes();
-    }
+     if (action === 'mark') {
+       await markAllEpisodes();
+     } else {
+       await unmarkAllEpisodes();
+     }
   };
   
-  // Mark all episodes
-  const markAllEpisodes = async (expectedCount?: number) => {
-    if (!tv || !session?.access_token) {
-      return;
-    }
+   const markAllEpisodes = async () => {
+     if (!tv || !session?.access_token) {
+       return;
+     }
+
+     showToast("Marcando todos los episodios...", "success");
     
-    showToast("Marcando todos los episodios...", "success");
     
-    // Collect all episodes from all loaded seasons
     const episodesToMark: Array<{ seasonNumber: number; episodeNumber: number; watched: boolean; runtime: number }> = [];
     
     for (const season of tv.seasons) {
       const episodes = seasonEpisodes[season.seasonNumber];
       
       if (episodes && episodes.length > 0) {
-        // Use loaded episodes
         for (const ep of episodes) {
           episodesToMark.push({
             seasonNumber: season.seasonNumber,
@@ -504,8 +474,8 @@ export default function TvDetailPage({ params }: { params: Promise<{ id: string 
           });
         }
       } else {
-        // Fallback: create synthetic episodes
-        // We still need to fetch the season to get correct episode numbers
+        
+        
         const fetchedEpisodes = await loadSeasonEpisodes(season.seasonNumber);
         
         if (fetchedEpisodes.length > 0) {
@@ -518,7 +488,6 @@ export default function TvDetailPage({ params }: { params: Promise<{ id: string 
             });
           }
         } else {
-          // Use range if fetch fails
           for (let epNum = 1; epNum <= season.episodeCount; epNum++) {
             episodesToMark.push({
               seasonNumber: season.seasonNumber,
@@ -549,20 +518,18 @@ export default function TvDetailPage({ params }: { params: Promise<{ id: string 
         throw new Error("Failed to mark episodes");
       }
       
-      // Also mark the series itself
       await activateSeries();
       
-      // Invalidate React Query cache to force refetch with all episodes
-      // First invalidate by exact key, then also invalidate by prefix
+      
+      
       queryClient.invalidateQueries({ queryKey: episodeKeys.watched(tv.tmdbId) });
       queryClient.invalidateQueries({ queryKey: ["episodes"] });
-      // Also invalidate tv-status to update series watched state
+      
       queryClient.invalidateQueries({ queryKey: ["tv-status"] });
       
-      // Dispatch event to update profile page
+      
       window.dispatchEvent(new CustomEvent('episode-sync-success', { detail: { type: 'series' } }));
       
-      // Force a small delay then trigger profile stats invalidation
       setTimeout(() => {
         queryClient.invalidateQueries({ queryKey: ["profile"] });
         window.dispatchEvent(new CustomEvent('episode-sync-success', { detail: { type: 'stats' } }));
@@ -576,11 +543,10 @@ export default function TvDetailPage({ params }: { params: Promise<{ id: string 
     }
   };
   
-  // Unmark all episodes
   const unmarkAllEpisodes = async () => {
     if (!tv || !session?.access_token) return;
     
-    // Collect all episode keys from all seasons
+    
     const allEpisodeKeys: Array<{ seasonNumber: number; episodeNumber: number; watched: boolean; runtime: number }> = [];
     
     for (const season of tv.seasons) {
@@ -596,7 +562,6 @@ export default function TvDetailPage({ params }: { params: Promise<{ id: string 
           });
         }
       } else {
-        // Fallback
         for (let epNum = 1; epNum <= season.episodeCount; epNum++) {
           allEpisodeKeys.push({
             seasonNumber: season.seasonNumber,
@@ -621,17 +586,16 @@ export default function TvDetailPage({ params }: { params: Promise<{ id: string 
         throw new Error("Failed to unmark episodes");
       }
       
-      // Note: We DON'T deactivate the series automatically when unmarking all episodes
-      // The series stays marked until the user manually unmarks it
       
-      // Invalidate React Query cache
+      
+      
       queryClient.invalidateQueries({ queryKey: episodeKeys.watched(tv.tmdbId) });
       queryClient.invalidateQueries({ queryKey: ["episodes"] });
       
-      // Dispatch event to update profile page
+      
       window.dispatchEvent(new CustomEvent('episode-sync-success', { detail: { type: 'unmark-all' } }));
       
-      // Trigger profile stats invalidation
+      
       setTimeout(() => {
         queryClient.invalidateQueries({ queryKey: ["profile"] });
       }, 100);
@@ -644,75 +608,82 @@ export default function TvDetailPage({ params }: { params: Promise<{ id: string 
     }
   };
   
-  // Handle favorite
-  const handleFavoriteToggle = async (favorite: boolean) => {
-    if (!tv) return;
-    
-    try {
-      await fetchWithAuth("/api/user/tv-favorite", {
-        method: "POST",
-        body: JSON.stringify({
-          tmdbId: tv.tmdbId,
-          favorite,
-        }),
-      });
-      setFavoriteStatus({ favorite, favoritedAt: favorite ? new Date().toISOString() : null });
-    } catch (err) {
-      console.error("Error toggling favorite:", err);
-    }
-  };
+   const handleFavoriteToggle = async (favorite: boolean) => {
+     if (!tv) return;
+     
+     try {
+       const response = await fetchWithAuth("/api/user/tv-favorite", {
+         method: "POST",
+         body: JSON.stringify({
+           tmdbId: tv.tmdbId,
+           favorite,
+         }),
+       });
+       
+       if (!response.ok) {
+         const errorText = await response.text();
+         console.error("[handleFavoriteToggle] API error:", response.status, errorText);
+         showToast("Error al actualizar favorito", "error");
+         return;
+       }
+       
+       setFavoriteStatus({ favorite, favoritedAt: favorite ? new Date().toISOString() : null });
+     } catch (err) {
+       console.error("Error toggling favorite:", err);
+       showToast("Error al actualizar favorito", "error");
+     }
+   };
   
-  // ========================================
-  // DATA LOADING
-  // ========================================
   
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const { data: sessionData } = await supabase.auth.getSession();
-        setSession(sessionData?.session || null);
+  
+  
+   useEffect(() => {
+     const fetchData = async () => {
+       try {
+         const { data: sessionData } = await supabase.auth.getSession();
+         const authHeaders = {
+           "Authorization": `Bearer ${sessionData?.session?.access_token || ""}`,
+         };
+         setSession(sessionData?.session || null);
 
-        const tmdbId = id.replace(/^(tv_|tmdb_)/, '');
+         const tmdbId = id.replace(/^(tv_|tmdb_)/, '');
 
-        const [tvRes, similarRes, favoriteRes] = await Promise.all([
-          fetch(`/api/tv/${id}`),
-          fetch(`/api/tv/${id}/similar`),
-          sessionData?.session?.access_token 
-            ? fetchWithAuth(`/api/user/tv-favorite?tmdbId=${tmdbId}`)
-            : Promise.resolve({ ok: true, json: () => Promise.resolve({ favorite: false }) }),
-        ]);
+         const [tvRes, similarRes, favoriteRes] = await Promise.all([
+           fetch(`/api/tv/${id}`),
+           fetch(`/api/tv/${id}/similar`),
+           fetch(`/api/user/tv-favorite?tmdbId=${tmdbId}`, { headers: authHeaders }),
+         ]);
 
-        if (!tvRes.ok) {
-          throw new Error("Failed to fetch TV show");
-        }
+         if (!tvRes.ok) {
+           throw new Error("Failed to fetch TV show");
+         }
 
-        const tvData = await tvRes.json();
-        const similarData = await similarRes.json();
-        const favoriteData = await favoriteRes.json();
+         const tvData = await tvRes.json();
+         const similarData = await similarRes.json();
+         const favoriteData = await favoriteRes.json();
 
-        setTv(tvData);
-        setSimilar(similarData.results || []);
-        setFavoriteStatus(favoriteData);
-      } catch (err) {
-        console.error("Error fetching TV show data:", err);
-        setError("Failed to load TV show details");
-      } finally {
-        setIsLoading(false);
-      }
-    };
+         setTv(tvData);
+         setSimilar(similarData.results || []);
+         setFavoriteStatus(favoriteData);
+       } catch (err) {
+         console.error("Error fetching TV show data:", err);
+         setError("Failed to load TV show details");
+       } finally {
+         setIsLoading(false);
+       }
+     };
 
-    fetchData();
-  }, [id]);
+     fetchData();
+   }, [id]);
 
-  // Load episodes when TV show is loaded
+  
   useEffect(() => {
     if (!tv) return;
 
     const loadInitialData = async () => {
-      // Load all seasons in parallel
       await loadAllSeasonsEpisodes();
       
-      // Load series watched status if logged in
+      
       if (session?.access_token) {
         try {
           const seriesRes = await fetchWithAuth(`/api/user/tv-status?tmdbId=${tv.tmdbId}`);
@@ -727,11 +698,10 @@ export default function TvDetailPage({ params }: { params: Promise<{ id: string 
     };
 
     loadInitialData();
-  }, [tv, session]);
+   }, [tv, session, fetchWithAuth, loadAllSeasonsEpisodes]);
 
-  // ========================================
-  // RENDER
-  // ========================================
+  
+  
   
   if (isLoading) {
     return (
@@ -744,35 +714,40 @@ export default function TvDetailPage({ params }: { params: Promise<{ id: string 
     );
   }
 
-  if (error || !tv) {
-    return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-zinc-400 mb-4">{error || "TV show not found"}</p>
-          <a href="/" className="text-white hover:underline">
-            Volver al inicio
-          </a>
-        </div>
-      </div>
-    );
-  }
+   if (error || !tv) {
+     return (
+       <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+         <div className="text-center">
+           <p className="text-zinc-400 mb-4">{error || "TV show not found"}</p>
+           <Link href="/" className="text-white hover:underline">
+             Volver al inicio
+           </Link>
+         </div>
+       </div>
+     );
+   }
 
   return (
-    <div className="min-h-screen bg-zinc-950">
-      {tv.backdropUrl && (
-        <div className="fixed inset-0 -z-10">
-          <img src={tv.backdropUrl} alt="" className="w-full h-full object-cover opacity-20 blur-2xl" />
-          <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/50 via-zinc-950/80 to-zinc-950" />
-        </div>
-      )}
+     <div className="min-h-screen bg-zinc-950">
+       {tv.backdropUrl && (
+         <div className="fixed inset-0 -z-10">
+           <Image
+             src={tv.backdropUrl}
+             alt=""
+             fill
+             className="object-cover opacity-20 blur-2xl"
+           />
+           <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/50 via-zinc-950/80 to-zinc-950" />
+         </div>
+       )}
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <a href="/" className="inline-flex items-center gap-2 text-zinc-400 hover:text-white mb-8 transition-colors">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" />
-          </svg>
-          <span>Volver</span>
-        </a>
+       <div className="max-w-7xl mx-auto px-4 py-8">
+         <Link href="/" className="inline-flex items-center gap-2 text-zinc-400 hover:text-white mb-8 transition-colors">
+           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" />
+           </svg>
+           <span>Volver</span>
+         </Link>
 
         <TvInfo
           tv={tv}
@@ -786,7 +761,6 @@ export default function TvDetailPage({ params }: { params: Promise<{ id: string 
         {tv.seasons && tv.seasons.length > 0 && (
           <div className="mb-12">
             <EpisodesAccordion
-              tvId={tv.id}
               tvTmdId={tv.tmdbId}
               seasons={tv.seasons}
               watchedEpisodes={watchedSet ?? new Set()}
@@ -806,7 +780,7 @@ export default function TvDetailPage({ params }: { params: Promise<{ id: string 
 
         <SimilarMediaCarousel items={similar} type="tv" />
         
-        {/* Mark All Episodes Modal */}
+        {}
         {showMarkAllModal && (
           <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-6 max-w-sm w-full shadow-2xl">
@@ -839,7 +813,7 @@ export default function TvDetailPage({ params }: { params: Promise<{ id: string 
         )}
       </div>
 
-      {/* Toast notifications */}
+      {}
       {toasts.map((toast) => (
         <ErrorToast
           key={toast.id}
@@ -852,3 +826,4 @@ export default function TvDetailPage({ params }: { params: Promise<{ id: string 
     </div>
   );
 }
+

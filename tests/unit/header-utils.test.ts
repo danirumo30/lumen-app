@@ -1,6 +1,5 @@
 import { describe, test, expect } from "vitest";
 
-// Simulamos la lógica de display de username en el Header
 interface UserMetadata {
   username?: string;
   full_name?: string;
@@ -65,3 +64,4 @@ describe("Header Username Display", () => {
     expect(getInitialDisplay(userMetadata)).toBe("U");
   });
 });
+

@@ -1,25 +1,96 @@
 "use client";
 
 import { useState } from "react";
-import type { Media } from "@/modules/shared/domain/media";
+import Image from "next/image";
+import Link from "next/link";
+import type { Media } from '@/domain/shared/value-objects/media-id';
 
 interface MediaCardProps {
   media: Media;
 }
 
+interface CardContentProps {
+  media: Media;
+  imageUrl: string | null;
+  placeholderGradient: string;
+  icon: React.ReactNode;
+  onImageError: () => void;
+}
+
+function CardContent({ media, imageUrl, placeholderGradient, icon, onImageError }: CardContentProps) {
+  return (
+    <div className="relative group/card">
+      {}
+      <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-zinc-900/50 border border-white/[0.03] transition-all duration-500 ease-out group-hover/card:scale-[1.02] group-hover/card:border-white/[0.08]">
+        
+        {}
+        <div className="absolute inset-0 rounded-xl opacity-0 group-hover/card:opacity-100 transition-opacity duration-500 pointer-events-none z-10">
+          <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/[0.03] via-transparent to-white/[0.02]" />
+          <div className="absolute inset-[-1px] rounded-xl bg-gradient-to-br from-white/[0.05] via-transparent to-transparent" />
+        </div>
+        
+        {}
+        {imageUrl ? (
+          <Image
+            src={imageUrl}
+            alt={media.title}
+            fill
+            className="object-cover transition-transform duration-700 ease-out group-hover/card:scale-105"
+            loading="lazy"
+            onError={onImageError}
+            sizes="(max-width: 768px) 40vw, (max-width: 1024px) 20vw, 10vw"
+          />
+        ) : (
+          <div className={`w-full h-full flex items-center justify-center ${placeholderGradient}`}>
+            {icon}
+          </div>
+        )}
+        
+        {}
+        {media.rating && (
+          <div className="absolute top-2 right-2 px-2 py-1 rounded-lg bg-black/40 backdrop-blur-xl border border-white/10">
+            <div className="flex items-center gap-1">
+              <svg className="w-3 h-3 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+              </svg>
+              <span className="text-[10px] font-semibold text-white/90 tabular-nums">
+                {media.rating.toFixed(1)}
+              </span>
+            </div>
+          </div>
+        )}
+        
+        {}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover/card:opacity-100 transition-all duration-400 flex flex-col justify-end p-3 z-20">
+          <h3 className="text-xs font-medium text-white/95 tracking-tight line-clamp-2 leading-tight mb-2">
+            {media.title}
+          </h3>
+          {media.releaseYear && (
+            <span className="text-[10px] text-white/50 tracking-tight mb-2">
+              {media.releaseYear}
+            </span>
+          )}
+          <button className="w-full py-1.5 rounded-lg bg-white/[0.08] backdrop-blur-xl text-[10px] font-medium text-white/90 border border-white/10 hover:bg-white/[0.15] transition-all duration-200">
+            {}
+            Ver más
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function MediaCard({ media }: MediaCardProps) {
   const [imageError, setImageError] = useState(false);
   
-  // Determine href based on media type
   const getHref = () => {
     switch (media.type) {
       case "movie":
-        return `/movie/${media.id}`;
+        return `/movie/${media.id.value}`;
       case "tv":
-        return `/tv/${media.id}`;
+        return `/tv/${media.id.value}`;
       case "game":
-        return `/game/${media.id}`;
+        return `/game/${media.id.value}`;
       default:
         return null;
     }
@@ -27,8 +98,6 @@ export function MediaCard({ media }: MediaCardProps) {
   const href = getHref();
   
   const posterUrl = media.posterUrl;
-  
-  console.log("[MediaCard] media.id:", media.id, "posterUrl:", posterUrl);
   
   const getPlaceholderGradient = () => {
     switch (media.type) {
@@ -72,77 +141,36 @@ export function MediaCard({ media }: MediaCardProps) {
     ? posterUrl 
     : null;
   
-  console.log("[MediaCard] imageUrl:", imageUrl);
-
-  const CardContent = () => (
-    <div className="relative group/card">
-      {/* Poster Card - matches homepage style */}
-      <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-zinc-900/50 border border-white/[0.03] transition-all duration-500 ease-out group-hover/card:scale-[1.02] group-hover/card:border-white/[0.08]">
-        
-        {/* Subtle perimeter glow on hover */}
-        <div className="absolute inset-0 rounded-xl opacity-0 group-hover/card:opacity-100 transition-opacity duration-500 pointer-events-none z-10">
-          <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/[0.03] via-transparent to-white/[0.02]" />
-          <div className="absolute inset-[-1px] rounded-xl bg-gradient-to-br from-white/[0.05] via-transparent to-transparent" />
-        </div>
-        
-        {/* Poster image or placeholder */}
-        {imageUrl ? (
-          <img
-            src={imageUrl}
-            alt={media.title}
-            className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover/card:scale-105"
-            loading="lazy"
-            onError={() => setImageError(true)}
-          />
-        ) : (
-          <div className={`w-full h-full flex items-center justify-center ${getPlaceholderGradient()}`}>
-            {getIcon()}
-          </div>
-        )}
-        
-        {/* Rating Badge - only show if available */}
-        {media.rating && (
-          <div className="absolute top-2 right-2 px-2 py-1 rounded-lg bg-black/40 backdrop-blur-xl border border-white/10">
-            <div className="flex items-center gap-1">
-              <svg className="w-3 h-3 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-              </svg>
-              <span className="text-[10px] font-semibold text-white/90 tabular-nums">
-                {media.rating.toFixed(1)}
-              </span>
-            </div>
-          </div>
-        )}
-        
-        {/* Elegant Hover Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover/card:opacity-100 transition-all duration-400 flex flex-col justify-end p-3 z-20">
-          <h3 className="text-xs font-medium text-white/95 tracking-tight line-clamp-2 leading-tight mb-2">
-            {media.title}
-          </h3>
-          {media.releaseYear && (
-            <span className="text-[10px] text-white/50 tracking-tight mb-2">
-              {media.releaseYear}
-            </span>
-          )}
-          <button className="w-full py-1.5 rounded-lg bg-white/[0.08] backdrop-blur-xl text-[10px] font-medium text-white/90 border border-white/10 hover:bg-white/[0.15] transition-all duration-200">
-            Ver más
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+  const placeholderGradient = getPlaceholderGradient();
+  const iconNode = getIcon();
 
   if (href) {
     return (
-      <a href={href} className="flex-shrink-0 w-40 snap-start block">
-        <CardContent />
-      </a>
+      <Link href={href} className="flex-shrink-0 w-40 snap-start block">
+        <CardContent 
+          media={media} 
+          imageUrl={imageUrl} 
+          placeholderGradient={placeholderGradient}
+          icon={iconNode}
+          onImageError={() => setImageError(true)}
+        />
+      </Link>
     );
   }
 
   return (
     <div className="flex-shrink-0 w-40 snap-start">
-      <CardContent />
+      <CardContent 
+        media={media} 
+        imageUrl={imageUrl} 
+        placeholderGradient={placeholderGradient}
+        icon={iconNode}
+        onImageError={() => setImageError(true)}
+      />
     </div>
   );
 }
+
+
+
+

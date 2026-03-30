@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useAuth } from "@/modules/auth/infrastructure/contexts/AuthContext";
+import { useAuth } from "@/infrastructure/contexts/AuthContext";
 import { Carousel } from "@/components/home/Carousel";
 import { HomepageSkeleton } from "@/components/home/CarouselSkeleton";
 
@@ -19,6 +19,8 @@ interface TrendingItem {
   date?: string;
   overview?: string;
   summary?: string;
+  providers?: { id: number; name: string; logoUrl: string }[];
+  platformLogos?: { id: number; name: string; platformName?: string; logoUrl: string | null; key?: string }[];
 }
 
 export default function HomePage() {
@@ -27,7 +29,7 @@ export default function HomePage() {
   const [games, setGames] = useState<TrendingItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { user, isLoading: authLoading } = useAuth();
+   const { user } = useAuth();
 
   useEffect(() => {
     async function fetchData() {
@@ -83,15 +85,14 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-zinc-950">
-      {/* Hero Section - starts right after fixed header */}
+      {}
       <section className="relative pt-16 overflow-hidden">
-        {/* Gradient backgrounds */}
+        {}
         <div className="absolute inset-0 bg-gradient-to-b from-indigo-500/20 via-zinc-950 to-zinc-950" />
         
         <div className="relative max-w-7xl mx-auto px-6 py-16">
           <div className="max-w-2xl">
             {user ? (
-              // Logged in view
               <>
                 <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 tracking-tight">
                   Bienvenido de nuevo,
@@ -119,7 +120,6 @@ export default function HomePage() {
                 </div>
               </>
             ) : (
-              // Logged out view
               <>
                 <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 tracking-tight">
                   Tu universo,
@@ -152,7 +152,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Carousels */}
+      {}
       <main className="max-w-7xl mx-auto px-6">
         <Carousel
           title="Películas en tendencia"
@@ -160,7 +160,8 @@ export default function HomePage() {
           items={movies.map(m => ({ 
             ...m, 
             rating: m.voteAverage,
-            date: m.releaseDate 
+            date: m.releaseDate || "Desconocida",
+            providers: m.providers
           }))}
           variant="movies"
         />
@@ -171,7 +172,8 @@ export default function HomePage() {
           items={tvShows.map(t => ({ 
             ...t, 
             rating: t.voteAverage,
-            date: t.firstAirDate 
+            date: t.firstAirDate || "Desconocida",
+            providers: t.providers
           }))}
           variant="tv"
         />
@@ -179,18 +181,19 @@ export default function HomePage() {
         <Carousel
           title="Videojuegos en tendencia"
           subtitle="Los videojuegos más jugados"
-          items={games.map(g => ({ 
+          items={games.map((g, idx) => ({ 
             id: g.id,
             title: g.name || g.title || "Desconocido",
             posterUrl: g.coverUrl || g.posterUrl,
             rating: g.rating,
-            date: g.releaseDate
+            date: g.releaseDate || "Desconocida",
+            platformLogos: g.platformLogos?.map((p, i) => ({ ...p, key: `${p.id}-${idx}-${i}` }))
           }))}
           variant="games"
         />
       </main>
 
-      {/* Footer CTA */}
+      {}
       <section className="max-w-7xl mx-auto px-6 mt-16 pb-12">
         <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-indigo-600/20 to-purple-600/20 border border-indigo-500/20 p-8 md:p-12">
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxjaXJjbGUgY3g9IjMwIiBjeT0iMzAiIHI9IjMiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wMykiLz48L2c+PC9zdmc+')] opacity-50" />
@@ -239,3 +242,8 @@ export default function HomePage() {
     </div>
   );
 }
+
+
+
+
+

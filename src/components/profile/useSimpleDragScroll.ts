@@ -15,10 +15,7 @@ interface UseSimpleDragScrollReturn {
   };
 }
 
-/**
- * Hook simple para drag-scroll horizontal
- * Sin scrollbar visible, sin flechas
- */
+
 export function useSimpleDragScroll(): UseSimpleDragScrollReturn {
   const containerRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
@@ -106,7 +103,6 @@ export function useSimpleDragScroll(): UseSimpleDragScrollReturn {
     hasDragged.current = false;
   }, []);
 
-  // Cancelar clicks fantasma a nivel de documento después de drag
   useEffect(() => {
     const handleGlobalClick = (e: MouseEvent) => {
       const timeSinceDrag = Date.now() - lastDragTime.current;
@@ -135,3 +131,8 @@ export function useSimpleDragScroll(): UseSimpleDragScrollReturn {
     },
   };
 }
+
+
+
+
+

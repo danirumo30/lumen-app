@@ -1,15 +1,15 @@
 "use client";
 
-import { useRef, useCallback, useEffect, RefObject } from "react";
+import { useRef, useCallback, useEffect, useState, RefObject } from "react";
 
 interface UseDragScrollOptions {
-  /** Velocidad del scroll relativo al arrastre (1 = 1:1) - solo desktop */
+  
   speed?: number;
-  /** Habilitar snap a elementos hijos */
+  
   snap?: boolean;
-  /** Selector CSS para elementos que hacen snap */
+  
   snapSelector?: string;
-  /** Forzar uso de drag custom incluso en mobile (default: false = usar scroll nativo) */
+  
   forceDragOnMobile?: boolean;
 }
 
@@ -23,20 +23,14 @@ interface UseDragScrollReturn {
     onMouseLeave: () => void;
     onClick: (e: React.MouseEvent) => void;
   };
-  /** CSS classes para aplicar al contenedor */
+  
   containerProps?: {
     className?: string;
     style?: React.CSSProperties;
   };
 }
 
-/**
- * Hook para scroll horizontal con soporte nativo en mobile
- * 
- * Estrategia:
- * - Mobile/Touch: Usa scroll NATIVO del navegador (óptimo, con momentum)
- * - Desktop/Mouse: Usa drag custom para mejor control
- */
+
 export function useDragScroll(options: UseDragScrollOptions = {}): UseDragScrollReturn {
   const { speed = 1, snap = false, forceDragOnMobile = false } = options;
 
@@ -46,19 +40,16 @@ export function useDragScroll(options: UseDragScrollOptions = {}): UseDragScroll
   const startScrollLeft = useRef(0);
   const draggedDistance = useRef(0);
   const DRAG_THRESHOLD = 5;
+  
+  
+  const [isTouchDevice, setIsTouchDevice] = useState(() => {
+    return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  });
 
-  // Detectar si es dispositivo táctil
-  const isTouchDevice = useRef(
-    typeof window !== "undefined" && 
-    ("ontouchstart" in window || navigator.maxTouchPoints > 0)
-  );
-
-  // Actualizar detección de touch en resize (para hybrid devices)
+  
   useEffect(() => {
     const updateTouchDetection = () => {
-      isTouchDevice.current = 
-        "ontouchstart" in window || 
-        navigator.maxTouchPoints > 0;
+      setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
     };
     
     window.addEventListener("resize", updateTouchDetection);
@@ -69,8 +60,8 @@ export function useDragScroll(options: UseDragScrollOptions = {}): UseDragScroll
     const container = containerRef.current;
     if (!container) return;
 
-    // Solo usar drag custom en desktop
-    if (isTouchDevice.current && !forceDragOnMobile) return;
+    
+    if (isTouchDevice && !forceDragOnMobile) return;
 
     e.preventDefault();
 
@@ -82,7 +73,7 @@ export function useDragScroll(options: UseDragScrollOptions = {}): UseDragScroll
     container.style.cursor = "grabbing";
     container.style.userSelect = "none";
     container.style.scrollBehavior = "auto";
-  }, [forceDragOnMobile]);
+  }, [forceDragOnMobile, isTouchDevice]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (!isDragging.current || !containerRef.current) return;
@@ -91,7 +82,7 @@ export function useDragScroll(options: UseDragScrollOptions = {}): UseDragScroll
     draggedDistance.current = deltaX;
 
     if (Math.abs(deltaX) > DRAG_THRESHOLD) {
-      // Clamp to prevent over-scrolling
+      
       const newScrollLeft = startScrollLeft.current - deltaX * speed;
       const maxScroll = containerRef.current.scrollWidth - containerRef.current.clientWidth;
       containerRef.current.scrollLeft = Math.max(0, Math.min(newScrollLeft, maxScroll));
@@ -122,7 +113,6 @@ export function useDragScroll(options: UseDragScrollOptions = {}): UseDragScroll
   }, []);
 
   const handleClick = useCallback((e: React.MouseEvent) => {
-    // Si arrastraste más del threshold, cancelá el click
     if (Math.abs(draggedDistance.current) > DRAG_THRESHOLD) {
       e.preventDefault();
       e.stopPropagation();
@@ -130,20 +120,20 @@ export function useDragScroll(options: UseDragScrollOptions = {}): UseDragScroll
     }
   }, []);
 
-  // Cleanup al desmontar
   useEffect(() => {
+    const container = containerRef.current;
     return () => {
-      if (containerRef.current) {
-        containerRef.current.style.cursor = "";
-        containerRef.current.style.userSelect = "";
-        containerRef.current.style.scrollBehavior = "";
+      if (container) {
+        container.style.cursor = "";
+        container.style.userSelect = "";
+        container.style.scrollBehavior = "";
       }
     };
   }, []);
 
-  // Props para aplicar al contenedor
+  
   const containerProps = {
-    className: isTouchDevice.current && !forceDragOnMobile ? "touch-native-scroll" : "",
+    className: isTouchDevice && !forceDragOnMobile ? "touch-native-scroll" : "",
     style: {
       overflowX: "auto",
       overflowY: "hidden",
@@ -165,9 +155,7 @@ export function useDragScroll(options: UseDragScrollOptions = {}): UseDragScroll
   };
 }
 
-/**
- * Snap al elemento más cercano - versión mejorada
- */
+
 function snapToNearest(container: HTMLDivElement) {
   const items = Array.from(container.children) as HTMLElement[];
   if (items.length === 0) return;
@@ -176,12 +164,10 @@ function snapToNearest(container: HTMLDivElement) {
   const currentScroll = container.scrollLeft;
   const containerWidth = container.clientWidth;
 
-  // Si ya estás pegado a un borde, dejalo ahí
   if (currentScroll <= 1 || currentScroll >= maxScroll - 1) {
     return;
   }
 
-  // Si estás cerca del borde, déjalo ahí
   const EDGE_THRESHOLD = 50;
   if (currentScroll < EDGE_THRESHOLD || currentScroll > maxScroll - EDGE_THRESHOLD) {
     container.scrollTo({
@@ -218,3 +204,7 @@ function snapToNearest(container: HTMLDivElement) {
     });
   }
 }
+
+
+
+

@@ -10,7 +10,6 @@ import { test, expect, Page } from '@playwright/test';
 const BASE_URL = process.env.E2E_BASE_URL || 'http://localhost:3000';
 const MOVIE_ID = '550'; // Fight Club
 
-// Helper to login
 async function login(page: Page, email: string = 'test@test.com') {
   await page.goto(BASE_URL);
   await page.click('button:has-text("Entrar")');
@@ -23,7 +22,6 @@ async function login(page: Page, email: string = 'test@test.com') {
 }
 
 // ============================================================================
-// MOVIE DETAIL PAGE TESTS
 // ============================================================================
 
 test.describe('Movie Detail Page - Core', () => {
@@ -31,7 +29,6 @@ test.describe('Movie Detail Page - Core', () => {
     await page.goto(`${BASE_URL}/movie/${MOVIE_ID}`);
     await page.waitForLoadState('networkidle');
     
-    // Check title is visible
     const title = page.locator('h1, h2').first();
     await expect(title).toBeVisible({ timeout: 15000 });
   });
@@ -39,7 +36,6 @@ test.describe('Movie Detail Page - Core', () => {
   test('should display movie poster', async ({ page }) => {
     await page.goto(`${BASE_URL}/movie/${MOVIE_ID}`);
     
-    // Check for any image on the page
     const image = page.locator('img').first();
     await expect(image).toBeVisible({ timeout: 15000 });
   });
@@ -48,7 +44,6 @@ test.describe('Movie Detail Page - Core', () => {
     await page.goto(`${BASE_URL}/movie/${MOVIE_ID}`);
     await page.waitForLoadState('networkidle');
     
-    // Look for year or rating
     const rating = page.locator('text=/\\d{4}|\\d\\.\\d|\\d{2,}/').first();
     await expect(rating).toBeVisible({ timeout: 10000 });
   });
@@ -66,14 +61,12 @@ test.describe('Movie Detail Page - Core', () => {
     await page.goto(`${BASE_URL}/movie/${MOVIE_ID}`);
     await page.waitForLoadState('networkidle');
     
-    // Look for genre tags
     const genres = page.locator('text=/Drama|Acción|Comedia|Terror/i');
     await expect(genres.first()).toBeVisible({ timeout: 10000 });
   });
 });
 
 // ============================================================================
-// CAST CAROUSEL
 // ============================================================================
 
 test.describe('Movie Cast', () => {
@@ -81,7 +74,6 @@ test.describe('Movie Cast', () => {
     await page.goto(`${BASE_URL}/movie/${MOVIE_ID}`);
     await page.waitForLoadState('networkidle');
     
-    // Look for cast heading
     const castSection = page.locator('text=/Reparto|Cast|Elenco|Actors/i');
     await expect(castSection.first()).toBeVisible({ timeout: 10000 });
   });
@@ -90,7 +82,6 @@ test.describe('Movie Cast', () => {
     await page.goto(`${BASE_URL}/movie/${MOVIE_ID}`);
     await page.waitForLoadState('networkidle');
     
-    // Should show actor names
     const actorNames = page.locator('[class*="actor"], [class*="cast"]').first();
     await expect(actorNames).toBeVisible({ timeout: 10000 });
   });
@@ -99,7 +90,6 @@ test.describe('Movie Cast', () => {
     await page.goto(`${BASE_URL}/movie/${MOVIE_ID}`);
     await page.waitForLoadState('networkidle');
     
-    // Look for scrollable carousel
     const carousel = page.locator('[class*="carousel"], [class*="scroll"]').first();
     
     if (await carousel.isVisible({ timeout: 2000 }).catch(() => false)) {
@@ -110,7 +100,6 @@ test.describe('Movie Cast', () => {
 });
 
 // ============================================================================
-// SIMILAR MOVIES CAROUSEL
 // ============================================================================
 
 test.describe('Similar Movies', () => {
@@ -127,7 +116,6 @@ test.describe('Similar Movies', () => {
     await page.goto(`${BASE_URL}/movie/${MOVIE_ID}`);
     await page.waitForLoadState('networkidle');
     
-    // Look for movie cards
     const movieCards = page.locator('a[href^="/movie/"]');
     const count = await movieCards.count();
     expect(count).toBeGreaterThan(0);
@@ -137,7 +125,6 @@ test.describe('Similar Movies', () => {
     await page.goto(`${BASE_URL}/movie/${MOVIE_ID}`);
     await page.waitForLoadState('networkidle');
     
-    // Find similar movie card
     const similarCard = page.locator('section a[href^="/movie/"]').first();
     
     if (await similarCard.isVisible({ timeout: 5000 }).catch(() => false)) {
@@ -161,7 +148,6 @@ test.describe('Movie Marking - Authenticated', () => {
     await page.goto(`${BASE_URL}/movie/${MOVIE_ID}`);
     await page.waitForLoadState('networkidle');
     
-    // Look for watched button
     const watchedBtn = page.locator('button:has-text("Vista"), button:has-text("Watched"), button[aria-label*="watch"]');
     await expect(watchedBtn.first()).toBeVisible({ timeout: 10000 });
   });
@@ -170,7 +156,6 @@ test.describe('Movie Marking - Authenticated', () => {
     await page.goto(`${BASE_URL}/movie/${MOVIE_ID}`);
     await page.waitForLoadState('networkidle');
     
-    // Find and click watched button
     const watchedBtn = page.locator('button:has-text("Vista"), button:has-text("Watched")').first();
     
     if (await watchedBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
@@ -196,18 +181,14 @@ test.describe('Movie Marking - Authenticated', () => {
     await page.goto(`${BASE_URL}/movie/${MOVIE_ID}`);
     await page.waitForLoadState('networkidle');
     
-    // Find watched button
     const watchedBtn = page.locator('button:has-text("Vista"), button:has-text("Watched")').first();
     
     if (await watchedBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
-      // Get initial state
       const classBefore = await watchedBtn.getAttribute('class');
       
-      // Click to toggle
       await watchedBtn.click();
       await page.waitForTimeout(1000);
       
-      // State should have changed
       const classAfter = await watchedBtn.getAttribute('class');
       expect(classAfter).toBeTruthy();
     }
@@ -223,14 +204,12 @@ test.describe('Movie Marking - Unauthenticated', () => {
     await page.goto(`${BASE_URL}/movie/${MOVIE_ID}`);
     await page.waitForLoadState('networkidle');
     
-    // Page should load successfully
     const title = page.locator('h1, h2').first();
     await expect(title).toBeVisible({ timeout: 10000 });
   });
 });
 
 // ============================================================================
-// NAVIGATION
 // ============================================================================
 
 test.describe('Movie Navigation', () => {
@@ -238,7 +217,6 @@ test.describe('Movie Navigation', () => {
     await page.goto(BASE_URL);
     await page.waitForLoadState('networkidle');
     
-    // Find movie card
     const movieCard = page.locator(`a[href^="/movie/"]`).first();
     
     if (await movieCard.isVisible({ timeout: 5000 }).catch(() => false)) {
@@ -252,7 +230,6 @@ test.describe('Movie Navigation', () => {
     await page.goto(`${BASE_URL}/movie/${MOVIE_ID}`);
     await page.waitForLoadState('networkidle');
     
-    // Click home link
     const homeLink = page.locator('a[href="/"]').first();
     
     if (await homeLink.isVisible({ timeout: 2000 }).catch(() => false)) {
@@ -274,10 +251,10 @@ test.describe('Movie Poster', () => {
     // Look for poster image with tmdb URL
     const poster = page.locator('img[src*="tmdb"], img[src*="image.tmdb"]').first();
     
-    // Poster should be visible
     if (await poster.isVisible({ timeout: 5000 }).catch(() => false)) {
       const src = await poster.getAttribute('src');
       expect(src).toContain('tmdb');
     }
   });
 });
+

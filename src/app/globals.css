@@ -10,13 +10,23 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  
+   
   /* Custom Animations */
   --animate-fade-in: fade-in 0.3s ease-out;
   @keyframes fade-in {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
   }
+}
+
+/* Staggered reveal for grid items */
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.5s ease-out forwards;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -62,4 +72,72 @@ body {
   100% {
     transform: translateX(100%);
   }
+}
+
+/* Hide scrollbar for any element (horizontal or vertical) */
+.hide-scrollbar,
+.dropdown-scrollbar {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+  scrollbar-gutter: stable !important;
+}
+.hide-scrollbar::-webkit-scrollbar,
+.dropdown-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Animated gradient for header accent */
+@keyframes gradient-x {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-gradient-x {
+  background-size: 200% 200%;
+  animation: gradient-x 3s ease infinite;
+}
+
+/* Animated gradient text - flowing colors through text */
+@keyframes gradient-text {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-gradient-text {
+  background-size: 200% auto;
+  background-image: linear-gradient(90deg, #34d399, #2dd4bf, #22d3ee);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradient-text 3s ease infinite;
+}
+
+/* Slow bounce for subtle elements */
+@keyframes bounce-slow {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.animate-bounce-slow {
+  animation: bounce-slow 2s ease-in-out infinite;
 }

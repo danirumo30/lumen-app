@@ -20,7 +20,6 @@ test.afterEach(async ({ page }, testInfo) => {
   }
 });
 
-// Helper to login
 async function login(page: Page, email: string = 'test@test.com') {
   await page.goto(BASE_URL);
   await page.click('button:has-text("Entrar")');
@@ -33,7 +32,6 @@ async function login(page: Page, email: string = 'test@test.com') {
 }
 
 // ============================================================================
-// TV DETAIL PAGE TESTS
 // ============================================================================
 
 test.describe('TV Detail Page - Core', () => {
@@ -41,7 +39,6 @@ test.describe('TV Detail Page - Core', () => {
     await page.goto(`${BASE_URL}/tv/${TV_ID}`);
     await page.waitForLoadState('networkidle');
     
-    // Check title is visible
     const title = page.locator('h1, h2').first();
     await expect(title).toBeVisible({ timeout: 15000 });
   });
@@ -49,7 +46,6 @@ test.describe('TV Detail Page - Core', () => {
   test('should display TV poster', async ({ page }) => {
     await page.goto(`${BASE_URL}/tv/${TV_ID}`);
     
-    // Check for backdrop or any main image on the page
     const image = page.locator('img').first();
     await expect(image).toBeVisible({ timeout: 15000 });
   });
@@ -58,7 +54,6 @@ test.describe('TV Detail Page - Core', () => {
     await page.goto(`${BASE_URL}/tv/${TV_ID}`);
     await page.waitForLoadState('networkidle');
     
-    // Look for seasons text
     const seasonsText = page.locator('text=/Temporada|Season/i');
     await expect(seasonsText.first()).toBeVisible({ timeout: 10000 });
   });
@@ -76,14 +71,11 @@ test.describe('TV Detail Page - Core', () => {
     await page.goto(`${BASE_URL}/tv/${TV_ID}`);
     await page.waitForLoadState('networkidle');
     
-    // Click first season
     const seasonBtn = page.locator('button:has-text("Temporada 1"), button:has-text("Season 1")').first();
     await seasonBtn.click();
     
-    // Wait for episodes to load
     await page.waitForTimeout(2000);
     
-    // Check for episodes
     const episodes = page.locator('text=/Episodio|Episode/i');
     await expect(episodes.first()).toBeVisible({ timeout: 10000 });
   });
@@ -116,10 +108,8 @@ test.describe('TV Episode Marking - Authenticated', () => {
     await seasonBtn.click();
     await page.waitForTimeout(3000);
     
-    // Find a watched episode button
     const watchedBtn = page.locator('button[aria-label*="watched"], button[aria-label*="Vista"]').first();
     
-    // Try to click it if visible
     if (await watchedBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
       await watchedBtn.click();
       await page.waitForTimeout(1000);
@@ -130,7 +120,6 @@ test.describe('TV Episode Marking - Authenticated', () => {
     await page.goto(`${BASE_URL}/tv/${TV_ID}`);
     await page.waitForLoadState('networkidle');
     
-    // Expand season
     const seasonBtn = page.locator('button:has-text("Temporada 1"), button:has-text("Season 1")').first();
     await seasonBtn.click();
     await page.waitForTimeout(3000);
@@ -148,7 +137,6 @@ test.describe('TV Episode Marking - Authenticated', () => {
     await page.goto(`${BASE_URL}/tv/${TV_ID}`);
     await page.waitForLoadState('networkidle');
     
-    // Look for favorite button
     const favBtn = page.locator('button:has-text("Favorita"), button:has-text("Favorite"), button[aria-label*="favorite"]');
     
     if (await favBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
@@ -171,7 +159,6 @@ test.describe('TV Episode Marking - Unauthenticated', () => {
     const loginPrompt = page.locator('text=/Inicia sesión|Login|Entrar para/');
     const markBtns = page.locator('button:has-text("Marcar todo"), button:has-text("Mark all")');
     
-    // One of these should be true
     const hasLoginPrompt = await loginPrompt.first().isVisible({ timeout: 2000 }).catch(() => false);
     const hasNoMarkBtns = !(await markBtns.first().isVisible({ timeout: 2000 }).catch(() => false));
     
@@ -180,7 +167,6 @@ test.describe('TV Episode Marking - Unauthenticated', () => {
 });
 
 // ============================================================================
-// SIMILAR TV CAROUSEL
 // ============================================================================
 
 test.describe('Similar TV Carousel', () => {
@@ -188,7 +174,6 @@ test.describe('Similar TV Carousel', () => {
     await page.goto(`${BASE_URL}/tv/${TV_ID}`);
     await page.waitForLoadState('networkidle');
     
-    // Look for the section heading
     const similarSection = page.locator('text=/Series similares|Similar shows/i');
     await expect(similarSection.first()).toBeVisible({ timeout: 10000 });
   });
@@ -209,7 +194,6 @@ test.describe('Similar TV Carousel', () => {
 });
 
 // ============================================================================
-// CAST CAROUSEL
 // ============================================================================
 
 test.describe('Cast Carousel', () => {
@@ -230,7 +214,6 @@ test.describe('Cast Carousel', () => {
     const carousel = page.locator('[class*="carousel"], [class*="scroll"]').first();
     
     if (await carousel.isVisible({ timeout: 2000 }).catch(() => false)) {
-      // Try scrolling
       await carousel.evaluate((el) => el.scrollLeft += 200);
       await page.waitForTimeout(500);
     }
@@ -238,7 +221,6 @@ test.describe('Cast Carousel', () => {
 });
 
 // ============================================================================
-// NAVIGATION TESTS
 // ============================================================================
 
 test.describe('TV Navigation', () => {
@@ -260,10 +242,8 @@ test.describe('TV Navigation', () => {
     await page.goto(`${BASE_URL}/tv/${TV_ID}`);
     await page.waitForLoadState('networkidle');
     
-    // Try to find and click a home link
     const homeLink = page.locator('a[href="/"]').first();
     
-    // Check if home link exists and is clickable
     const homeExists = await homeLink.isVisible({ timeout: 2000 }).catch(() => false);
     
     if (homeExists) {
@@ -282,7 +262,6 @@ test.describe('TV Navigation', () => {
 });
 
 // ============================================================================
-// CHAINING LOGIC UI TESTS
 // ============================================================================
 
 test.describe('TV Marking Chaining Logic UI', () => {
@@ -294,7 +273,6 @@ test.describe('TV Marking Chaining Logic UI', () => {
     await page.goto(`${BASE_URL}/tv/${TV_ID}`);
     await page.waitForLoadState('networkidle');
     
-    // Expand season
     const seasonBtn = page.locator('button:has-text("Temporada 1"), button:has-text("Season 1")').first();
     await seasonBtn.click();
     await page.waitForTimeout(3000);
@@ -307,7 +285,6 @@ test.describe('TV Marking Chaining Logic UI', () => {
     await page.goto(`${BASE_URL}/tv/${TV_ID}`);
     await page.waitForLoadState('networkidle');
     
-    // Expand season
     const seasonBtn = page.locator('button:has-text("Temporada 1"), button:has-text("Season 1")').first();
     await seasonBtn.click();
     await page.waitForTimeout(4000);
@@ -320,3 +297,4 @@ test.describe('TV Marking Chaining Logic UI', () => {
     expect(pageLoaded).toBe(true);
   });
 });
+

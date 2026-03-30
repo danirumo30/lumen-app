@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import Link from "next/link";
-import type { Follower } from "@/modules/social/domain/user-profile";
+import type { Follower } from '@/domain/social/entities/user-profile.entity';
 
 interface FollowersModalProps {
   isOpen: boolean;
@@ -20,29 +21,27 @@ export function FollowersModal({
   type,
 }: FollowersModalProps) {
   const [activeTab, setActiveTab] = useState<"followers" | "following">("followers");
-  const list = type === "followers" ? followers : following;
 
-  // Sync activeTab when modal opens or type changes
-  // eslint-disable-next-line react-hooks/set-state-in-effect -- Intentional: needed to sync tab with prop
-  useEffect(() => {
-    if (isOpen) {
-      setActiveTab(type);
-    }
-  }, [isOpen, type]);
+   
+    useEffect(() => {
+      if (isOpen) {
+        queueMicrotask(() => setActiveTab(type));
+      }
+    }, [isOpen, type]);
 
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      {/* Backdrop */}
+      {}
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       />
       
-      {/* Modal */}
+      {}
       <div className="relative w-full max-w-md bg-zinc-900/95 backdrop-blur-xl rounded-2xl border border-zinc-800/50 shadow-2xl overflow-hidden">
-        {/* Header */}
+        {}
         <div className="flex items-center justify-between p-4 border-b border-zinc-800/50">
           <h3 className="text-white font-medium">
             {type === "followers" ? "Seguidores" : "Siguiendo"}
@@ -57,7 +56,7 @@ export function FollowersModal({
           </button>
         </div>
 
-        {/* Tabs */}
+        {}
         <div className="flex border-b border-zinc-800/50">
           <button
             onClick={() => setActiveTab("followers")}
@@ -81,7 +80,7 @@ export function FollowersModal({
           </button>
         </div>
 
-        {/* List */}
+        {}
         <div className="max-h-80 overflow-y-auto">
           {(activeTab === "followers" ? followers : following).length === 0 ? (
             <div className="py-12 text-center text-zinc-500">
@@ -95,14 +94,16 @@ export function FollowersModal({
                 onClick={onClose}
                 className="flex items-center gap-3 px-4 py-3 hover:bg-zinc-800/50 transition-colors"
               >
-                <div className="relative">
-                  {user.avatarUrl ? (
-                    <img
-                      src={user.avatarUrl}
-                      alt={user.username}
-                      className="w-10 h-10 rounded-full object-cover"
-                    />
-                  ) : (
+                 <div className="relative">
+                   {user.avatarUrl ? (
+                     <Image
+                       src={user.avatarUrl}
+                       alt={user.username}
+                       width={40}
+                       height={40}
+                       className="rounded-full object-cover"
+                     />
+                   ) : (
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
                       <span className="text-white text-sm font-medium">
                         {user.username.charAt(0).toUpperCase()}
@@ -131,3 +132,7 @@ export function FollowersModal({
     </div>
   );
 }
+
+
+
+

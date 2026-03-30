@@ -1,0 +1,192 @@
+## Architecture - C4 Container Diagram
+
+```mermaid
+graph TB
+    subgraph "Cliente (Browser)"
+        UI[React UI Components]
+        RQ[React Query Cache]
+    end
+
+    subgraph "Aplicación (Next.js 16)"
+        APP[App Router Pages]
+        API[API Routes]
+        SSR[Server Components]
+    end
+
+    subgraph "Capa de Aplicación"
+        CMD[Commands<br/>POST/PUT/DELETE]
+        QRY[Queries<br/>GET]
+        DTO[Data Transfer Objects]
+    end
+
+    subgraph "Capa de Dominio"
+        ENT[Entities<br/>User, Media, UserProfile]
+        VO[Value Objects<br/>Email, Username, MediaId]
+        REPO[Repository Ports<br/>IUserRepository, etc.]
+        EVT[Domain Events]
+    end
+
+    subgraph "Capa de Infraestructura"
+        ADPT[Adapters]
+        PERSIST[Supabase Adapters]
+        EXTERNAL[TMDB/IGDB Clients]
+        EMAIL[Nodemailer/SendGrid]
+        HOOKS[React Query Hooks]
+    end
+
+    subgraph "Servicios Externos"
+        DB[(Supabase PostgreSQL)]
+        TMDB[(TMDB API)]
+        IGDB[(IGDB API)]
+        SMTP[SMTP Server]
+    end
+
+    UI --> APP
+    RQ -.-> API
+    APP --> CMD
+    APP --> QRY
+    CMD --> ENT
+    QRY --> ENT
+    CMD --> REPO
+    QRY --> REPO
+    REPO -.-> PERSIST
+    ENT --> VO
+    ENT --> EVT
+    ADPT --> PERSIST
+    ADPT --> EXTERNAL
+    ADPT --> EMAIL
+    HOOKS --> CMD
+    HOOKS --> QRY
+    PERSIST --> DB
+    EXTERNAL --> TMDB
+    EXTERNAL --> IGDB
+    EMAIL --> SMTP
+
+    style DOMAIN fill:#e1f5e1
+    style APPLICATION fill:#e3f2fd
+    style INFRASTRUCTURE fill:#fce4ec
+    style FRAMEWORKS fill:#fff3e0
+```
+
+## Request Flow - Ver Perfil de Usuario
+
+```mermaid
+sequenceDiagram
+    actor User as Usuario (Browser)
+    participant UI as ProfilePage (Server Component)
+    participant QH as GetProfileQueryHandler
+    participant PR as UserProfileRepository
+    participant UR as UserRepository
+    participant FR as FollowRepository
+    participant DB as Supabase DB
+
+    User->>UI: Navega a /profile/johndoe
+    UI->>QH: execute({ username: 'johndoe' })
+    QH->>PR: findByUsername('johndoe')
+    PR->>DB: SELECT * FROM user_profiles WHERE username = ?
+    DB-->>PR: profile data
+    PR-->>QH: UserProfile entity
+    QH->>UR: findById(profile.userId)
+    UR->>DB: SELECT * FROM users WHERE id = ?
+    DB-->>UR: user data
+    UR-->>QH: User entity
+    alt Profile is private && not owner
+        QH->>PR: canView(otherUserId)
+        QH-->>UI: throw PermissionDenied
+    else
+        QH->>FR: getFollowers(profile.userId)
+        FR->>DB: SELECT * FROM follows WHERE following_id = ?
+        DB-->>FR: followers list
+        QH->>FR: getFollowing(profile.userId)
+        FR->>DB: SELECT * FROM follows WHERE follower_id = ?
+        DB-->>FR: following list
+        QH-->>UI: GetProfileResult (DTO)
+    end
+    UI->>User: Render profile page with stats
+```
+
+## Bounded Contexts Map
+
+```mermaid
+graph LR
+    subgraph "Auth Context"
+        A_ENT[User Entity]
+        A_VO[EmailVO, UsernameVO, PasswordVO]
+        A_EVT[UserRegistered, EmailVerified]
+        A_REPO[IUserRepository]
+    end
+
+    subgraph "Media Context"
+        M_ENT[Media, Tv, Movie, Game, Episode, UserMediaState]
+        M_VO[MediaId, TrackingStatus, EpisodeNumber]
+        M_EVT[MediaToggled, MediaStatusUpdated]
+        M_REPO[IMediaRepository, IUserMediaTrackingRepository]
+    end
+
+    subgraph "Social Context"
+        S_ENT[UserProfile, Follow]
+        S_VO[UserStatsVO, BioVO]
+        S_EVT[ProfileUpdated, UserFollowed]
+        S_REPO[IUserProfileRepository, IFollowRepository]
+    end
+
+    subgraph "Shared Context"
+        SH_ERR[DomainError, ValidationError, NotFoundError]
+        SH_VO[EntityId, Result<T>, Option<T>]
+        SH_EVT[DomainEvent base, EventBus port]
+    end
+
+    A_ENT -- UserRegistered --> S_ENT
+    A_ENT -- EmailVerified --> A_EVT
+    M_ENT -- MediaToggled --> M_EVT
+    S_ENT -- UserFollowed --> S_EVT
+
+    style Auth fill:#bbdefb
+    style Media fill:#c8e6c9
+    style Social fill:#ffecb3
+    style Shared fill:#d1c4e9
+```
+
+## Deployment Architecture (High-Level)
+
+```mermaid
+graph TB
+    subgraph "Vercel (Frontend Hosting)"
+        subgraph "Next.js Edge Runtime"
+            EDGE[Edge Functions / Middleware]
+        end
+        subgraph "Node.js Runtime"
+            API[API Routes]
+            SSR[Server Components]
+        end
+    end
+
+    subgraph "Supabase"
+        DB[(PostgreSQL)]
+        AUTH[Auth Service]
+        REALTIME[Realtime]
+        STORAGE[Storage]
+    end
+
+    subgraph "External APIs"
+        TMDB[TMDB API]
+        IGDB[IGDB API]
+        EMAIL[SMTP / SendGrid]
+    end
+
+    EDGE --> AUTH
+    API --> DB
+    API --> EXTERNAL
+    SSR --> DB
+    API --> TMDB
+    API --> IGDB
+    AUTH --> EMAIL
+
+    style Vercel fill:#e3f2fd
+    style Supabase fill:#f3e5f5
+    style EXTERNAL fill:#e8f5e8
+```
+
+---
+
+**Nota**: Estos diagramas usan [Mermaid](https://mermaid.js.org/) y son renderizados automáticamente en GitHub y muchas herramientas de documentación.

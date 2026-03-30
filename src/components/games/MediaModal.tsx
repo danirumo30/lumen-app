@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import Image from "next/image";
 
 interface MediaModalProps {
   type: "image" | "video";
@@ -10,7 +11,6 @@ interface MediaModalProps {
 }
 
 export function MediaModal({ type, src, alt, onClose }: MediaModalProps) {
-  // Close on escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -24,7 +24,7 @@ export function MediaModal({ type, src, alt, onClose }: MediaModalProps) {
       className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 animate-in fade-in duration-200"
       onClick={onClose}
     >
-      {/* Close button */}
+      {}
       <button
         className="absolute top-4 right-4 text-white/70 hover:text-white transition-colors z-10"
         onClick={onClose}
@@ -34,15 +34,22 @@ export function MediaModal({ type, src, alt, onClose }: MediaModalProps) {
         </svg>
       </button>
 
-      {/* Content */}
-      {type === "image" ? (
-        <img
-          src={src}
-          alt={alt || "Media"}
-          className="max-w-full max-h-[90vh] object-contain rounded-lg animate-in zoom-in-95 duration-300"
-          onClick={(e) => e.stopPropagation()}
-        />
-      ) : (
+       {}
+       {type === "image" ? (
+         <div
+           className="relative max-w-full max-h-[90vh] animate-in zoom-in-95 duration-300"
+           onClick={(e) => e.stopPropagation()}
+         >
+           <Image
+             src={src}
+             alt={alt || "Media"}
+             fill
+             className="object-contain rounded-lg"
+             sizes="90vw"
+             priority
+           />
+         </div>
+       ) : (
         <div
           className="w-full max-w-5xl aspect-video rounded-lg overflow-hidden animate-in zoom-in-95 duration-300"
           onClick={(e) => e.stopPropagation()}
@@ -58,3 +65,8 @@ export function MediaModal({ type, src, alt, onClose }: MediaModalProps) {
     </div>
   );
 }
+
+
+
+
+

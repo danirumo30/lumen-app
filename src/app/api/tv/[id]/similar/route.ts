@@ -1,3 +1,4 @@
+import { logger } from '@/shared/logger';
 import { NextResponse } from "next/server";
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY!;
@@ -11,7 +12,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    // Remove 'tv_' or 'tmdb_' prefix if present
+    
     const tmdbId = id.replace(/^(tv_|tmdb_)/, '');
 
     const response = await fetch(
@@ -48,7 +49,7 @@ export async function GET(
 
     return NextResponse.json({ results });
   } catch (error) {
-    console.error("Error fetching similar TV shows:", error);
+    logger.error("Error fetching similar TV shows:", error);
     return NextResponse.json(
       { error: "Failed to fetch similar TV shows" },
       { status: 500 }

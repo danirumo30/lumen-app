@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { useDragScroll } from "../home/useDragScroll";
 
 interface BaseCarouselProps {
@@ -11,7 +11,7 @@ interface BaseCarouselProps {
 
 export function BaseCarousel({ title, children, className = "" }: BaseCarouselProps) {
   const { containerRef, handlers } = useDragScroll({ snap: true });
-  const [isHovered, setIsHovered] = BaseCarousel.useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   return (
     <section className={`mb-10 ${className}`}>
@@ -37,7 +37,6 @@ export function BaseCarousel({ title, children, className = "" }: BaseCarouselPr
           paddingBottom: "16px",
           paddingLeft: "4px",
           paddingRight: "4px",
-          touchAction: "pan-x",
         }}
         onClickCapture={handlers.onClick}
       >
@@ -45,10 +44,8 @@ export function BaseCarousel({ title, children, className = "" }: BaseCarouselPr
       </div>
     </section>
   );
-}
-
-// Attach useState for convenience
-BaseCarousel.useState = (initial: boolean) => {
-  const { useState } = require("react");
-  return useState(initial);
 };
+
+
+
+

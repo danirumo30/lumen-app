@@ -1,4 +1,6 @@
+import { logger } from '@/shared/logger';
 import { NextResponse } from "next/server";
+import type { TmdbMovie, TmdbSearchResult } from '@/types/tmdb';
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY!;
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
@@ -15,7 +17,7 @@ export async function GET(
 
     const response = await fetch(
       `${TMDB_BASE_URL}/movie/${tmdbId}/similar?api_key=${TMDB_API_KEY}&language=es-ES&page=1`,
-      { 
+      {
         headers: { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400" }
       }
     );
@@ -24,9 +26,9 @@ export async function GET(
       throw new Error(`TMDB API error: ${response.status}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as TmdbSearchResult<TmdbMovie>;
 
-    const results = data.results?.slice(0, 20).map((movie: any) => ({
+    const results = data.results?.slice(0, 20).map((movie) => ({
       id: `tmdb_${movie.id}`,
       tmdbId: movie.id,
       title: movie.title,
@@ -41,7 +43,7 @@ export async function GET(
 
     return NextResponse.json({ results });
   } catch (error) {
-    console.error("Error fetching similar movies:", error);
+    logger.error("Error fetching similar movies:", error);
     return NextResponse.json(
       { error: "Failed to fetch similar movies" },
       { status: 500 }
