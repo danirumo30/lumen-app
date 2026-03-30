@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/danirumo30/lumen-app/compare/lumen-app-v1.1.0...lumen-app-v1.2.0) (2026-03-23)
+
+
+### Features
+
+* **videogames:** complete games functionality with platinum tracking and profile stats ([#22](https://github.com/danirumo30/lumen-app/issues/22)) ([f3f9a36](https://github.com/danirumo30/lumen-app/commit/f3f9a36004d898b454fb1f3692060384a522b601))
+
 ## [1.1.0](https://github.com/danirumo30/lumen-app/compare/lumen-app-v1.0.0...lumen-app-v1.1.0) (2026-03-21)
 
 
